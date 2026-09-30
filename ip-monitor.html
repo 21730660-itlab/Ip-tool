@@ -4987,7 +4987,7 @@ function renderDash(){
   for (const o of out) if (o.n.e.v === 4 && o.n.kind === "net"){ cap4 += o.cap; used4 += o.used; }
   const util = cap4 > 0n ? used4 / Number(cap4) * 100 : 0;
   const hosts = networks.reduce((a, n) => a + hostCount(n), 0);
-  const routers = devices.filter(d => d.type !== "wireless" || d.role === "ap" || d.func === "core");
+  const routers = devices.filter(d => vendorOf(d) === "mikrotik" && (d.type !== "wireless" || d.role === "ap" || d.func === "core"));
   const cov = routers.length ? pct1(routers.filter(d => configs.some(c => c.deviceId === d.id)).length, routers.length) : 0;
   const crit = checks.filter(c => c.sev === "crit").reduce((a, c) => a + c.items.length, 0), warn = checks.filter(c => c.sev === "warn").reduce((a, c) => a + c.items.length, 0);
   const grade = score >= 90 ? "ok" : score >= 70 ? "warn" : "crit";
