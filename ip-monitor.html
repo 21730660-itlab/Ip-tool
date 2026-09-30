@@ -1118,28 +1118,42 @@ svg .sitehdr-n{fill:var(--gold)}
     <div class="sheet-body">
       <div class="group">
         <label class="field"><span>Site <i>*</i></span><select id="d-site"></select></label>
+        <span style="display:block;font-weight:600;margin:6px 0 4px">Brand <i style="font-style:normal;color:var(--sig)">*</i></span>
+        <div class="seg" id="d-vendor">
+          <button type="button" data-v="mikrotik">MikroTik</button>
+          <button type="button" data-v="other">Other brand</button>
+        </div>
         <span style="display:block;font-weight:600;margin:6px 0 4px">Device type <i style="font-style:normal;color:var(--sig)">*</i></span>
         <div class="seg" id="d-type">
           <button type="button" data-t="router">Router</button>
           <button type="button" data-t="wireless">Wireless</button>
           <button type="button" data-t="both">Router + Wi-Fi</button>
         </div>
-        <label class="field"><span>MikroTik model <i>*</i></span><input id="d-model" list="d-models" autocomplete="off" placeholder="e.g. SXTsq 5 ac, LHG XL 5 ac"></label>
+        <label class="field"><span><b id="d-modellab" style="font-weight:inherit">MikroTik model</b> <i>*</i></span><input id="d-model" list="d-models" autocomplete="off" placeholder="e.g. SXTsq 5 ac, LHG XL 5 ac"></label>
         <datalist id="d-models"></datalist>
         <p class="hint2" id="d-modelhint"></p>
         <label class="field"><span>Interfaces</span><input id="d-ports" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ether1, wlan1"></label>
         <div class="portchips" id="d-portchips"></div>
         <div class="fielderr" id="d-portserr"></div>
       </div>
-      <div class="group">
+      <div class="group" id="d-bipgroup" hidden>
+        <h3>IP from a bridge subnet</h3>
+        <label class="field"><span>Bridge</span><select id="d-br"></select></label>
+        <label class="field"><span>IP address</span><input id="d-bip" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. 10.10.10.5"></label>
+        <button type="button" class="btn btn-line btn-sm" id="d-bipnext">Use next free IP</button>
+        <div id="d-bipstate"></div>
+      </div>
+      <div class="group" id="d-brgroup">
         <div class="hosthead"><h3>Bridges</h3><button type="button" class="btn btn-line btn-sm" id="d-addbr">+ Bridge</button></div>
         <div id="d-bridges"></div>
         <p class="hint2" id="d-brhint">Group ports into a bridge, then give the bridge an IP below.</p>
       </div>
       <div class="group">
+        <div id="d-ipsec">
         <div class="hosthead"><h3>IP addresses</h3><button type="button" class="btn btn-line btn-sm" id="d-addip">+ IP address</button></div>
         <div id="d-addrs"></div>
         <p class="hint2">Any interface or bridge, e.g. bridge1 · 10.10.10.1/29. Leave out the /prefix and it's taken from the matching network.</p>
+        </div>
         <label class="field"><span>Device name (identity) <i>*</i></span><input id="d-name" autocomplete="off" autocapitalize="off" placeholder="e.g. HQ-Tower-SXT1"></label>
         <div class="fielderr" id="d-nameerr"></div>
       </div>
@@ -1148,11 +1162,11 @@ svg .sitehdr-n{fill:var(--gold)}
         <label class="field" id="d-rolewrap"><span>Wireless role</span>
           <select id="d-role"><option value="">—</option><option value="ap">Access point (AP bridge)</option><option value="station">Station (client)</option><option value="ptp">Point-to-point bridge</option></select></label>
         <label class="field"><span>Function</span><select id="d-func"></select></label>
-        <label class="field"><span>Management IP</span><input id="d-ip" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. 10.10.10.2"></label>
+        <label class="field" id="d-ipwrap"><span>Management IP</span><input id="d-ip" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. 10.10.10.2"></label>
         <div id="d-ipstate"></div>
         <label class="field"><span>MAC address</span><input id="d-mac" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="AA:BB:CC:DD:EE:FF"></label>
         <div class="fielderr" id="d-macerr"></div>
-        <label class="field"><span>RouterOS version</span><input id="d-ros" autocomplete="off" placeholder="e.g. 7.16"></label>
+        <label class="field" id="d-roswrap"><span>RouterOS version</span><input id="d-ros" autocomplete="off" placeholder="e.g. 7.16"></label>
         <label class="field"><span>Notes</span><textarea id="d-notes"></textarea></label>
       </div>
       <div class="group">
@@ -2781,7 +2795,8 @@ async function importCore(data, opts = {}){
     const rid = cleanId(raw.id), existing = rid && devices.find(d => d.id === rid);
     if (existing){ devMap.set(raw.id, existing.id); if (stampOf(raw) <= stampOf(existing)) continue; }
     const ip = raw.ip ? parseEntry(raw.ip) : null;
-    const dev = { id: existing ? existing.id : (rid || newId()), siteId, type: DEV_TYPES.includes(raw.type) ? raw.type : "wireless",
+    const dev = { id: existing ? existing.id : (rid || newId()), siteId, type: DEV_TYPES.includes(raw.type) ? raw.type : "wireless", vendor: raw.vendor === "other" ? "other" : "mikrotik",
+      uplink: raw.uplink && raw.uplink.deviceId && raw.uplink.bridge ? { deviceId: devMap.get(raw.uplink.deviceId) || String(raw.uplink.deviceId), bridge: String(raw.uplink.bridge) } : null,
       model: String(raw.model).trim(), name: String(raw.name).trim(), role: ["ap","station","ptp"].includes(raw.role) ? raw.role : "",
       ip: ip && ip.kind === "ip" ? ip.text : "", mac: normMac(raw.mac) || "", ros: String(raw.ros || ""), notes: String(raw.notes || ""),
       func: FUNC_LABEL[raw.func] ? raw.func : "", ...metaOf(raw),
@@ -2958,7 +2973,8 @@ function farName(l, dev){ const o = devById(l.a === dev.id ? l.b : l.a); return 
 const BANDS = { "2.4": { min: 2400, max: 2500, widths: ["20", "40"], hint: "e.g. 2412" },
                 "5":   { min: 4900, max: 6100, widths: ["20", "40", "80", "160"], hint: "e.g. 5180" },
                 "60":  { min: 57000, max: 71000, widths: ["2160"], hint: "e.g. 58320" } };
-let mapFilter = "all", editingDevId = null, editingLinkId = null, devType = "wireless", linkType = "wireless";
+let mapFilter = "all", editingDevId = null, editingLinkId = null, devType = "wireless", devVendor = "mikrotik", linkType = "wireless";
+const vendorOf = d => d && d.vendor === "other" ? "other" : "mikrotik";
 
 const devById = id => devices.find(d => d.id === id) || null;
 const hasWifi = d => d && (d.type === "wireless" || d.type === "both");
@@ -3367,9 +3383,76 @@ function siteOptions(sel){
 function setDevType(t){
   devType = t;
   $("d-type").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.t === t));
-  $("d-models").innerHTML = MT_MODELS[t].map(m => `<option value="${esc(m)}">`).join("");
+  $("d-models").innerHTML = devVendor === "other" ? "" : MT_MODELS[t].map(m => `<option value="${esc(m)}">`).join("");
   $("d-rolewrap").hidden = t === "router";
   validateDev();
+}
+/* MikroTik devices get interfaces, bridges and addresses; other brands take one IP from a MikroTik bridge subnet */
+function setDevVendor(v){
+  devVendor = v === "other" ? "other" : "mikrotik";
+  const other = devVendor === "other";
+  $("d-vendor").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === devVendor));
+  $("d-modellab").textContent = other ? "Brand & model" : "MikroTik model";
+  $("d-model").placeholder = other ? "e.g. Ubiquiti LiteBeam 5AC, Hikvision camera" : "e.g. SXTsq 5 ac, LHG XL 5 ac";
+  $("d-bipgroup").hidden = !other; $("d-brgroup").hidden = other; $("d-ipsec").hidden = other;
+  $("d-ipwrap").hidden = other; $("d-ipstate").hidden = other; $("d-roswrap").hidden = other;
+  $("d-bipnext").hidden = readOnly;
+  if (other) fillBridgeSelect($("d-br").value || null);
+  devCfgSummary();
+  setDevType(devType);
+}
+$("d-vendor").querySelectorAll("button").forEach(b => b.onclick = () => { if (!readOnly) setDevVendor(b.dataset.v); });
+/* bridges with a subnet address on the MikroTik devices of a site */
+function bridgeSubnets(sid){
+  const out = [];
+  for (const d of devices){
+    if (d.siteId !== sid || d.id === editingDevId || vendorOf(d) !== "mikrotik") continue;
+    for (const a of d.addrs || []){
+      if (!(d.bridges || []).some(b => b.name === a.iface)) continue;
+      const p = parseRaw(a.address); if (!p || p.prefix === null || p.prefix >= p.bits) continue;
+      out.push({ key: `${d.id}|${a.iface}`, dev: d, bridge: a.iface, gw: ipOf(a.address), e: analyze(p.v, p.addr, p.prefix) });
+    }
+  }
+  return out;
+}
+function fillBridgeSelect(selKey){
+  const list = bridgeSubnets($("d-site").value);
+  $("d-br").innerHTML = `<option value="">— no bridge —</option>` + list.map(b =>
+    `<option value="${esc(b.key)}" ${b.key === selKey ? "selected" : ""}>${esc(b.dev.name)} · ${esc(b.bridge)} · ${esc(b.e.text)}</option>`).join("");
+  if (selKey && !list.some(b => b.key === selKey)) $("d-br").value = "";
+}
+const chosenBridge = () => bridgeSubnets($("d-site").value).find(b => b.key === $("d-br").value) || null;
+function bridgeNextFree(){
+  const b = chosenBridge(); if (!b) return "";
+  const used = new Set(collectIPs().filter(r => r.devId !== editingDevId).map(r => r.ip));
+  used.add(b.gw);
+  return nextFree(b.e, used);
+}
+$("d-br").addEventListener("change", () => {
+  const b = chosenBridge(), cur = parseEntry($("d-bip").value);
+  if (b && !(cur && cur.kind === "ip" && inCidr(b.e.text, cur.v, cur.addr))) $("d-bip").value = bridgeNextFree();
+  validateDev();
+});
+$("d-bipnext").onclick = () => { const ip = bridgeNextFree(); if (ip) $("d-bip").value = ip; validateDev(); };
+$("d-bip").addEventListener("input", validateDev);
+function validateBip(sid){
+  const st = $("d-bipstate"), raw = $("d-bip").value.trim(), b = chosenBridge();
+  const say = (cls, msg) => { st.className = cls; st.textContent = msg; };
+  $("d-bipnext").disabled = !b;
+  if (!raw){ say("hint2", b ? "Pick an IP inside the bridge subnet, or use the next free one." : bridgeSubnets(sid).length ? "Choose the bridge this device gets its IP from." : "No MikroTik in this site has a bridge with an IP address yet."); return true; }
+  const e = parseEntry(raw);
+  if (!e || e.kind !== "ip"){ say("fielderr", "✕ Type a single IP address, without /prefix"); return false; }
+  if (b){
+    if (!inCidr(b.e.text, e.v, e.addr)){ say("fielderr", `✕ ${e.text} is outside ${b.e.text} of ${b.bridge}`); return false; }
+    if (e.v === 4 && b.e.prefix < 31 && (e.addr === b.e.start || e.addr === b.e.end)){ say("fielderr", `✕ ${e.text} is the ${e.addr === b.e.start ? "network" : "broadcast"} address of ${b.e.text}`); return false; }
+    if (e.text === b.gw){ say("fielderr", `✕ ${e.text} is the bridge's own address on ${b.dev.name}`); return false; }
+  }
+  const taken = collectIPs().find(r => r.ip === e.text && r.devId && r.devId !== editingDevId);
+  if (taken){ say("fielderr", `✕ ${e.text} is already used by ${taken.owner} (${taken.sub})`); return false; }
+  const foreign = networks.find(n => { const o = parseEntry(n.ip); return o && overlaps(o, e) && n.siteId !== sid; });
+  if (foreign){ say("fielderr", `✕ ${e.text} belongs to ${foreign.ip} of ${siteLabel(siteOf(foreign))}`); return false; }
+  say("fieldok", b ? `✓ ${e.text}/${b.e.prefix} from ${b.bridge} on ${b.dev.name} · gateway ${b.gw}` : `✓ ${e.text} (not tied to a bridge)`);
+  return true;
 }
 $("d-type").querySelectorAll("button").forEach(b => b.onclick = () => { if (!readOnly) setDevType(b.dataset.t); });
 function openDev(id, siteId){
@@ -3390,8 +3473,11 @@ function openDev(id, siteId){
   $("dSave").hidden = readOnly; $("dDelete").hidden = !d || !fullAccess;
   document.querySelectorAll("#devForm input, #devForm textarea").forEach(el => el.readOnly = readOnly);
   document.querySelectorAll("#devForm select").forEach(el => el.disabled = readOnly);
-  fillMeta("d", d); devCfgSummary();
-  setDevType(d?.type || "wireless");
+  fillMeta("d", d);
+  $("d-bip").value = d && vendorOf(d) === "other" ? d.ip || "" : "";
+  fillBridgeSelect(d && d.uplink ? `${d.uplink.deviceId}|${d.uplink.bridge}` : null);
+  devType = d?.type || "wireless";
+  setDevVendor(vendorOf(d));
   $("devSheet").showModal();
   if (!d && !readOnly) setTimeout(() => $("d-model").focus(), 50);
 }
@@ -3548,11 +3634,14 @@ function validateNetCfg(sid){
 function validateDev(){
   let ok = true;
   if (!portsEdited){ const auto = defaultPorts($("d-model").value, devType).join(", "); if ($("d-ports").value !== auto){ $("d-ports").value = auto; renderBridges(); renderAddrs(); } }
-  if (!validateNetCfg($("d-site").value)) ok = false;
+  const other = devVendor === "other";
+  if (!other && !validateNetCfg($("d-site").value)) ok = false;
+  if (other && !validateBip($("d-site").value)) ok = false;
   if (!validatePorts()) ok = false;
   const sid = $("d-site").value, model = $("d-model").value.trim(), name = $("d-name").value.trim();
   const known = Object.entries(MT_MODELS).find(([, list]) => list.some(m => m.toLowerCase() === model.toLowerCase()));
-  $("d-modelhint").textContent = !model ? "Pick from the list or type any MikroTik model."
+  $("d-modelhint").textContent = other ? "Any brand and model. Its IP comes from a MikroTik bridge subnet below."
+    : !model ? "Pick from the list or type any MikroTik model."
     : !known ? "Custom model: any MikroTik model is accepted."
     : known[0] !== devType ? `Tip: ${known[1].find(m => m.toLowerCase() === model.toLowerCase())} is usually a “${TYPE_LABEL[known[0]]}” device.` : "✓ Known MikroTik model";
   const dupName = name && devices.find(x => x.id !== editingDevId && x.siteId === sid && x.name.trim().toLowerCase() === name.toLowerCase());
@@ -3561,7 +3650,7 @@ function validateDev(){
 
   const ipT = $("d-ip").value.trim(), st = $("d-ipstate");
   st.className = ""; st.textContent = "";
-  if (ipT){
+  if (ipT && !other){
     const e = parseEntry(ipT);
     if (!e || e.kind !== "ip"){ st.className = "fielderr"; st.textContent = "✕ Not a valid single IP address"; ok = false; }
     else {
@@ -3589,25 +3678,28 @@ function validateDev(){
 ["d-model","d-name","d-ip","d-mac"].forEach(id => $(id).addEventListener("input", validateDev));
 $("d-ports").addEventListener("input", () => { portsEdited = true; renderBridges(); renderAddrs(); validateDev(); });
 $("d-role").addEventListener("change", validateDev);
-$("d-site").addEventListener("change", validateDev);
+$("d-site").addEventListener("change", () => { if (devVendor === "other") fillBridgeSelect($("d-br").value || null); validateDev(); });
 $("dCancel").onclick = () => $("devSheet").close();
 $("devForm").addEventListener("submit", async ev => {
   ev.preventDefault();
   if (readOnly || !validateDev()) return;
   const prev = editingDevId ? devById(editingDevId) : null;
-  const ip = $("d-ip").value.trim() ? parseEntry($("d-ip").value).text : "";
-  const dev = { ...(prev || {}), id: editingDevId || newId(), siteId: $("d-site").value, type: devType, func: $("d-func").value, ...readMeta("d"), model: $("d-model").value.trim(), name: $("d-name").value.trim(),
-    role: devType === "router" ? "" : $("d-role").value, ip, mac: normMac($("d-mac").value) || "", ros: $("d-ros").value.trim(), notes: $("d-notes").value.trim(),
+  const other = devVendor === "other", br = other ? chosenBridge() : null;
+  const ipRaw = other ? $("d-bip").value : $("d-ip").value;
+  const ip = ipRaw.trim() ? parseEntry(ipRaw).text : "";
+  const dev = { ...(prev || {}), id: editingDevId || newId(), siteId: $("d-site").value, type: devType, vendor: devVendor,
+    uplink: br ? { deviceId: br.dev.id, bridge: br.bridge } : null, func: $("d-func").value, ...readMeta("d"), model: $("d-model").value.trim(), name: $("d-name").value.trim(),
+    role: devType === "router" ? "" : $("d-role").value, ip, mac: normMac($("d-mac").value) || "", ros: other ? "" : $("d-ros").value.trim(), notes: $("d-notes").value.trim(),
     ports: parsePorts($("d-ports").value),
-    bridges: formBridges.map(b => ({ name: b.name.trim(), ports: b.ports.filter(p => parsePorts($("d-ports").value).includes(p)) })),
-    addrs: (() => { const seen = new Set(); return formAddrs.map(a => ({ id: a.id || newId(), iface: a.iface, address: checkAddr(a, $("d-site").value, seen).norm || a.address.trim(), comment: a.comment || "" })); })(),
+    bridges: other ? [] : formBridges.map(b => ({ name: b.name.trim(), ports: b.ports.filter(p => parsePorts($("d-ports").value).includes(p)) })),
+    addrs: other ? [] : (() => { const seen = new Set(); return formAddrs.map(a => ({ id: a.id || newId(), iface: a.iface, address: checkAddr(a, $("d-site").value, seen).norm || a.address.trim(), comment: a.comment || "" })); })(),
     createdAt: prev?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() };
   const sharedRadio = prev && prev.role === "ap" && dev.role !== "ap" && devicePorts(dev).some(p => isWifiPort(p) && portUsers(dev, p, null).length > 1);
   if (sharedRadio) return showAlert("Radio is shared", "This AP radio serves several stations. Only an access point can do that. Remove the extra connections first, or keep the role as Access point.");
   if (prev && hasWifi(prev) && !hasWifi(dev) && links.some(l => l.type === "wireless" && (l.a === dev.id || l.b === dev.id)))
     return showAlert("Wireless links exist", "This device has wireless connections. Remove them before changing it to a router without Wi-Fi.");
   // networks that don't exist yet are created automatically in the device's site
-  const creates = new Map(); { const seen = new Set(); for (const a of formAddrs){ const r = checkAddr(a, dev.siteId, seen); if (r.create) creates.set(r.create.text, { e: r.create, iface: a.iface }); } }
+  const creates = new Map(); if (!other){ const seen = new Set(); for (const a of formAddrs){ const r = checkAddr(a, dev.siteId, seen); if (r.create) creates.set(r.create.text, { e: r.create, iface: a.iface }); } }
   try {
     const now = new Date().toISOString();
     for (const { e, iface } of creates.values()){
@@ -3863,7 +3955,7 @@ function collectIPs(){
     if (n.gateway) recs.push({ ip: n.gateway, kind: "Gateway", owner: (n.name ? n.name + " " : "") + "gateway", sub: n.ip, siteId: n.siteId, open: () => openNet(n.id) });
   }
   for (const d of devices){
-    if (d.ip) recs.push({ ip: d.ip, kind: "Mgmt", owner: d.name, sub: "management IP", siteId: d.siteId, devId: d.id, open: () => openDev(d.id) });
+    if (d.ip) recs.push({ ip: d.ip, kind: "Mgmt", owner: d.name, sub: d.uplink ? `from ${d.uplink.bridge} on ${(devById(d.uplink.deviceId) || { name: "?" }).name}` : "management IP", siteId: d.siteId, devId: d.id, open: () => openDev(d.id) });
     for (const a of d.addrs || []){ const p = parseRaw(a.address); if (!p) continue;
       const isBr = (d.bridges || []).some(b => b.name === a.iface);
       recs.push({ ip: ipOf(a.address), prefix: p.prefix, kind: isBr ? "Bridge" : "Interface", owner: d.name, sub: `${a.iface}${p.prefix !== null ? " · /" + p.prefix : ""}${isBr ? " · " + ((d.bridges.find(b => b.name === a.iface) || {}).ports || []).join(", ") : ""}`, siteId: d.siteId, devId: d.id, open: () => openDev(d.id) }); }
@@ -4740,7 +4832,7 @@ function renderCfg(){
 }
 function devCfgSummary(){
   const g = $("d-cfggroup"), d = editingDevId && devById(editingDevId);
-  g.hidden = !d;
+  g.hidden = !d || devVendor === "other";
   if (!d) return;
   const list = cfgsOf(d.id);
   $("d-cfgcount").textContent = list.length ? ` · ${list.length}` : "";
@@ -4868,13 +4960,13 @@ function healthChecks(){
   const off = devices.filter(d => statusOf(d) === "offline");
   add("crit", "Devices marked Offline", off.map(d => ({ t: d.name, sid: d.siteId, s: `${d.model} · ${siteTag(d.siteId)}`, open: () => openDev(d.id) })), "");
   add("warn", "Devices without a management IP", devices.filter(d => statusOf(d) !== "retired" && !d.ip).map(d => ({ t: d.name, sid: d.siteId, s: `${d.model} · ${siteTag(d.siteId)}`, open: () => openDev(d.id) })), "");
-  const noCfg = devices.filter(d => statusOf(d) !== "retired" && (d.type !== "wireless" || d.role === "ap" || d.func === "core") && !configs.some(c => c.deviceId === d.id));
+  const noCfg = devices.filter(d => vendorOf(d) === "mikrotik" && statusOf(d) !== "retired" && (d.type !== "wireless" || d.role === "ap" || d.func === "core") && !configs.some(c => c.deviceId === d.id));
   add("warn", "Routers without a config backup", noCfg.map(d => ({ t: d.name, sid: d.siteId, s: `${d.model} · ${siteTag(d.siteId)}`, open: () => openCfg(d.id) })), "Open the device and paste its /export.");
   const stale = devices.map(d => ({ d, c: cfgsOf(d.id)[0] })).filter(o => o.c && Date.now() - Date.parse(o.c.at) > STALE_DAYS * 864e5);
   add("info", `Config backups older than ${STALE_DAYS} days`, stale.map(o => ({ t: o.d.name, s: `last ${fmtWhen(o.c.at)}`, open: () => openCfg(o.d.id) })), "");
   const v6 = devices.filter(d => /^6\./.test(String(d.ros || "")));
   add("warn", "Devices still on RouterOS 6", v6.map(d => ({ t: d.name, sid: d.siteId, s: `RouterOS ${d.ros} · ${siteTag(d.siteId)}`, open: () => openDev(d.id) })), "RouterOS 6 no longer gets new features. Plan the upgrade to v7.");
-  add("info", "Devices without RouterOS version", devices.filter(d => !d.ros).map(d => ({ t: d.name, sid: d.siteId, s: `${d.model} · ${siteTag(d.siteId)}`, open: () => openDev(d.id) })), "");
+  add("info", "Devices without RouterOS version", devices.filter(d => vendorOf(d) === "mikrotik" && !d.ros).map(d => ({ t: d.name, sid: d.siteId, s: `${d.model} · ${siteTag(d.siteId)}`, open: () => openDev(d.id) })), "");
   add("info", "Sites with no networks", sites.filter(s => !netsOf(s.id).length).map(s => ({ t: `#${s.siteNumber} ${s.name}`, s: "", open: () => { location.hash = "#site/" + encodeURIComponent(s.id); } })), "");
   return checks.sort((a, b) => sevRank[a.sev] - sevRank[b.sev]);
 }
