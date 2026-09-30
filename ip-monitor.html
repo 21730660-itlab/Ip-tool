@@ -334,6 +334,9 @@ svg .node .ico{fill:none;stroke-width:2;stroke-linecap:round}
 svg .node.router .ico{stroke:var(--data)}
 svg .node.wireless .ico{stroke:var(--sig)}
 svg .node.both .ico{stroke:var(--ok)}
+svg .node.pc rect.body,svg .node.phone rect.body{stroke:var(--acc)} svg .node.pc .ico,svg .node.phone .ico{stroke:var(--acc)}
+svg .node.server rect.body,svg .node.dbserver rect.body{stroke:#8a5cf6} svg .node.server .ico,svg .node.dbserver .ico{stroke:#8a5cf6}
+svg .node.nvr rect.body,svg .node.camera rect.body{stroke:#14b8a6} svg .node.nvr .ico,svg .node.camera .ico{stroke:#14b8a6}
 svg .node.ghost .ico{stroke:var(--muted)}
 svg .node{cursor:pointer}
 svg .link{fill:none;stroke-width:3}
@@ -350,6 +353,8 @@ svg .lbl text{fill:var(--ink);font-family:var(--mono);font-weight:700;font-size:
 .drow:active,.lrow:active{border-color:var(--data)}
 .dico{width:40px;height:40px;border:1.5px solid var(--line);border-radius:var(--r);display:flex;align-items:center;justify-content:center}
 .dico.router{border-color:var(--data)} .dico.wireless{border-color:var(--sig)} .dico.both{border-color:var(--ok)}
+.dico.pc,.dico.phone{border-color:var(--acc)} .dico.server,.dico.dbserver{border-color:#8a5cf6} .dico.nvr,.dico.camera{border-color:#14b8a6}
+#d-type{flex-wrap:wrap} #d-type button{flex:1 1 30%;border-top:1px solid var(--frame)} #d-type button[hidden]{display:none}
 .dname{font-weight:700;font-size:1.08rem}
 .dmeta{color:var(--muted);font-size:.92rem;font-weight:600}
 .dip{font-family:var(--mono);font-weight:700;font-size:.9rem}
@@ -945,7 +950,7 @@ svg .sitehdr-n{fill:var(--gold)}
     <div class="maplegend">
       <span><svg width="34" height="10"><line x1="0" y1="5" x2="34" y2="5" stroke="currentColor" stroke-width="3"/></svg>Wired</span>
       <span><svg width="34" height="10"><line x1="0" y1="5" x2="34" y2="5" stroke="var(--sig)" stroke-width="3" stroke-dasharray="7 5"/></svg>Wireless</span>
-      <span style="color:var(--data)">■ Router</span><span style="color:var(--sig)">■ Wireless</span><span style="color:var(--ok)">■ Router + Wi-Fi</span>
+      <span style="color:var(--data)">■ Router</span><span style="color:var(--sig)">■ Wireless</span><span style="color:var(--ok)">■ Router + Wi-Fi</span><span style="color:var(--acc)">■ PC / IP phone</span><span style="color:#8a5cf6">■ Servers</span><span style="color:#14b8a6">■ NVR / camera</span>
     </div>
     <div class="secthead"><h3>Devices</h3><span class="hint" id="devcount"></span></div>
     <div id="devlist"></div>
@@ -1132,6 +1137,12 @@ svg .sitehdr-n{fill:var(--gold)}
           <button type="button" data-t="router">Router</button>
           <button type="button" data-t="wireless">Wireless</button>
           <button type="button" data-t="both">Router + Wi-Fi</button>
+          <button type="button" data-t="pc" data-end>PC</button>
+          <button type="button" data-t="phone" data-end>IP phone</button>
+          <button type="button" data-t="server" data-end>Server</button>
+          <button type="button" data-t="dbserver" data-end>Database server</button>
+          <button type="button" data-t="nvr" data-end>NVR</button>
+          <button type="button" data-t="camera" data-end>IP camera</button>
         </div>
         <label class="field"><span><b id="d-modellab" style="font-weight:inherit">MikroTik model</b> <i>*</i></span><input id="d-model" list="d-models" autocomplete="off" placeholder="e.g. SXTsq 5 ac, LHG XL 5 ac"></label>
         <datalist id="d-models"></datalist>
@@ -2914,8 +2925,11 @@ $("expApp").onclick = () => {
 };
 
 /* ======================= SITE MAP: DEVICES & CONNECTIONS ======================= */
-const DEV_TYPES = ["router", "wireless", "both"];
-const TYPE_LABEL = { router: "Router", wireless: "Wireless", both: "Router + Wi-Fi" };
+const NET_TYPES = ["router", "wireless", "both"];                           // MikroTik devices use only these
+const END_TYPES = ["pc", "phone", "server", "dbserver", "nvr", "camera"];     // extra types for other brands
+const DEV_TYPES = [...NET_TYPES, ...END_TYPES];
+const TYPE_LABEL = { router: "Router", wireless: "Wireless", both: "Router + Wi-Fi", pc: "PC", phone: "IP phone", server: "Server", dbserver: "Database server", nvr: "NVR", camera: "IP camera" };
+const TYPE_COLOR = { router: "var(--data)", wireless: "var(--sig)", both: "var(--ok)", pc: "var(--acc)", phone: "var(--acc)", server: "#8a5cf6", dbserver: "#8a5cf6", nvr: "#14b8a6", camera: "#14b8a6" };
 const ROLE_LABEL = { ap: "Access point", station: "Station", ptp: "PtP bridge" };
 const MT_MODELS = {
   router: ["hEX (RB750Gr3)", "hEX S (RB760iGS)", "hEX lite", "hEX refresh", "RB4011iGS+", "RB5009UG+S+IN", "RB1100AHx4", "L009UiGS",
@@ -2959,12 +2973,13 @@ function portDesc(p, dev){
   let d = n.startsWith("wlan60") ? "Wireless 60 GHz" : n.startsWith("wlan") || n.startsWith("wifi") ? "Wireless" : n.startsWith("sfp-sfpplus") ? "SFP+ 10G"
     : n.startsWith("sfp28") ? "SFP28 25G" : n.startsWith("qsfp28") ? "QSFP28 100G" : n.startsWith("sfp") ? "SFP 1G" : n.startsWith("combo") ? "Combo"
     : n.startsWith("lte") ? "LTE" : n.startsWith("ether") ? "Ethernet" : "Interface";
-  if (n === "ether1" && dev) d += dev.type === "wireless" ? " · PoE-in / LAN" : " · WAN";
+  if (n === "ether1" && dev && NET_TYPES.includes(dev.type)) d += dev.type === "wireless" ? " · PoE-in / LAN" : " · WAN";
   return d;
 }
 function defaultPorts(model, type){
   const key = Object.keys(MODEL_PORTS).find(k => k.toLowerCase() === String(model || "").trim().toLowerCase());
   if (key) return MODEL_PORTS[key].slice();
+  if (END_TYPES.includes(type)) return type === "nvr" || type === "server" || type === "dbserver" ? ["ether1", "ether2"] : ["ether1"];
   return type === "router" ? [...R("ether", 1, 5), "sfp1"] : type === "both" ? [...R("ether", 1, 5), "wlan1", "wlan2"] : ["ether1", "wlan1"];
 }
 const devicePorts = d => d ? (Array.isArray(d.ports) && d.ports.length ? d.ports : defaultPorts(d.model, d.type)) : [];
@@ -3043,10 +3058,16 @@ function iconSVG(type, x, y){
   const wifi = `<path class="ico" d="M${x+2} ${y+7} q8 -8 16 0 M${x+5} ${y+10} q5 -5 10 0"/><circle class="ico" cx="${x+10}" cy="${y+13}" r="1.2"/>`;
   const router = `<rect class="ico" x="${x}" y="${y+4}" width="20" height="10" rx="2"/><path class="ico" d="M${x+5} ${y+9}h.5M${x+10} ${y+9}h.5M${x+15} ${y+9}h.5"/>`;
   if (type === "router") return router;
+  if (type === "pc") return `<rect class="ico" x="${x+1}" y="${y+1}" width="18" height="12" rx="1.5"/><path class="ico" d="M${x+7} ${y+18}h6M${x+10} ${y+13}v5"/>`;
+  if (type === "phone") return `<rect class="ico" x="${x+2}" y="${y+1}" width="16" height="17" rx="2"/><path class="ico" d="M${x+5} ${y+5}h10M${x+6} ${y+10}h.5M${x+10} ${y+10}h.5M${x+14} ${y+10}h.5M${x+6} ${y+14}h.5M${x+10} ${y+14}h.5M${x+14} ${y+14}h.5"/>`;
+  if (type === "server") return `<rect class="ico" x="${x+2}" y="${y+1}" width="16" height="7" rx="1.5"/><rect class="ico" x="${x+2}" y="${y+10}" width="16" height="7" rx="1.5"/><path class="ico" d="M${x+5} ${y+4.5}h.5M${x+5} ${y+13.5}h.5"/>`;
+  if (type === "dbserver") return `<ellipse class="ico" cx="${x+10}" cy="${y+4}" rx="8" ry="3"/><path class="ico" d="M${x+2} ${y+4}v11c0 1.7 3.6 3 8 3s8-1.3 8-3V${y+4}M${x+2} ${y+9.5}c0 1.7 3.6 3 8 3s8-1.3 8-3"/>`;
+  if (type === "nvr") return `<rect class="ico" x="${x}" y="${y+5}" width="20" height="9" rx="1.5"/><circle class="ico" cx="${x+15}" cy="${y+9.5}" r="2"/><path class="ico" d="M${x+4} ${y+9.5}h5"/>`;
+  if (type === "camera") return `<rect class="ico" x="${x+1}" y="${y+4}" width="13" height="9" rx="2"/><path class="ico" d="M${x+14} ${y+7}l5-3v9l-5-3M${x+6} ${y+13}v5M${x+3} ${y+18}h6"/>`;
   if (type === "both") return `<g transform="translate(0,-5)">${wifi}</g><g transform="translate(0,5)">${router}</g>`;
   return wifi;
 }
-function miniIcon(type){ return `<svg width="26" height="26" viewBox="-3 -3 26 26">${iconSVG(type, 0, type === "both" ? 3 : 0).replace(/class="ico"/g, `fill="none" stroke="${type === "router" ? "var(--data)" : type === "both" ? "var(--ok)" : "var(--sig)"}" stroke-width="2" stroke-linecap="round"`)}</svg>`; }
+function miniIcon(type){ return `<svg width="26" height="26" viewBox="-3 -3 26 26">${iconSVG(type, 0, type === "both" ? 3 : 0).replace(/class="ico"/g, `fill="none" stroke="${TYPE_COLOR[type] || "var(--sig)"}" stroke-width="2" stroke-linecap="round"`)}</svg>`; }
 
 /* ---------- render ---------- */
 function renderMap(){
@@ -3387,8 +3408,8 @@ function siteOptions(sel){
 function setDevType(t){
   devType = t;
   $("d-type").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.t === t));
-  $("d-models").innerHTML = devVendor === "other" ? "" : MT_MODELS[t].map(m => `<option value="${esc(m)}">`).join("");
-  $("d-rolewrap").hidden = t === "router";
+  $("d-models").innerHTML = devVendor === "other" || !MT_MODELS[t] ? "" : MT_MODELS[t].map(m => `<option value="${esc(m)}">`).join("");
+  $("d-rolewrap").hidden = !hasWifi({ type: t });
   validateDev();
 }
 /* MikroTik devices get interfaces, bridges and addresses; other brands take one IP from a MikroTik bridge subnet */
@@ -3401,6 +3422,9 @@ function setDevVendor(v){
   $("d-bipgroup").hidden = !other; $("d-brgroup").hidden = other; $("d-ipsec").hidden = other;
   $("d-ipwrap").hidden = other; $("d-ipstate").hidden = other; $("d-roswrap").hidden = other;
   $("d-bipnext").hidden = readOnly;
+  // PC, phone, servers, NVR and cameras are only offered for other brands
+  $("d-type").querySelectorAll("[data-end]").forEach(b => b.hidden = !other);
+  if (!other && END_TYPES.includes(devType)) devType = "wireless";
   if (other) fillBridgeSelect($("d-br").value || null);
   devCfgSummary();
   setDevType(devType);
@@ -3693,7 +3717,7 @@ $("devForm").addEventListener("submit", async ev => {
   const ip = ipRaw.trim() ? parseEntry(ipRaw).text : "";
   const dev = { ...(prev || {}), id: editingDevId || newId(), siteId: $("d-site").value, type: devType, vendor: devVendor,
     uplink: br ? { deviceId: br.dev.id, bridge: br.bridge } : null, func: $("d-func").value, ...readMeta("d"), model: $("d-model").value.trim(), name: $("d-name").value.trim(),
-    role: devType === "router" ? "" : $("d-role").value, ip, mac: normMac($("d-mac").value) || "", ros: other ? "" : $("d-ros").value.trim(), notes: $("d-notes").value.trim(),
+    role: hasWifi({ type: devType }) ? $("d-role").value : "", ip, mac: normMac($("d-mac").value) || "", ros: other ? "" : $("d-ros").value.trim(), notes: $("d-notes").value.trim(),
     ports: parsePorts($("d-ports").value),
     bridges: other ? [] : formBridges.map(b => ({ name: b.name.trim(), ports: b.ports.filter(p => parsePorts($("d-ports").value).includes(p)) })),
     addrs: other ? [] : (() => { const seen = new Set(); return formAddrs.map(a => ({ id: a.id || newId(), iface: a.iface, address: checkAddr(a, $("d-site").value, seen).norm || a.address.trim(), comment: a.comment || "" })); })(),
@@ -5062,7 +5086,7 @@ function renderDash(){
       return `<button type="button" class="urow" data-link="${esc(l.id)}"><span class="un">${esc(A ? A.name : "?")} ↔ ${esc(B ? B.name : "?")}<small>${l.band ? esc(l.band) + " GHz" : ""}${l.freq ? " · " + esc(l.freq) + " MHz" : ""}${l.width ? " · " + esc(l.width) + " MHz wide" : ""}${l.dist ? " · " + esc(l.dist) + " km" : ""}</small></span>
         <span class="um"><span class="meter rf ${sigClass(s)}"><i style="width:${w.toFixed(0)}%"></i></span></span><span class="up sig ${sigClass(s)}">${s}<small>dBm</small></span></button>`; }).join("")
     : `<p class="hint2">No wireless links with a signal value yet.</p>`;
-  const byType = [["Router", devices.filter(d => d.type === "router").length, "c1"], ["Wireless", devices.filter(d => d.type === "wireless").length, "c2"], ["Router + Wi-Fi", devices.filter(d => d.type === "both").length, "c3"]];
+  const byType = DEV_TYPES.map((t, i) => [TYPE_LABEL[t], devices.filter(d => d.type === t).length, "c" + ((i % 6) + 1)]);
   const byStatus = STATUSES.map(([k, l], i) => [l, devices.filter(d => statusOf(d) === k).length, "s-" + k]);
   const fnCounts = FUNCS.filter(f => f[0]).map(([k, l], i) => [l, devices.filter(d => d.func === k).length, "c" + ((i % 6) + 1)]);
   const noFn = devices.filter(d => !d.func).length;
