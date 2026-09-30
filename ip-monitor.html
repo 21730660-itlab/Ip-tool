@@ -6,7 +6,7 @@
 <title>IP Monitor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   /* Corporate console: navy chrome, royal-blue actions, amber for attention */
@@ -901,6 +901,116 @@ dialog::backdrop{background:color-mix(in srgb,#05070A 58%,transparent);backdrop-
 .page.on{animation:pagein .28s var(--ease)}
 @keyframes pagein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.page.on{animation:none} dialog{transition:none}}
+/* ===================================================================
+   AURORA CONSOLE THEME — violet → cyan signal gradient on deep ink
+   =================================================================== */
+:root{
+  --bg:#F3F4FA; --panel:#FFFFFF; --panel2:#F6F7FC; --ink:#0B1020; --muted:#5B6479; --line:#E4E7F1; --frame:#D9DDEB;
+  --acc:#7C3AED; --acc2:#06B6D4; --acc-ink:#FFFFFF; --acc-soft:#EFE9FE; --gold:#22D3EE;
+  --sig:#E11D48; --sig-soft:#FFE4EA; --data:#0891B2; --data-soft:#DDF6FB; --ok:#059669; --ok-soft:#D8F7EA; --warn:#D97706; --warn-soft:#FEF0D6;
+  --side:#0A0E1C; --side2:#151B33; --side-ink:#EEF0FF; --side-mute:#8B93B8; --side-line:#1B2240;
+  --grad:linear-gradient(135deg,var(--acc) 0%,#4F46E5 45%,var(--acc2) 100%);
+  --glow:0 10px 30px -8px color-mix(in srgb,var(--acc) 55%,transparent);
+  --r:14px; --rs:10px;
+  --lift:0 1px 0 rgba(11,16,32,.04),0 1px 3px rgba(11,16,32,.06),0 12px 32px -12px rgba(11,16,32,.14);
+  --lift2:0 30px 80px -20px rgba(11,16,32,.45);
+  --sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --head:"Space Grotesk","Inter",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#060913; --panel:#0D1224; --panel2:#121932; --ink:#E9ECFF; --muted:#8C94B7; --line:#1C2442; --frame:#252F55;
+    --acc:#A78BFA; --acc2:#22D3EE; --acc-soft:#221A45; --gold:#22D3EE;
+    --sig:#FB7185; --sig-soft:#3A1220; --data:#22D3EE; --data-soft:#0A2A36; --ok:#34D399; --ok-soft:#0B2B22; --warn:#FBBF24; --warn-soft:#33250A;
+    --side:#04060D; --side2:#10162C; --side-line:#141B35;
+    --lift:0 1px 0 rgba(255,255,255,.03) inset,0 12px 32px -12px rgba(0,0,0,.7); --lift2:0 30px 80px -20px rgba(0,0,0,.85);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#060913; --panel:#0D1224; --panel2:#121932; --ink:#E9ECFF; --muted:#8C94B7; --line:#1C2442; --frame:#252F55;
+  --acc:#A78BFA; --acc2:#22D3EE; --acc-soft:#221A45; --gold:#22D3EE;
+  --sig:#FB7185; --sig-soft:#3A1220; --data:#22D3EE; --data-soft:#0A2A36; --ok:#34D399; --ok-soft:#0B2B22; --warn:#FBBF24; --warn-soft:#33250A;
+  --side:#04060D; --side2:#10162C; --side-line:#141B35;
+  --lift:0 1px 0 rgba(255,255,255,.03) inset,0 12px 32px -12px rgba(0,0,0,.7); --lift2:0 30px 80px -20px rgba(0,0,0,.85);
+}
+body{font-family:var(--sans);font-size:18px;letter-spacing:-.005em;background:
+  radial-gradient(900px 500px at 100% -10%,color-mix(in srgb,var(--acc2) 12%,transparent),transparent 70%),
+  radial-gradient(800px 500px at 20% -20%,color-mix(in srgb,var(--acc) 12%,transparent),transparent 70%),var(--bg);background-attachment:fixed}
+h1,h2,h3,.ptitle b,.sname,.dname,.gnum b,.kpi b,.ro b,.vid,.snum{font-family:var(--head);letter-spacing:-.02em}
+.side{background:
+  radial-gradient(400px 300px at 0% 0%,color-mix(in srgb,var(--acc) 22%,transparent),transparent 70%),
+  radial-gradient(400px 300px at 100% 100%,color-mix(in srgb,var(--acc2) 14%,transparent),transparent 70%),var(--side);border-right:1px solid var(--side-line)}
+.logo{background:var(--grad);box-shadow:var(--glow);border-radius:14px}
+.sbrand h1 .slash{color:var(--acc2)}
+.side .tab{border-radius:12px;color:#C3C8E6}
+.side .tab:hover{background:color-mix(in srgb,#fff 6%,transparent)}
+.side .tab[aria-selected="true"]{background:var(--grad);box-shadow:var(--glow);color:#fff}
+.side .tab[aria-selected="true"]::after{background:var(--acc2);box-shadow:0 0 12px var(--acc2)}
+.navgrp{text-transform:uppercase;letter-spacing:.14em;font-size:.72rem;color:#6E77A0}
+.topbar{border-bottom:1px solid color-mix(in srgb,var(--frame) 70%,transparent);box-shadow:none}
+.ptitle b{font-weight:700}
+.tools{border-radius:999px;border:1px solid var(--frame);background:color-mix(in srgb,var(--panel) 80%,transparent)}
+.avatar{background:var(--grad)}
+.card,.panel,.dhead,.sitehead,.scard,.ipgroup,.canvaswrap,.authbox,.qlist,.row,.drow,.lrow,.vrow,.ucard,.cfgrow,.logrow,.ptp,.permtable,.empty,.readouts,.kpis{
+  border-radius:var(--r);border:1px solid var(--frame);background:var(--panel);box-shadow:var(--lift)}
+.card,.panel,.ipgroup{position:relative;overflow:hidden}
+.card::before,.panel::before,.ipgroup::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:var(--grad);opacity:.9}
+.card-h,.ph,.iphead{background:transparent;border-bottom:1px solid var(--line)}
+.card-h h2,.ph h3{font-family:var(--head);font-weight:700}
+@media (hover:hover){.scard:hover,.row:hover,.drow:hover,.lrow:hover,.vrow:hover,.cfgrow:hover,.ptp:hover{border-color:color-mix(in srgb,var(--acc) 55%,var(--frame));box-shadow:0 0 0 4px color-mix(in srgb,var(--acc) 12%,transparent),var(--lift)}}
+.snum{background:var(--grad);font-family:var(--head)}
+.snum small{color:rgba(255,255,255,.8)}
+.row.net .pfx{background:var(--grad);color:#fff}
+.pfx{background:var(--acc-soft);color:var(--acc)}
+.kpi::before{background:var(--grad)}
+.kpi.bad::before{background:var(--sig)}
+.kpi b,.ro b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700}
+.kpi.bad b,.ro.alert b{background:none;color:var(--sig)}
+.dhead{background:
+  radial-gradient(500px 240px at 90% 0%,color-mix(in srgb,var(--acc2) 45%,transparent),transparent 70%),
+  radial-gradient(600px 300px at 0% 100%,color-mix(in srgb,var(--acc) 55%,transparent),transparent 70%),#0A0E1C;border:0;box-shadow:var(--lift2)}
+.gauge.ok .gv{stroke:#34D399} .gauge.warn .gv{stroke:#FBBF24} .gauge.crit .gv{stroke:#FB7185}
+.btn{border-radius:12px;font-weight:700}
+.btn-primary{background:var(--grad);color:#fff;border:0;box-shadow:var(--glow)}
+.btn-primary:hover{filter:brightness(1.08) saturate(1.1)}
+.btn-line{background:var(--panel);border:1px solid var(--frame)}
+.btn-line:hover{border-color:var(--acc);color:var(--acc);background:var(--acc-soft)}
+.btn-ghost{color:var(--acc)}
+.fab{background:var(--grad);box-shadow:var(--glow)}
+.field input,.field textarea,.field select,.search,.bigin,select.sel{border-radius:12px;border:1px solid var(--frame);background:var(--panel)}
+.search{box-shadow:var(--lift)}
+input:focus,textarea:focus,select:focus{border-color:var(--acc)!important}
+.chip,.mchip{border-radius:999px}
+.mchip[aria-pressed="true"],.useg button[aria-pressed="true"],.seg button[aria-pressed="true"]{background:var(--grad);border-color:transparent;color:#fff}
+.mchip b{color:var(--acc)} .mchip[aria-pressed="true"] b{color:#fff}
+.seg,.useg{border-radius:12px;padding:3px;gap:3px;background:var(--panel2);border:1px solid var(--frame)}
+.seg button,.useg button{border:0!important;border-radius:9px;background:transparent}
+.sev{border-radius:999px}
+.sev.crit{background:var(--sig)} .sev.warn{background:var(--warn)} .sev.info{background:var(--data)} .sev.ok{background:var(--ok)}
+.kb,.stpill,.ltype,.lact,.qk{border-radius:999px}
+dialog{border-radius:20px;border:1px solid var(--frame)}
+.sheet-head{background:#0A0E1C;border-radius:20px 20px 0 0}
+.sheet-head::after{content:"";position:absolute;inset:auto 0 0 0;height:2px;background:var(--grad)}
+.sheet-head .btn-ghost{color:#C4B5FD}
+.alert h2{color:var(--acc)}
+.auth{background:
+  radial-gradient(700px 400px at 80% 10%,color-mix(in srgb,var(--acc2) 40%,transparent),transparent 70%),
+  radial-gradient(800px 500px at 10% 90%,color-mix(in srgb,var(--acc) 55%,transparent),transparent 70%),#05070F}
+.authbox{border-radius:22px}
+.authbrand h1 .slash{color:var(--acc)}
+.authtabs button[aria-selected="true"]{color:var(--acc);border-bottom-color:var(--acc)}
+.dt th{background:var(--panel2);text-transform:uppercase;letter-spacing:.06em;font-size:.72rem}
+.meter i{background:var(--grad)}
+.meter.hot i{background:var(--warn)} .meter.full i{background:var(--sig)}
+.canvaswrap{background:
+  radial-gradient(700px 400px at 0% 0%,color-mix(in srgb,var(--acc) 7%,transparent),transparent 70%),
+  radial-gradient(700px 400px at 100% 100%,color-mix(in srgb,var(--acc2) 7%,transparent),transparent 70%),var(--panel)}
+svg .sitehdr{fill:#0A0E1C}
+svg .sitehdr-n{fill:#22D3EE}
+svg .sitebox{fill:color-mix(in srgb,var(--panel2) 85%,transparent);stroke:var(--frame)}
+.mtool{border-radius:12px}
+.dbdot.live{background:#34D399;box-shadow:0 0 10px #34D399}
 </style>
 </head>
 <body class="locked">
@@ -2597,9 +2707,9 @@ const STYLES_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <fills count="6">
 <fill><patternFill patternType="none"/></fill>
 <fill><patternFill patternType="gray125"/></fill>
-<fill><patternFill patternType="solid"><fgColor rgb="FF111827"/><bgColor indexed="64"/></patternFill></fill>
-<fill><patternFill patternType="solid"><fgColor rgb="FFD92B1C"/><bgColor indexed="64"/></patternFill></fill>
-<fill><patternFill patternType="solid"><fgColor rgb="FFDCECF7"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FF0A0E1C"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FF6D28D9"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFEDE9FE"/><bgColor indexed="64"/></patternFill></fill>
 <fill><patternFill patternType="solid"><fgColor rgb="FFF3F4F6"/><bgColor indexed="64"/></patternFill></fill>
 </fills>
 <borders count="3">
@@ -3031,7 +3141,7 @@ function buildOfflineHTML(){
 <title>IP Monitor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>${APP_PARTS.css}</style>
 </head>
 <body class="locked">
@@ -5535,7 +5645,7 @@ class PdfPage {
 const textW = (s, size, font) => s.length * size * (font === "F3" ? .6 : font === "F2" ? .56 : .51);
 function fitText(t, width, size, font){ let s = pdfLatin(t); if (textW(s, size, font) <= width) return s; while (s.length > 1 && textW(s + "...", size, font) > width) s = s.slice(0, -1); return s + "..."; }
 
-const NAVY = "#0B1735", BLUE = "#1E4FD8", GOLD = "#F0A500", INK = "#0E1A33", MUTED = "#5A667D", LINE = "#D5DCE8", ZEBRA = "#F3F6FB";
+const NAVY = "#0A0E1C", BLUE = "#7C3AED", GOLD = "#06B6D4", INK = "#0B1020", MUTED = "#5B6479", LINE = "#DDE1EE", ZEBRA = "#F7F5FF";
 function pdfHeader(pg, title, sub){
   pg.rect(0, 0, PW, 56, NAVY);
   pg.rect(0, 56, PW, 3, GOLD);
