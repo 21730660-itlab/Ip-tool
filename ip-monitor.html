@@ -443,7 +443,7 @@ svg .sitehdr-g{fill:var(--muted);font-size:16px;font-weight:800}
 .iprow .o{font-weight:600;font-size:.95rem}
 .iprow .o small{display:block;color:var(--muted);font-weight:600;font-size:.82rem}
 .kb{font-family:var(--mono);font-weight:800;font-size:.72rem;padding:2px 7px;border:1.5px solid currentColor;border-radius:var(--r);white-space:nowrap}
-.kb.Interface{color:var(--data)} .kb.Bridge{color:var(--ok)} .kb.PtP{color:var(--sig)} .kb.Host{color:var(--muted)} .kb.Mgmt{color:var(--ink)} .kb.Gateway{color:var(--warn)}
+.kb.Interface{color:var(--data)} .kb.Bridge{color:var(--ok)} .kb.PtP{color:var(--sig)} .kb.Host{color:var(--muted)} .kb.Mgmt{color:var(--ink)} .kb.Device{color:var(--acc)} .kb.Gateway{color:var(--warn)}
 .iprow.dup{background:var(--sig-soft)}
 .iprow .warn{color:var(--sig);font-weight:800;font-size:.82rem;display:block}
 .freeip{padding:8px 14px;border-top:1px dashed var(--line);font-family:var(--mono);font-size:.88rem;color:var(--muted);font-weight:700}
@@ -2190,7 +2190,7 @@ $("nDelete").onclick = () => {
 function deviceIPsIn(e){
   // addresses already configured on devices or link ends inside this subnet → don't hand them out again
   const m = new Map(), add = (ip, who) => { const x = ip && parseEntry(ip); if (x && x.kind === "ip" && x.v === e.v && x.addr >= e.start && x.addr <= e.end && !m.has(x.text)) m.set(x.text, who); };
-  for (const d of devices){ add(d.ip, `${d.name} (management)`); for (const a of d.addrs || []) add(ipOf(a.address), `${d.name} ${a.iface}`); }
+  for (const d of devices){ add(d.ip, `${d.name} (${vendorOf(d) === "mikrotik" ? "management" : "device IP"})`); for (const a of d.addrs || []) add(ipOf(a.address), `${d.name} ${a.iface}`); }
   for (const l of links){ const A = devById(l.a), B = devById(l.b); add(l.ipA, `${A ? A.name : "?"} ${l.portA || ""}`.trim()); add(l.ipB, `${B ? B.name : "?"} ${l.portB || ""}`.trim()); }
   return m;
 }
@@ -2637,13 +2637,13 @@ function simpleSheet(title, head, rows, widths){
 </worksheet>`;
 }
 function devicesTable(){
-  const head = ["Site #","Site","Device","Type","Model","Role","Function","Status","Management IP","IP addresses","Bridges","MAC","RouterOS","Connections","Config backups","Tags","Notes"], rows = [];
+  const head = ["Site #","Site","Device","Type","Model","Role","Function","Status","Management IP (MikroTik)","IP addresses","Bridges","MAC","RouterOS","Connections","Config backups","Tags","Notes"], rows = [];
   for (const s of [...sites].sort(byNum)){
     const devs = devices.filter(d => d.siteId === s.id).sort((a, b) => a.name.localeCompare(b.name));
     if (!devs.length) continue;
     rows.push({ site: true, cells: [s.siteNumber, s.name, `${devs.length} device${devs.length === 1 ? "" : "s"}`, "", "", "", "", "", "", "", "", "", "", "", "", "", ""] });
-    for (const d of devs) rows.push({ cells: [s.siteNumber, "", d.name, TYPE_LABEL[d.type] || d.type, d.model, ROLE_LABEL[d.role] || "", FUNC_LABEL[d.func] || "", STATUS_LABEL[statusOf(d)], d.ip || "",
-      (d.addrs || []).map(a => `${a.iface} ${a.address}`).join("; "), (d.bridges || []).map(b => `${b.name}: ${b.ports.join(", ")}`).join("; "), d.mac || "", d.ros || "",
+    for (const d of devs) rows.push({ cells: [s.siteNumber, "", d.name, TYPE_LABEL[d.type] || d.type, d.model, ROLE_LABEL[d.role] || "", FUNC_LABEL[d.func] || "", STATUS_LABEL[statusOf(d)], mgmtIP(d),
+      otherIPs(d).join("; "), (d.bridges || []).map(b => `${b.name}: ${b.ports.join(", ")}`).join("; "), d.mac || "", d.ros || "",
       links.filter(l => l.a === d.id || l.b === d.id).length, cfgsOf(d.id).length, (d.tags || []).join(", "), d.notes || ""] });
   }
   return [head, rows, [8, 22, 24, 16, 20, 16, 14, 11, 16, 34, 30, 19, 10, 12, 12, 20, 30]];
@@ -3003,6 +3003,8 @@ const BANDS = { "2.4": { min: 2400, max: 2500, widths: ["20", "40"], hint: "e.g.
                 "60":  { min: 57000, max: 71000, widths: ["2160"], hint: "e.g. 58320" } };
 let mapFilter = "all", editingDevId = null, editingLinkId = null, devType = "wireless", devVendor = "mikrotik", linkType = "wireless";
 const vendorOf = d => d && d.vendor === "other" ? "other" : "mikrotik";
+const mgmtIP = d => vendorOf(d) === "mikrotik" ? d.ip || "" : "";          // only MikroTik devices have a management IP
+const otherIPs = d => [...(vendorOf(d) === "other" && d.ip ? [`${d.ip}${d.uplink ? " (from " + d.uplink.bridge + ")" : ""}`] : []), ...(d.addrs || []).map(a => `${a.iface} ${a.address}`)];
 
 const devById = id => devices.find(d => d.id === id) || null;
 const hasWifi = d => d && (d.type === "wireless" || d.type === "both");
@@ -4123,7 +4125,9 @@ function collectIPs(){
     if (n.gateway) recs.push({ ip: n.gateway, kind: "Gateway", owner: (n.name ? n.name + " " : "") + "gateway", sub: n.ip, siteId: n.siteId, open: () => openNet(n.id) });
   }
   for (const d of devices){
-    if (d.ip) recs.push({ ip: d.ip, kind: "Mgmt", owner: d.name, sub: d.uplink ? `from ${d.uplink.bridge} on ${(devById(d.uplink.deviceId) || { name: "?" }).name}` : "management IP", siteId: d.siteId, devId: d.id, open: () => openDev(d.id) });
+    if (d.ip) recs.push(vendorOf(d) === "mikrotik"
+      ? { ip: d.ip, kind: "Mgmt", owner: d.name, sub: "management IP", siteId: d.siteId, devId: d.id, open: () => openDev(d.id) }
+      : { ip: d.ip, kind: "Device", owner: d.name, sub: `${TYPE_LABEL[d.type] || "device"} IP${d.uplink ? ` · from ${d.uplink.bridge} on ${(devById(d.uplink.deviceId) || { name: "?" }).name}` : ""}`, siteId: d.siteId, devId: d.id, open: () => openDev(d.id) });
     for (const a of d.addrs || []){ const p = parseRaw(a.address); if (!p) continue;
       const isBr = (d.bridges || []).some(b => b.name === a.iface);
       recs.push({ ip: ipOf(a.address), prefix: p.prefix, kind: isBr ? "Bridge" : "Interface", owner: d.name, sub: `${a.iface}${p.prefix !== null ? " · /" + p.prefix : ""}${isBr ? " · " + ((d.bridges.find(b => b.name === a.iface) || {}).ports || []).join(", ") : ""}`, siteId: d.siteId, devId: d.id, open: () => openDev(d.id) }); }
@@ -5156,7 +5160,7 @@ function healthChecks(){
   // devices
   const off = devices.filter(d => statusOf(d) === "offline");
   add("crit", "Devices marked Offline", off.map(d => ({ t: d.name, sid: d.siteId, s: `${d.model} · ${siteTag(d.siteId)}`, open: () => openDev(d.id) })), "");
-  add("warn", "Devices without a management IP", devices.filter(d => statusOf(d) !== "retired" && !d.ip).map(d => ({ t: d.name, sid: d.siteId, s: `${d.model} · ${siteTag(d.siteId)}`, open: () => openDev(d.id) })), "");
+  add("warn", "MikroTik devices without a management IP", devices.filter(d => vendorOf(d) === "mikrotik" && statusOf(d) !== "retired" && !d.ip).map(d => ({ t: d.name, sid: d.siteId, s: `${d.model} · ${siteTag(d.siteId)}`, open: () => openDev(d.id) })), "");
   const noCfg = devices.filter(d => vendorOf(d) === "mikrotik" && statusOf(d) !== "retired" && (d.type !== "wireless" || d.role === "ap" || d.func === "core") && !configs.some(c => c.deviceId === d.id));
   add("warn", "Routers without a config backup", noCfg.map(d => ({ t: d.name, sid: d.siteId, s: `${d.model} · ${siteTag(d.siteId)}`, open: () => openCfg(d.id) })), "Open the device and paste its /export.");
   const stale = devices.map(d => ({ d, c: cfgsOf(d.id)[0] })).filter(o => o.c && Date.now() - Date.parse(o.c.at) > STALE_DAYS * 864e5);
@@ -5457,9 +5461,9 @@ function siteTables(ctx, s){
   pdfTable(ctx, "Networks", [{ h: "Network", w: 16, mono: 1 }, { h: "Name", w: 16 }, { h: "VLAN", w: 6 }, { h: "Gateway", w: 12, mono: 1 }, { h: "Usable range", w: 26, mono: 1 }, { h: "Used", w: 10, align: "right" }, { h: "Status", w: 9 }],
     nets.map(n => { const e = parseEntry(n.ip), used = e ? new Set(recs.filter(r => { const x = parseEntry(r.ip); return x && overlaps(e, x); }).map(r => r.ip)).size : 0;
       return [n.ip, n.name || "", n.vlan || "", n.gateway || "", e && e.kind === "subnet" ? `${e.firstU} - ${e.lastU}` : "single IP", e && e.kind === "subnet" ? `${used} / ${fmtCount(e.usable)}` : "1", STATUS_LABEL[statusOf(n)]]; }));
-  pdfTable(ctx, "Devices", [{ h: "Device", w: 15 }, { h: "Model", w: 14 }, { h: "Type / role", w: 14 }, { h: "Function", w: 9 }, { h: "Mgmt IP", w: 11, mono: 1 }, { h: "IP addresses", w: 25, mono: 1 }, { h: "RouterOS", w: 7 }, { h: "Status", w: 7 }],
-    devs.map(d => [d.name, d.model, `${TYPE_LABEL[d.type] || d.type}${d.role ? " / " + ROLE_LABEL[d.role] : ""}`, FUNC_LABEL[d.func] || "", d.ip || "",
-      (d.addrs || []).map(a => `${a.iface} ${a.address}`).join("  "), d.ros || "", STATUS_LABEL[statusOf(d)]]));
+  pdfTable(ctx, "Devices", [{ h: "Device", w: 15 }, { h: "Model", w: 14 }, { h: "Type / role", w: 14 }, { h: "Function", w: 9 }, { h: "Mgmt IP (MikroTik)", w: 11, mono: 1 }, { h: "IP addresses", w: 25, mono: 1 }, { h: "RouterOS", w: 7 }, { h: "Status", w: 7 }],
+    devs.map(d => [d.name, d.model, `${TYPE_LABEL[d.type] || d.type}${d.role ? " / " + ROLE_LABEL[d.role] : ""}`, FUNC_LABEL[d.func] || "", mgmtIP(d),
+      otherIPs(d).join("  "), d.ros || "", STATUS_LABEL[statusOf(d)]]));
   pdfTable(ctx, "Connections", [{ h: "From", w: 15 }, { h: "To", w: 18 }, { h: "Type", w: 7 }, { h: "Interfaces", w: 13, mono: 1 }, { h: "Link subnet", w: 12, mono: 1 }, { h: "IPs", w: 16, mono: 1 }, { h: "Radio / cable", w: 19 }],
     lks.map(l => { const A = devById(l.a), B = devById(l.b), sb = B && sites.find(x => x.id === B.siteId), w = l.type === "wireless";
       const r = [A ? A.name : "?", `${B ? B.name : "?"}${sb && sb.id !== s.id ? ` (#${sb.siteNumber})` : ""}`, w ? "Wireless" : "Wired", `${l.portA || "-"} / ${l.portB || "-"}`, l.subnet || "",
