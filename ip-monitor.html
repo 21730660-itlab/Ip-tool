@@ -486,6 +486,7 @@ button.tag{cursor:pointer;font-size:.9rem;padding:5px 11px}
 .kend>span{display:block;font-size:.9rem;font-weight:600;color:var(--muted)}
 .kend b{font-family:var(--mono);font-size:1.05rem}
 .kend small{display:block;color:var(--muted);font-weight:600;font-size:.88rem}
+.kend .kip{width:100%;margin-top:8px;padding:10px 12px;border:1.5px solid var(--frame);border-radius:var(--rs);background:var(--panel);font-family:var(--mono);font-weight:700;font-size:1.05rem}
 .logrow.clear{border-left-color:var(--sig)} .lact.clear{color:var(--sig)}
 #logacts{margin:12px 0 0} #logacts[hidden]{display:none}
 .logrow.add{border-left-color:var(--ok)} .logrow.edit{border-left-color:var(--warn)} .logrow.delete{border-left-color:var(--sig)} .logrow.import{border-left-color:var(--data)}
@@ -1247,11 +1248,13 @@ svg .sitehdr-n{fill:var(--gold)}
             <input id="k-pb-c" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type interface name" hidden style="margin-top:6px"></label>
         </div>
         <div class="two">
-          <div class="kend"><span id="k-ialab">“From” end</span><div id="k-enda"></div></div>
-          <div class="kend"><span id="k-iblab">“To” end</span><div id="k-endb"></div></div>
+          <div class="kend"><span id="k-ialab">“From” end</span><div id="k-enda"></div>
+            <input id="k-ipa" class="kip" hidden inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. 10.5.5.1/30"><div class="fielderr" id="k-ipaerr"></div></div>
+          <div class="kend"><span id="k-iblab">“To” end</span><div id="k-endb"></div>
+            <input id="k-ipb" class="kip" hidden inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. 10.5.5.2/30"><div class="fielderr" id="k-ipberr"></div></div>
         </div>
         <div id="k-netstate"></div>
-        <p class="hint2">IPs come from the interface you pick. Give an interface its IP on the device page. A port inside a bridge has no IP of its own: the IP belongs to the bridge.</p>
+        <p class="hint2" id="k-iphint">IPs come from the interface you pick. Give an interface its IP on the device page. A port inside a bridge has no IP of its own: the IP belongs to the bridge.</p>
         <div class="fielderr" id="k-porterr"></div>
         <p class="hint2" id="k-porthint"></p>
       </div>
@@ -2818,7 +2821,7 @@ async function importCore(data, opts = {}){
       func: FUNC_LABEL[raw.func] ? raw.func : "", ...metaOf(raw),
       ports: Array.isArray(raw.ports) ? raw.ports.map(String).filter(p => /^[A-Za-z0-9._\-\/]{1,32}$/.test(p)).slice(0, 64) : [],
       bridges: Array.isArray(raw.bridges) ? raw.bridges.filter(b => b && /^[A-Za-z0-9._\-]{1,32}$/.test(String(b.name || ""))).map(b => ({ name: String(b.name), ports: Array.isArray(b.ports) ? b.ports.map(String).slice(0, 64) : [] })).slice(0, 16) : [],
-      addrs: Array.isArray(raw.addrs) ? raw.addrs.filter(a => a && parseRaw(a.address)).map(a => ({ id: String(a.id || newId()), iface: String(a.iface || ""), address: String(a.address), comment: String(a.comment || "") })).slice(0, 64) : [],
+      addrs: Array.isArray(raw.addrs) ? raw.addrs.filter(a => a && parseRaw(a.address)).map(a => ({ id: String(a.id || newId()), iface: String(a.iface || ""), address: String(a.address), comment: String(a.comment || ""), ...(a.link ? { link: String(a.link) } : {}) })).slice(0, 64) : [],
       ...(Number.isFinite(raw.mx) ? { mx: raw.mx, my: raw.my } : {}),
       createdAt: raw.createdAt || new Date().toISOString(), updatedAt: raw.updatedAt || new Date().toISOString() };
     try { await putDoc(COL_DEV, dev); if (db){ if (existing) Object.assign(existing, dev); else devices.push(dev); } devMap.set(raw.id, dev.id); if (existing) res.updated++; else res.devs = (res.devs || 0) + 1; }
@@ -3013,6 +3016,9 @@ const bridgeOf = (dev, port) => dev && port ? (dev.bridges || []).find(b => (b.p
 /* what one end of a connection gets from the interface chosen on it */
 function endInfo(dev, port){
   if (!dev) return { ip: "", head: "—", sub: "Choose the device" };
+  const wa = port && isWifiPort(port) && !bridgeOf(dev, port) ? (dev.addrs || []).find(x => x.iface === port) : null;
+  if (wa) return { ip: ipOf(wa.address), cidr: wa.address, head: wa.address, sub: `on ${port}${wa.link ? " · set by the wireless connection" : ""}` };
+  if (vendorOf(dev) === "other" && port && isWifiPort(port) && !bridgeOf(dev, port)) return { ip: "", wlan: true, head: port, sub: "No IP yet: type it below" };
   if (vendorOf(dev) === "other")
     return dev.ip ? { ip: dev.ip, head: dev.ip, sub: `${port ? port + " · " : ""}${dev.name}'s IP${dev.uplink ? " (from " + dev.uplink.bridge + ")" : ""}` }
                   : { ip: "", head: port || "—", sub: `${dev.name} has no IP yet` };
@@ -3021,6 +3027,7 @@ function endInfo(dev, port){
   if (br) return { ip: "", bridge: br.name, head: `${port} on ${br.name}`, sub: `No IP on the link: the IP belongs to ${br.name}` };
   const a = (dev.addrs || []).find(x => x.iface === port);
   if (a) return { ip: ipOf(a.address), cidr: a.address, head: a.address, sub: `on ${port}` };
+  if (isWifiPort(port)) return { ip: "", wlan: true, head: port, sub: "No IP yet: type it below" };
   return { ip: "", head: port, sub: `${port} has no IP address` };
 }
 const linkEnd = (l, side) => endInfo(devById(side === "a" ? l.a : l.b), side === "a" ? l.portA : l.portB);
@@ -3028,8 +3035,9 @@ const linkEnd = (l, side) => endInfo(devById(side === "a" ? l.a : l.b), side ===
 async function refreshLinkIPs(devId){
   for (const l of links.filter(x => x.a === devId || x.b === devId)){
     const ipA = linkEnd(l, "a").ip, ipB = linkEnd(l, "b").ip;
-    if ((l.ipA || "") !== ipA || (l.ipB || "") !== ipB || l.subnet){
-      const u = { ...l, ipA, ipB, subnet: "", updatedAt: new Date().toISOString() };
+    const subnet = l.type === "wireless" ? (l.subnet || "") : "";      // wireless links keep the subnet their IPs were typed in
+    if ((l.ipA || "") !== ipA || (l.ipB || "") !== ipB || (l.subnet || "") !== subnet){
+      const u = { ...l, ipA, ipB, subnet, updatedAt: new Date().toISOString() };
       await putDoc(COL_LINKS, u); if (db) Object.assign(l, u);
     }
   }
@@ -3532,6 +3540,7 @@ function openDev(id, siteId){
   $("dSave").hidden = readOnly; $("dDelete").hidden = !d || !fullAccess;
   document.querySelectorAll("#devForm input, #devForm textarea").forEach(el => el.readOnly = readOnly);
   document.querySelectorAll("#devForm select").forEach(el => el.disabled = readOnly);
+  renderAddrs();   // re-lock the WLAN rows set by wireless connections
   fillMeta("d", d);
   $("d-bip").value = d && vendorOf(d) === "other" ? d.ip || "" : "";
   fillBridgeSelect(d && d.uplink ? `${d.uplink.deviceId}|${d.uplink.bridge}` : null);
@@ -3587,18 +3596,19 @@ function renderBridges(){
 function ifaceOptions(sel){
   const ports = formPortList(), br = formBridges.map(b => b.name).filter(Boolean);
   let h = br.map(n => `<option value="${esc(n)}" ${n === sel ? "selected" : ""}>${esc(n)} (bridge)</option>`).join("");
-  h += ports.map(p => { const bi = bridgeOfPort(p, -1); return `<option value="${esc(p)}" ${p === sel ? "selected" : ""}>${esc(p)}${bi >= 0 ? " · in " + esc(formBridges[bi].name) : ""}</option>`; }).join("");
+  h += ports.filter(p => !isWifiPort(p) || p === sel).map(p => { const bi = bridgeOfPort(p, -1); return `<option value="${esc(p)}" ${p === sel ? "selected" : ""}>${esc(p)}${bi >= 0 ? " · in " + esc(formBridges[bi].name) : ""}</option>`; }).join("");
   const vl = editingDevId ? vlans.filter(v => v.deviceId === editingDevId && v.ifname) : [];
   h += vl.map(v => `<option value="${esc(v.ifname)}" ${v.ifname === sel ? "selected" : ""}>${esc(v.ifname)} (VLAN ${esc(v.vid)})</option>`).join("");
   if (sel && !br.includes(sel) && !ports.includes(sel) && !vl.some(v => v.ifname === sel)) h = `<option value="${esc(sel)}" selected>${esc(sel)} (missing)</option>` + h;
   return `<option value="">interface…</option>` + h;
 }
 function renderAddrs(){
-  $("d-addrs").innerHTML = formAddrs.map((a, i) => `<div class="adrow"><div class="adtop">
-      <select data-ai="${i}" ${readOnly ? "disabled" : ""}>${ifaceOptions(a.iface)}</select>
-      <input data-aa="${i}" value="${esc(a.address)}" placeholder="10.10.10.1/29" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" ${readOnly ? "readonly" : ""}>
-      ${readOnly ? "" : `<button type="button" class="xbtn" data-ax="${i}" aria-label="Remove address">✕</button>`}</div>
-    <div class="adst" id="d-adst-${i}"></div></div>`).join("");
+  // addresses set by a wireless connection are shown but changed only on that connection
+  $("d-addrs").innerHTML = formAddrs.map((a, i) => { const lk = !!a.link, ro = readOnly || lk; return `<div class="adrow"><div class="adtop">
+      <select data-ai="${i}" ${ro ? "disabled" : ""}>${ifaceOptions(a.iface)}</select>
+      <input data-aa="${i}" value="${esc(a.address)}" placeholder="10.10.10.1/29" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" ${ro ? "readonly" : ""}>
+      ${ro ? "" : `<button type="button" class="xbtn" data-ax="${i}" aria-label="Remove address">✕</button>`}</div>
+    <div class="adst" id="d-adst-${i}"></div></div>`; }).join("");
   $("d-addrs").querySelectorAll("[data-ai]").forEach(el => el.addEventListener("change", () => { formAddrs[+el.dataset.ai].iface = el.value; validateDev(); }));
   $("d-addrs").querySelectorAll("[data-aa]").forEach(el => el.addEventListener("input", () => { formAddrs[+el.dataset.aa].address = el.value; validateDev(); }));
   $("d-addrs").querySelectorAll("[data-ax]").forEach(el => el.onclick = () => { formAddrs.splice(+el.dataset.ax, 1); renderAddrs(); validateDev(); });
@@ -3616,6 +3626,12 @@ $("d-addip").onclick = () => {
 /* check one address row; returns {cls, msg, norm} */
 function checkAddr(a, sid, seen){
   const bad = msg => ({ cls: "bad", msg }), iface = a.iface, raw = String(a.address || "").trim();
+  if (a.link){
+    const l = links.find(x => x.id === a.link), far = l ? devById(l.a === editingDevId ? l.b : l.a) : null;
+    seen.add(ipOf(raw));
+    return { cls: "ok", norm: raw, msg: `✓ ${raw} on ${iface} · set by the wireless connection${far ? " to " + far.name : ""}. Change it on that connection.` };
+  }
+  if (iface && isWifiPort(iface)) return bad(`✕ ${iface} is a wireless interface. Its IP is typed on the wireless connection, not here.`);
   if (!iface && !raw) return bad("✕ Choose an interface and type an address");
   if (!iface) return bad("✕ Choose the interface");
   const brNames = formBridges.map(b => b.name), ports = formPortList();
@@ -3751,7 +3767,7 @@ $("devForm").addEventListener("submit", async ev => {
     role: hasWifi({ type: devType }) ? $("d-role").value : "", ip, mac: normMac($("d-mac").value) || "", ros: other ? "" : $("d-ros").value.trim(), notes: $("d-notes").value.trim(),
     ports: parsePorts($("d-ports").value),
     bridges: other ? [] : formBridges.map(b => ({ name: b.name.trim(), ports: b.ports.filter(p => parsePorts($("d-ports").value).includes(p)) })),
-    addrs: other ? [] : (() => { const seen = new Set(); return formAddrs.map(a => ({ id: a.id || newId(), iface: a.iface, address: checkAddr(a, $("d-site").value, seen).norm || a.address.trim(), comment: a.comment || "" })); })(),
+    addrs: other ? (prev?.addrs || []).filter(a => a.link) : (() => { const seen = new Set(); return formAddrs.map(a => ({ id: a.id || newId(), iface: a.iface, address: checkAddr(a, $("d-site").value, seen).norm || a.address.trim(), comment: a.comment || "", ...(a.link ? { link: a.link } : {}) })); })(),
     createdAt: prev?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() };
   const sharedRadio = prev && prev.role === "ap" && dev.role !== "ap" && devicePorts(dev).some(p => isWifiPort(p) && portUsers(dev, p, null).length > 1);
   if (sharedRadio) return showAlert("Radio is shared", "This AP radio serves several stations. Only an access point can do that. Remove the extra connections first, or keep the role as Access point.");
@@ -3781,7 +3797,7 @@ $("dDelete").onclick = () => {
   const cf = configs.filter(c => c.deviceId === d.id), vs = vlans.filter(v => v.deviceId === d.id);
   showAlert("Delete this device?", `${d.name} (${d.model})${ls.length ? ` and its ${ls.length} connection${ls.length === 1 ? "" : "s"}` : ""}${cf.length ? `, plus ${cf.length} config backup${cf.length === 1 ? "" : "s"},` : ""} will be deleted.${vs.length ? ` ${vs.length} VLAN${vs.length === 1 ? " stays" : "s stay"} in the site without a device.` : ""}`, [
     { label: "Delete", danger: true, run: async () => { try {
-      for (const l of ls) await delDoc(COL_LINKS, l.id);
+      for (const l of ls){ await dropLinkAddrs(l.id, d.id); await delDoc(COL_LINKS, l.id); }
       for (const c of cf) await delDoc(COL_CFG, c.id);
       for (const v of vs) await putDoc(COL_VLANS, { ...v, deviceId: "", parent: "", ifname: "", updatedAt: new Date().toISOString() });
       await delDoc(COL_DEV, d.id); $("devSheet").close(); } catch { showAlert("Couldn't delete", "Please try again."); } } },
@@ -3820,6 +3836,7 @@ function openLink(id){
   $("k-band").value = l?.band || "5"; $("k-width").value = l?.width || ""; $("k-freq").value = l?.freq ?? "";
   $("k-ssid").value = l?.ssid || ""; $("k-dist").value = l?.dist ?? ""; $("k-sig").value = l?.signal ?? "";
   pendingPorts = { a: l?.portA || "", b: l?.portB || "" };
+  $("k-ipa").dataset.touched = ""; $("k-ipb").dataset.touched = "";
   $("k-speed").value = l?.speed || ""; $("k-cable").value = l?.cable || "";
   $("k-notes").value = l?.notes || "";
   $("kTitle").textContent = readOnly ? "Connection" : l ? "Edit connection" : "New connection";
@@ -3897,7 +3914,9 @@ function fillPortSelects(){ fillPortSelect("a"); fillPortSelect("b"); pendingPor
 ["a", "b"].forEach(side => {
   $("k-p" + side).addEventListener("change", () => { $("k-p" + side + "-c").hidden = $("k-p" + side).value !== OTHER; validateLink(); });
   $("k-p" + side + "-c").addEventListener("input", validateLink);
-  $("k-" + side).addEventListener("change", () => { pendingPorts[side] = ""; fillPortSelect(side); pendingPorts[side] = null; validateLink(); });
+  $("k-" + side).addEventListener("change", () => { pendingPorts[side] = ""; fillPortSelect(side); pendingPorts[side] = null; $("k-ip" + side).dataset.touched = ""; validateLink(); });
+  $("k-p" + side).addEventListener("change", () => { $("k-ip" + side).dataset.touched = ""; validateLink(); });
+  $("k-ip" + side).addEventListener("input", () => { $("k-ip" + side).dataset.touched = "1"; validateLink(); });
 });
 function validatePortsLink(A, B){
   let err = "";
@@ -3916,24 +3935,91 @@ function validatePortsLink(A, B){
   $("k-porthint").textContent = hint.join(" · ");
   return !err;
 }
+/* remove the WLAN IPs a wireless connection put on its devices */
+async function dropLinkAddrs(linkId, exceptDevId){
+  for (const d of devices){
+    // an AP radio shared by several stations keeps its IP while another connection still uses it
+    const stillUsed = a => links.some(l => l.id !== linkId && ((l.a === d.id && l.portA === a.iface) || (l.b === d.id && l.portB === a.iface)));
+    const keep = (d.addrs || []).filter(a => a.link !== linkId || stillUsed(a));
+    if (d.id === exceptDevId || keep.length === (d.addrs || []).length) continue;
+    const u = { ...d, addrs: keep, updatedAt: new Date().toISOString() };
+    await putDoc(COL_DEV, u); if (db) Object.assign(d, u);
+  }
+}
+/* one end of a wireless connection: the IP typed for its WLAN interface */
+function wlanEnd(side, dev, other){
+  const port = portValue(side), e = endInfo(dev, port), inp = $("k-ip" + side), err = $("k-ip" + side + "err");
+  const typeable = linkType === "wireless" && dev && port && isWifiPort(port) && !e.bridge;
+  inp.hidden = !typeable; inp.readOnly = readOnly; err.textContent = "";
+  if (!typeable) return { ok: true, ip: e.ip, cidr: e.cidr || "", e };
+  if (inp.dataset.touched !== "1") inp.value = e.cidr || "";
+  const raw = inp.value.trim();
+  if (!raw) return { ok: true, ip: "", cidr: "", e };
+  const p = parseRaw(raw);
+  const fail = m => { err.textContent = m; return { ok: false, ip: "", cidr: "", e }; };
+  if (!p) return fail("✕ Not a valid IP address");
+  let pfx = p.prefix;
+  if (pfx === null){ const o = parseRaw($("k-ip" + other).value.trim()); pfx = o && o.prefix !== null && o.v === p.v ? o.prefix : null; }
+  if (pfx === null) return fail("✕ Add the prefix, e.g. /30");
+  if (pfx >= p.bits - (p.v === 4 ? 1 : 0) && !(p.v === 4 && pfx === 31)) return fail("✕ Use a subnet like /30 or /31");
+  const n = analyze(p.v, p.addr, pfx), ip = p.v === 4 ? fmtV4(p.addr) : fmtV6(p.addr);
+  if (p.v === 4 && pfx < 31 && (p.addr === n.start || p.addr === n.end)) return fail(`✕ ${ip} is the ${p.addr === n.start ? "network" : "broadcast"} address of ${n.text}`);
+  // used anywhere else? (another device, or another interface of this one)
+  for (const d of devices){
+    const hit = [...(d.addrs || []).filter(a => ipOf(a.address) === ip && !(d.id === dev.id && (a.link === editingLinkId || a.iface === port))).map(a => `${d.name} ${a.iface}`),
+      ...(d.ip === ip && d.id !== dev.id ? [`${d.name} (device IP)`] : [])];
+    if (hit.length) return fail(`✕ ${ip} is already used by ${hit[0]}`);
+  }
+  for (const nw of networks) if (nw.gateway === ip) return fail(`✕ ${ip} is the gateway of ${nw.ip}`);
+  return { ok: true, ip, cidr: `${ip}/${pfx}`, net: n, e };
+}
+/* where the link's subnet sits: inside an existing network, a new link network, or a clash */
+function wlanNet(n, A, B){
+  const inNet = networks.find(x => { const o = parseEntry(x.ip); return o && o.v === n.v && o.start <= n.start && n.end <= o.end; });
+  if (inNet){
+    if (A && B && inNet.siteId !== A.siteId && inNet.siteId !== B.siteId) return { err: `✕ ${n.text} is inside ${inNet.ip} of ${siteLabel(siteOf(inNet))}` };
+    return { subnet: "", msg: `✓ Both ends are in ${n.text} · inside ${inNet.ip}${inNet.name ? " (" + inNet.name + ")" : ""}` };
+  }
+  const c = netConflicts(parseEntry(n.text), null, editingLinkId);
+  if (c.length) return { err: "✕ " + describe(parseEntry(n.text), c[0]) };
+  return { subnet: n.text, msg: `✓ Both ends are in ${n.text} · saved as a new link network` };
+}
+let linkAddrPlan = null;
 function validateAddr(A, B){
   $("k-palab").textContent = `Interface on ${A ? "“" + trunc(A.name, 16) + "”" : "“From”"}`;
   $("k-pblab").textContent = `Interface on ${B ? "“" + trunc(B.name, 16) + "”" : "“To”"}`;
   $("k-ialab").textContent = A ? trunc(A.name, 22) : "“From” end";
   $("k-iblab").textContent = B ? trunc(B.name, 22) : "“To” end";
-  const ea = endInfo(A, portValue("a")), eb = endInfo(B, portValue("b"));
-  const show = (id, e) => { $(id).innerHTML = `<b>${esc(e.head)}</b><small>${esc(e.sub)}</small>`; };
-  show("k-enda", ea); show("k-endb", eb);
+  $("k-iphint").textContent = linkType === "wireless"
+    ? "Type the IP of each WLAN interface here, with its prefix (e.g. 10.5.5.1/30). It is saved on the device's WLAN interface. A WLAN inside a bridge has no IP of its own."
+    : "IPs come from the interface you pick. Give an interface its IP on the device page. A port inside a bridge has no IP of its own: the IP belongs to the bridge.";
+  const ra = wlanEnd("a", A, "b"), rb = wlanEnd("b", B, "a");
+  const show = (id, r, typed) => { const e = r.e; $(id).innerHTML = typed ? `<b>${esc(portValue(id === "k-enda" ? "a" : "b"))}</b><small>WLAN IP</small>` : `<b>${esc(e.head)}</b><small>${esc(e.sub)}</small>`; };
+  show("k-enda", ra, !$("k-ipa").hidden); show("k-endb", rb, !$("k-ipb").hidden);
   const st = $("k-netstate"); st.className = ""; st.textContent = "";
-  if (ea.ip && eb.ip){
-    const a = parseRaw(ea.cidr || ea.ip), b = parseRaw(eb.cidr || eb.ip);
+  linkAddrPlan = null;
+  if (!ra.ok || !rb.ok) return false;
+  const wA = !$("k-ipa").hidden, wB = !$("k-ipb").hidden;
+  linkAddrPlan = { a: wA ? ra.cidr : null, b: wB ? rb.cidr : null, ipA: ra.ip, ipB: rb.ip, subnet: "" };
+  if (ra.ip && rb.ip){
+    if (ra.ip === rb.ip){ st.className = "fielderr"; st.textContent = `✕ Both ends have the same IP ${ra.ip}`; linkAddrPlan = null; return false; }
+    const a = parseRaw(ra.cidr || ra.ip), b = parseRaw(rb.cidr || rb.ip);
     const pfx = (a && a.prefix !== null) ? a.prefix : (b && b.prefix !== null) ? b.prefix : null;
-    if (ea.ip === eb.ip){ st.className = "fielderr"; st.textContent = `✕ Both ends have the same IP ${ea.ip}`; return false; }
     if (a && b && pfx !== null && a.v === b.v){
       const na = analyze(a.v, a.addr, pfx), nb = analyze(b.v, b.addr, pfx);
-      if (na.start === nb.start){ st.className = "fieldok"; st.textContent = `✓ Both ends are in ${na.text}`; }
-      else { st.className = "hint2 bad"; st.textContent = `⚠ The two ends are in different subnets (${na.text} and ${nb.text}). Check the IPs on the device pages.`; }
+      if (na.start !== nb.start){
+        if (wA || wB){ st.className = "fielderr"; st.textContent = `✕ The two ends must be in the same subnet (${na.text} and ${nb.text})`; linkAddrPlan = null; return false; }
+        st.className = "hint2 bad"; st.textContent = `⚠ The two ends are in different subnets (${na.text} and ${nb.text}). Check the IPs on the device pages.`;
+      } else if (wA || wB){
+        const w = wlanNet(na, A, B);
+        if (w.err){ st.className = "fielderr"; st.textContent = w.err; linkAddrPlan = null; return false; }
+        st.className = "fieldok"; st.textContent = w.msg; linkAddrPlan.subnet = w.subnet;
+      } else { st.className = "fieldok"; st.textContent = `✓ Both ends are in ${na.text}`; }
     }
+  } else if ((wA && ra.ip) || (wB && rb.ip)){
+    const r = wA && ra.ip ? ra : rb, w = wlanNet(r.net, A, B);
+    if (w.err){ st.className = "fielderr"; st.textContent = w.err; linkAddrPlan = null; return false; }
+    st.className = "fieldok"; st.textContent = w.msg.replace("Both ends are", "The WLAN IP is"); linkAddrPlan.subnet = w.subnet;
   }
   return true;
 }
@@ -3948,11 +4034,23 @@ $("linkForm").addEventListener("submit", async ev => {
   const raw = { band: w ? $("k-band").value : "", width: w ? $("k-width").value : "", freq: w ? $("k-freq").value.trim() : "",
     ssid: w ? $("k-ssid").value.trim() : "", dist: w ? $("k-dist").value.trim() : "", signal: w ? $("k-sig").value.trim() : "",
     portA: portValue("a"), portB: portValue("b"), speed: w ? "" : $("k-speed").value, cable: w ? "" : $("k-cable").value,
-    subnet: "", ipA: endInfo(devById($("k-a").value), portValue("a")).ip, ipB: endInfo(devById($("k-b").value), portValue("b")).ip,
+    subnet: linkAddrPlan ? linkAddrPlan.subnet : "", ipA: linkAddrPlan ? linkAddrPlan.ipA : "", ipB: linkAddrPlan ? linkAddrPlan.ipB : "",
     notes: $("k-notes").value.trim() };
   const link = { ...pickLinkFields(raw), id: editingLinkId || newId(), type: linkType, a: $("k-a").value, b: $("k-b").value,
     createdAt: prev?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() };
-  try { await putDoc(COL_LINKS, link); if (db && !prev) links.push(link); $("linkSheet").close(); renderAll(); }
+  const plan = linkAddrPlan;
+  try {
+    // put the typed WLAN IPs on the devices' WLAN interfaces (and take this link's old ones off)
+    await dropLinkAddrs(link.id);
+    if (w && plan) for (const [side, cidr] of [["a", plan.a], ["b", plan.b]]){
+      const d = devById(link[side]), port = side === "a" ? link.portA : link.portB;
+      if (!d || !cidr || !port) continue;
+      if ((d.addrs || []).some(x => x.iface === port && x.address === cidr)) continue;   // already there (e.g. a shared AP radio)
+      const u = { ...d, addrs: [...(d.addrs || []).filter(x => x.iface !== port), { id: newId(), iface: port, address: cidr, comment: "", link: link.id }], updatedAt: new Date().toISOString() };
+      await putDoc(COL_DEV, u); if (db) Object.assign(d, u);
+    }
+    await putDoc(COL_LINKS, link); if (db && !prev) links.push(link); $("linkSheet").close(); renderAll();
+  }
   catch { showAlert("Couldn't save", "Something went wrong saving this connection. Please try again."); }
 });
 $("kDelete").onclick = () => {
@@ -3960,7 +4058,7 @@ $("kDelete").onclick = () => {
   const l = links.find(x => x.id === editingLinkId); if (!l) return;
   const A = devById(l.a), B = devById(l.b);
   showAlert("Delete this connection?", `${A ? A.name : "?"} ⟷ ${B ? B.name : "?"} (${l.type}) will be removed.`, [
-    { label: "Delete", danger: true, run: async () => { try { await delDoc(COL_LINKS, l.id); $("linkSheet").close(); } catch { showAlert("Couldn't delete", "Please try again."); } } },
+    { label: "Delete", danger: true, run: async () => { try { await dropLinkAddrs(l.id); await delDoc(COL_LINKS, l.id); $("linkSheet").close(); } catch { showAlert("Couldn't delete", "Please try again."); } } },
     { label: "Keep it" }]);
 };
 $("addLinkBtn").onclick = () => openLink(null);
