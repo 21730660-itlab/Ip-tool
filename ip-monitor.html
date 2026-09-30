@@ -482,6 +482,10 @@ button.tag{cursor:pointer;font-size:.9rem;padding:5px 11px}
 .logday{font-weight:800;color:var(--muted);margin:18px 0 6px;font-size:1rem;letter-spacing:.04em;text-transform:uppercase}
 .loglist{display:flex;flex-direction:column;gap:6px}
 .logrow{display:grid;grid-template-columns:60px 1fr;gap:10px;background:var(--panel);border:1.5px solid var(--line);border-left-width:6px;border-radius:var(--r);padding:10px 12px;text-align:left;width:100%;font-size:1rem}
+.kend{border:1.5px solid var(--line);border-radius:var(--r);background:var(--panel2);padding:10px 12px;margin-bottom:10px}
+.kend>span{display:block;font-size:.9rem;font-weight:600;color:var(--muted)}
+.kend b{font-family:var(--mono);font-size:1.05rem}
+.kend small{display:block;color:var(--muted);font-weight:600;font-size:.88rem}
 .logrow.clear{border-left-color:var(--sig)} .lact.clear{color:var(--sig)}
 #logacts{margin:12px 0 0} #logacts[hidden]{display:none}
 .logrow.add{border-left-color:var(--ok)} .logrow.edit{border-left-color:var(--warn)} .logrow.delete{border-left-color:var(--sig)} .logrow.import{border-left-color:var(--data)}
@@ -1242,17 +1246,14 @@ svg .sitehdr-n{fill:var(--gold)}
           <label class="field"><span id="k-pblab">Interface on “To”</span><select id="k-pb"></select>
             <input id="k-pb-c" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type interface name" hidden style="margin-top:6px"></label>
         </div>
-        <label class="field"><span>Link subnet (shared by both ends)</span><input id="k-net" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. 1.1.1.8/30"></label>
-        <div class="chips" id="k-netchips"></div>
-        <div id="k-netstate"></div>
-        <div class="two" style="margin-top:10px">
-          <label class="field"><span id="k-ialab">IP on “From”</span><input id="k-ipa" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-          <label class="field"><span id="k-iblab">IP on “To”</span><input id="k-ipb" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        <div class="two">
+          <div class="kend"><span id="k-ialab">“From” end</span><div id="k-enda"></div></div>
+          <div class="kend"><span id="k-iblab">“To” end</span><div id="k-endb"></div></div>
         </div>
+        <div id="k-netstate"></div>
+        <p class="hint2">IPs come from the interface you pick. Give an interface its IP on the device page. A port inside a bridge has no IP of its own: the IP belongs to the bridge.</p>
         <div class="fielderr" id="k-porterr"></div>
         <p class="hint2" id="k-porthint"></p>
-        <div class="fielderr" id="k-iperr"></div>
-        <button type="button" class="linkbtn" id="k-auto" hidden>Auto-assign: 1st IP → From, 2nd IP → To</button>
       </div>
       <div class="group" id="k-wd" hidden>
         <h3>Cable</h3>
@@ -3007,9 +3008,38 @@ function sortedLinks(list = links){
   return [...list].sort((x, y) => siteNumOf(x.a).localeCompare(siteNumOf(y.a), undefined, { numeric: true }) ||
     String(devById(x.a)?.name || "").localeCompare(String(devById(y.a)?.name || "")));
 }
+/* the bridge a port sits in on a device, if any */
+const bridgeOf = (dev, port) => dev && port ? (dev.bridges || []).find(b => (b.ports || []).includes(port)) || null : null;
+/* what one end of a connection gets from the interface chosen on it */
+function endInfo(dev, port){
+  if (!dev) return { ip: "", head: "—", sub: "Choose the device" };
+  if (vendorOf(dev) === "other")
+    return dev.ip ? { ip: dev.ip, head: dev.ip, sub: `${port ? port + " · " : ""}${dev.name}'s IP${dev.uplink ? " (from " + dev.uplink.bridge + ")" : ""}` }
+                  : { ip: "", head: port || "—", sub: `${dev.name} has no IP yet` };
+  if (!port) return { ip: "", head: "—", sub: "Choose the interface" };
+  const br = bridgeOf(dev, port);
+  if (br) return { ip: "", bridge: br.name, head: `${port} on ${br.name}`, sub: `No IP on the link: the IP belongs to ${br.name}` };
+  const a = (dev.addrs || []).find(x => x.iface === port);
+  if (a) return { ip: ipOf(a.address), cidr: a.address, head: a.address, sub: `on ${port}` };
+  return { ip: "", head: port, sub: `${port} has no IP address` };
+}
+const linkEnd = (l, side) => endInfo(devById(side === "a" ? l.a : l.b), side === "a" ? l.portA : l.portB);
+/* keep a device's connections in step after its interfaces or IP change */
+async function refreshLinkIPs(devId){
+  for (const l of links.filter(x => x.a === devId || x.b === devId)){
+    const ipA = linkEnd(l, "a").ip, ipB = linkEnd(l, "b").ip;
+    if ((l.ipA || "") !== ipA || (l.ipB || "") !== ipB || l.subnet){
+      const u = { ...l, ipA, ipB, subnet: "", updatedAt: new Date().toISOString() };
+      await putDoc(COL_LINKS, u); if (db) Object.assign(l, u);
+    }
+  }
+}
 function cleanLinkAddr(r){
   const net = r.subnet ? parseEntry(r.subnet) : null;
-  if (!net || net.kind !== "subnet") return { subnet: "", ipA: "", ipB: "" };
+  if (!net || net.kind !== "subnet"){   // IPs taken from the interfaces: no link subnet of their own
+    const one = v => { const x = v ? parseEntry(v) : null; return x && x.kind === "ip" ? x.text : ""; };
+    return { subnet: "", ipA: one(r.ipA), ipB: one(r.ipB) };
+  }
   const ok = v => { const x = v ? parseEntry(v) : null; return x && x.kind === "ip" && x.v === net.v && hostRangeOK(net, x.addr) ? x.text : ""; };
   const ipA = ok(r.ipA), ipB = ok(r.ipB);
   return { subnet: net.text, ipA, ipB: ipB && ipB !== ipA ? ipB : "" };
@@ -3025,7 +3055,8 @@ function pickLinkFields(r){
 }
 function endLine(l, A, B){
   if (!l.portA && !l.portB && !l.ipA && !l.ipB && !l.subnet) return "";
-  const side = (d, p, ip) => `${esc(d ? d.name : "?")}${p ? " <span style='color:var(--muted)'>" + esc(p) + "</span>" : ""}${ip ? " <b style='color:var(--data)'>" + esc(ip) + "</b>" : ""}`;
+  const side = (d, p, ip) => { const br = bridgeOf(d, p);
+    return `${esc(d ? d.name : "?")}${p ? " <span style='color:var(--muted)'>" + esc(p) + (br ? " on " + esc(br.name) : "") + "</span>" : ""}${ip && !br ? " <b style='color:var(--data)'>" + esc(ip) + "</b>" : ""}`; };
   return `<div class="ldet" style="color:var(--ink)">${side(A, l.portA, l.ipA)} ⟷ ${side(B, l.portB, l.ipB)}${l.subnet ? ` · <b>${esc(l.subnet)}</b>` : ""}</div>`;
 }
 function linkSummary(l){
@@ -3229,9 +3260,9 @@ function drawMap(shownSites, shownDevs, shownLinks){
     const cls = l.type === "wireless" ? `wireless ${sigClass(l.signal)}` : "wired";
     linkSvg += `<path class="link ${cls}" d="${d}"/><path class="linkhit" data-link="${esc(l.id)}" d="${d}"/>`;
     // endpoint tags: interface + IP next to each device
-    const tagLines = (p, ip) => [p, ip].filter(Boolean);
-    const ends = [[A, tagLines(l.portA, l.ipA), bend ? { x: cx - A.x, y: cy - A.y } : { x: dx, y: dy }],
-                  [B, tagLines(l.portB, l.ipB), bend ? { x: cx - B.x, y: cy - B.y } : { x: -dx, y: -dy }]];
+    const tagLines = (d, p, ip) => { const br = bridgeOf(d, p); return [p ? (br ? `${p} · ${br.name}` : p) : "", br ? "" : ip].filter(Boolean); };
+    const ends = [[A, tagLines(A.d, l.portA, l.ipA), bend ? { x: cx - A.x, y: cy - A.y } : { x: dx, y: dy }],
+                  [B, tagLines(B.d, l.portB, l.ipB), bend ? { x: cx - B.x, y: cy - B.y } : { x: -dx, y: -dy }]];
     const tags = ends.map(([P, lines, v]) => {
       if (!lines.length) return null;
       const vl = Math.hypot(v.x, v.y) || 1, ux = v.x / vl, uy = v.y / vl;
@@ -3736,7 +3767,9 @@ $("devForm").addEventListener("submit", async ev => {
         hostList: [], hosts: 0, status: "active", tags: [], createdAt: now, updatedAt: now };
       await putDoc(COL_NETS, net); if (db) networks.push(net);
     }
-    await putDoc(COL_DEV, dev); if (db && !prev) devices.push(dev); $("devSheet").close(); renderAll();
+    await putDoc(COL_DEV, dev); if (db){ if (prev) Object.assign(prev, dev); else devices.push(dev); }
+    if (prev) await refreshLinkIPs(dev.id);
+    $("devSheet").close(); renderAll();
     if (creates.size) showAlert("Device saved", `${creates.size} new network${creates.size === 1 ? " was" : "s were"} created in this site: ${[...creates.keys()].join(", ")}.`, [{ label: "OK", primary: true }]);
   }
   catch { showAlert("Couldn't save", "Something went wrong saving this device. Please try again."); }
@@ -3785,7 +3818,6 @@ function openLink(id){
   $("k-ssid").value = l?.ssid || ""; $("k-dist").value = l?.dist ?? ""; $("k-sig").value = l?.signal ?? "";
   pendingPorts = { a: l?.portA || "", b: l?.portB || "" };
   $("k-speed").value = l?.speed || ""; $("k-cable").value = l?.cable || "";
-  $("k-net").value = l?.subnet || ""; $("k-ipa").value = l?.ipA || ""; $("k-ipb").value = l?.ipB || ""; autoIPs = !l || (!l.ipA && !l.ipB);
   $("k-notes").value = l?.notes || "";
   $("kTitle").textContent = readOnly ? "Connection" : l ? "Edit connection" : "New connection";
   $("kSave").hidden = readOnly; $("kDelete").hidden = !l || !fullAccess;
@@ -3832,7 +3864,6 @@ function validateLink(){
   $("kSave").disabled = !ok;
   return ok;
 }
-let autoIPs = true;
 let pendingPorts = { a: "", b: "" };
 const OTHER = "__other";
 function portValue(side){ const sel = $("k-p" + side); return sel.value === OTHER ? $("k-p" + side + "-c").value.trim() : sel.value; }
@@ -3847,7 +3878,8 @@ function fillPortSelect(side){
     const users = portUsers(dev, p, editingLinkId), share = canShare(dev, p);
     const busy = users.length && !share;
     const note = users.length ? (share ? ` · shared with ${users.map(l => farName(l, dev)).join(", ")}` : ` · used → ${farName(users[0], dev)}`) : "";
-    return `<option value="${esc(p)}" ${busy ? "disabled" : ""} ${p === want ? "selected" : ""}>${esc(p)} — ${esc(portDesc(p, dev))}${esc(note)}</option>`;
+    const e = endInfo(dev, p), addr = e.bridge ? ` · in ${e.bridge}` : e.ip ? ` · ${e.cidr || e.ip}` : "";
+    return `<option value="${esc(p)}" ${busy ? "disabled" : ""} ${p === want ? "selected" : ""}>${esc(p)} — ${esc(portDesc(p, dev))}${esc(addr)}${esc(note)}</option>`;
   };
   let h = `<option value="">— none —</option>`;
   h += fit.length ? fit.map(opt).join("") : `<option value="" disabled>No ${wantWifi ? "wireless" : "wired"} interfaces on this device</option>`;
@@ -3882,69 +3914,26 @@ function validatePortsLink(A, B){
   return !err;
 }
 function validateAddr(A, B){
-  let ok = true;
   $("k-palab").textContent = `Interface on ${A ? "“" + trunc(A.name, 16) + "”" : "“From”"}`;
   $("k-pblab").textContent = `Interface on ${B ? "“" + trunc(B.name, 16) + "”" : "“To”"}`;
-  $("k-ialab").textContent = `IP on ${A ? "“" + trunc(A.name, 16) + "”" : "“From”"}`;
-  $("k-iblab").textContent = `IP on ${B ? "“" + trunc(B.name, 16) + "”" : "“To”"}`;
-  const raw = $("k-net").value.trim(), st = $("k-netstate"), autoBtn = $("k-auto");
-  const net = raw ? parseEntry(raw) : null;
-  // prefix chips
-  const base = raw.split("/")[0].trim();
-  $("k-netchips").innerHTML = readOnly || !base || (parseV4(base) === null && parseV6(base) === null) ? "" :
-    (base.includes(":") ? [127, 126, 64] : [30, 31, 29]).map(p => `<button type="button" class="chip ${net && net.prefix === p ? "on" : ""}" data-p="${p}">/${p}</button>`).join("");
-  $("k-netchips").querySelectorAll(".chip").forEach(c => c.onclick = () => { $("k-net").value = base + "/" + c.dataset.p; onNetInput(); });
-  st.className = ""; st.textContent = ""; autoBtn.hidden = true;
-  let err = "";
-  if (raw){
-    if (!net || net.kind !== "subnet"){ st.className = "fielderr"; st.textContent = "✕ Enter a subnet like 1.1.1.8/30"; ok = false; }
-    else if (net.usable < 2n){ st.className = "fielderr"; st.textContent = "✕ Too small: a link needs at least 2 usable addresses"; ok = false; }
-    else {
-      const c = netConflicts(net, null, editingLinkId);
-      const intr = devices.find(d => d.id !== (A && A.id) && d.id !== (B && B.id) &&
-        [...(d.addrs || []).map(a => a.address), d.ip].filter(Boolean).some(t => { const x = parseRaw(t); return x && x.v === net.v && x.addr >= net.start && x.addr <= net.end; }));
-      if (c.length){ st.className = "fielderr"; st.textContent = "✕ " + describe(net, c[0]); ok = false; }
-      else if (intr){ st.className = "fielderr"; st.textContent = `✕ An address in ${net.text} is already configured on “${intr.name}”`; ok = false; }
-      else {
-        st.className = "fieldok";
-        st.textContent = `✓ ${net.text} is free · usable ${net.firstU} – ${net.lastU}${net.hostBitsSet ? ` (saved as ${net.text})` : ""}`;
-        autoBtn.hidden = readOnly;
-      }
+  $("k-ialab").textContent = A ? trunc(A.name, 22) : "“From” end";
+  $("k-iblab").textContent = B ? trunc(B.name, 22) : "“To” end";
+  const ea = endInfo(A, portValue("a")), eb = endInfo(B, portValue("b"));
+  const show = (id, e) => { $(id).innerHTML = `<b>${esc(e.head)}</b><small>${esc(e.sub)}</small>`; };
+  show("k-enda", ea); show("k-endb", eb);
+  const st = $("k-netstate"); st.className = ""; st.textContent = "";
+  if (ea.ip && eb.ip){
+    const a = parseRaw(ea.cidr || ea.ip), b = parseRaw(eb.cidr || eb.ip);
+    const pfx = (a && a.prefix !== null) ? a.prefix : (b && b.prefix !== null) ? b.prefix : null;
+    if (ea.ip === eb.ip){ st.className = "fielderr"; st.textContent = `✕ Both ends have the same IP ${ea.ip}`; return false; }
+    if (a && b && pfx !== null && a.v === b.v){
+      const na = analyze(a.v, a.addr, pfx), nb = analyze(b.v, b.addr, pfx);
+      if (na.start === nb.start){ st.className = "fieldok"; st.textContent = `✓ Both ends are in ${na.text}`; }
+      else { st.className = "hint2 bad"; st.textContent = `⚠ The two ends are in different subnets (${na.text} and ${nb.text}). Check the IPs on the device pages.`; }
     }
   }
-  const ipAt = $("k-ipa").value.trim(), ipBt = $("k-ipb").value.trim();
-  const chk = (t, dev, label) => {
-    if (!t) return "";
-    const x = parseEntry(t);
-    if (!x || x.kind !== "ip") return `✕ ${label}: not a valid IP`;
-    if (!net || net.kind !== "subnet") return "✕ Enter the link subnet first";
-    if (x.v !== net.v || !hostRangeOK(net, x.addr)) return `✕ ${label}: ${x.text} is not a usable address of ${net.text}`;
-    const other = devices.find(d => d.ip === x.text && (!dev || d.id !== dev.id));
-    if (other) return `✕ ${label}: ${x.text} is the management IP of “${other.name}”`;
-    return "";
-  };
-  err = chk(ipAt, A, "From") || chk(ipBt, B, "To");
-  if (!err && ipAt && ipBt && parseEntry(ipAt)?.text === parseEntry(ipBt)?.text) err = "✕ Both ends can't have the same IP";
-  $("k-iperr").textContent = err;
-  if (err) ok = false;
-  return ok;
+  return true;
 }
-function assignIPs(){
-  const net = parseEntry($("k-net").value);
-  if (!net || net.kind !== "subnet" || net.usable < 2n) return;
-  const fmt = net.v === 4 ? fmtV4 : fmtV6;
-  const first = net.v === 4 && net.prefix < 31 ? net.start + 1n : net.start;
-  $("k-ipa").value = fmt(first); $("k-ipb").value = fmt(first + 1n);
-  autoIPs = true; validateLink();
-}
-function onNetInput(){
-  const net = parseEntry($("k-net").value);
-  if (autoIPs && net && net.kind === "subnet" && net.usable >= 2n && !netConflicts(net, null, editingLinkId).length) assignIPs();
-  else validateLink();
-}
-$("k-net").addEventListener("input", onNetInput);
-$("k-auto").onclick = assignIPs;
-["k-ipa","k-ipb"].forEach(id => $(id).addEventListener("input", () => { autoIPs = false; validateLink(); }));
 ["k-a","k-b","k-band","k-width"].forEach(id => $(id).addEventListener("change", validateLink));
 ["k-freq","k-sig","k-dist"].forEach(id => $(id).addEventListener("input", validateLink));
 $("kCancel").onclick = () => $("linkSheet").close();
@@ -3956,7 +3945,7 @@ $("linkForm").addEventListener("submit", async ev => {
   const raw = { band: w ? $("k-band").value : "", width: w ? $("k-width").value : "", freq: w ? $("k-freq").value.trim() : "",
     ssid: w ? $("k-ssid").value.trim() : "", dist: w ? $("k-dist").value.trim() : "", signal: w ? $("k-sig").value.trim() : "",
     portA: portValue("a"), portB: portValue("b"), speed: w ? "" : $("k-speed").value, cable: w ? "" : $("k-cable").value,
-    subnet: $("k-net").value.trim(), ipA: $("k-ipa").value.trim(), ipB: $("k-ipb").value.trim(),
+    subnet: "", ipA: endInfo(devById($("k-a").value), portValue("a")).ip, ipB: endInfo(devById($("k-b").value), portValue("b")).ip,
     notes: $("k-notes").value.trim() };
   const link = { ...pickLinkFields(raw), id: editingLinkId || newId(), type: linkType, a: $("k-a").value, b: $("k-b").value,
     createdAt: prev?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() };
@@ -3995,6 +3984,7 @@ function collectIPs(){
   for (const l of links){
     for (const [dv, ip, port, far] of [[l.a, l.ipA, l.portA, l.b], [l.b, l.ipB, l.portB, l.a]]){
       if (!ip) continue; const D = devById(dv), F = devById(far);
+      if (D && (D.ip === ip || (D.addrs || []).some(a => ipOf(a.address) === ip))) continue;   // already listed as the interface / device IP
       recs.push({ ip, kind: "PtP", owner: D ? D.name : "?", sub: `${port || "?"} → ${F ? F.name : "?"}${F && D && F.siteId !== D.siteId ? " (" + siteName(F.siteId) + ")" : ""}`, siteId: D ? D.siteId : "", devId: dv, open: () => openLink(l.id) });
     }
   }
