@@ -3795,8 +3795,9 @@ function deviceOptions(sel){
   for (const s of [...sites].sort(byNum)){
     const devs = devices.filter(d => d.siteId === s.id).sort((a, b) => a.name.localeCompare(b.name));
     if (!devs.length) continue;
-    h += `<optgroup label="#${esc(s.siteNumber)} · ${esc(s.name)}">` + devs.map(d =>
-      `<option value="${esc(d.id)}" ${d.id === sel ? "selected" : ""}>${esc(d.name)} · ${esc(d.model)}${hasWifi(d) ? "" : " (no Wi-Fi)"}</option>`).join("") + `</optgroup>`;
+    // a wireless connection needs a wireless device (Wireless or Router + Wi-Fi) at both ends, MikroTik or other brand
+    h += `<optgroup label="#${esc(s.siteNumber)} · ${esc(s.name)}">` + devs.map(d => { const off = linkType === "wireless" && !hasWifi(d) && d.id !== sel;
+      return `<option value="${esc(d.id)}" ${d.id === sel ? "selected" : ""} ${off ? "disabled" : ""}>${esc(d.name)} · ${esc(d.model)}${hasWifi(d) ? "" : " (no Wi-Fi · wired only)"}</option>`; }).join("") + `</optgroup>`;
   }
   return h;
 }
@@ -3804,6 +3805,8 @@ function setLinkType(t){
   linkType = t;
   $("k-type").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.t === t));
   $("k-wl").hidden = t !== "wireless"; $("k-wd").hidden = t !== "wired";
+  const a = $("k-a").value, b = $("k-b").value;
+  $("k-a").innerHTML = deviceOptions(a); $("k-b").innerHTML = deviceOptions(b);
   fillPortSelects();
   validateLink();
 }
@@ -3834,10 +3837,10 @@ function validateLink(){
     const sa = sites.find(s => s.id === A.siteId), sb = sites.find(s => s.id === B.siteId);
     err = `✕ A wired connection must stay inside one site. ${A.name} is in #${sa ? sa.siteNumber : "?"} and ${B.name} is in #${sb ? sb.siteNumber : "?"}. Use a wireless connection between sites.`;
   }
+  else if (linkType === "wireless" && A && !hasWifi(A)) err = `✕ ${A.name} is a ${TYPE_LABEL[A.type] || A.type} without Wi-Fi. A wireless connection needs a wireless device at both ends (Wireless or Router + Wi-Fi). Use a wired connection instead.`;
+  else if (linkType === "wireless" && B && !hasWifi(B)) err = `✕ ${B.name} is a ${TYPE_LABEL[B.type] || B.type} without Wi-Fi. A wireless connection needs a wireless device at both ends (Wireless or Router + Wi-Fi). Use a wired connection instead.`;
   else if (A && B && links.some(l => l.id !== editingLinkId && l.type === linkType && ((l.a === a && l.b === b) || (l.a === b && l.b === a))))
     err = `✕ A ${linkType} connection between these two devices already exists`;
-  else if (linkType === "wireless" && A && !hasWifi(A)) err = `✕ ${A.name} is a router without Wi-Fi. Use a wired connection or pick a wireless device.`;
-  else if (linkType === "wireless" && B && !hasWifi(B)) err = `✕ ${B.name} is a router without Wi-Fi. Use a wired connection or pick a wireless device.`;
   $("k-err").textContent = err;
   if (!a || !b || err) ok = false;
   const sa = A && sites.find(s => s.id === A.siteId), sb = B && sites.find(s => s.id === B.siteId);
@@ -4999,6 +5002,9 @@ function healthChecks(){
   add("warn", "Possible co-channel interference", cc.map(o => ({ sid: o.siteId, t: `${o.A.freq} / ${o.B.freq} MHz`, s: `${lbl(o.A)}  ×  ${lbl(o.B)} · ${siteTag(o.siteId)}`, open: () => openLink(o.A.id) })),
     "Two links at the same site use overlapping channels.");
   add("info", "Wireless links missing signal or frequency", wl.filter(l => !l.freq || l.signal === "" || l.signal === undefined || l.signal === null).map(l => ({ t: lbl(l), s: [!l.freq ? "no frequency" : "", l.signal === "" || l.signal == null ? "no signal" : ""].filter(Boolean).join(" · "), open: () => openLink(l.id) })), "");
+  add("crit", "Wireless connections to a device without Wi-Fi", links.filter(l => l.type === "wireless" && [devById(l.a), devById(l.b)].some(d => d && !hasWifi(d)))
+    .map(l => ({ t: lbl(l), s: [devById(l.a), devById(l.b)].filter(d => d && !hasWifi(d)).map(d => `${d.name} is ${TYPE_LABEL[d.type] || d.type}`).join(" · "), open: () => openLink(l.id), sid: devById(l.a)?.siteId })),
+    "Both ends of a wireless link must be wireless devices. Change the link to wired or the device type.");
   add("crit", "Wired connections between different sites", links.filter(l => { const A = devById(l.a), B = devById(l.b); return l.type === "wired" && A && B && A.siteId !== B.siteId; })
     .map(l => ({ t: lbl(l), s: `${siteTag(devById(l.a).siteId)} ⟷ ${siteTag(devById(l.b).siteId)}`, open: () => openLink(l.id), sid: devById(l.a).siteId })), "Wired links must stay inside one site. Change them to wireless or move a device.");
   add("info", "Connections without a link subnet", links.filter(l => !l.subnet && !(l.ipA || l.ipB)).map(l => ({ t: lbl(l), s: l.type, open: () => openLink(l.id) })), "Fine for bridged links; routed links need a /30 or /31.");
