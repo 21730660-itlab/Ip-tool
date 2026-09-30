@@ -3798,6 +3798,10 @@ function validateLink(){
   let ok = true, err = "";
   const a = $("k-a").value, b = $("k-b").value, A = devById(a), B = devById(b);
   if (a && b && a === b) err = "✕ Choose two different devices";
+  else if (linkType === "wired" && A && B && A.siteId !== B.siteId){
+    const sa = sites.find(s => s.id === A.siteId), sb = sites.find(s => s.id === B.siteId);
+    err = `✕ A wired connection must stay inside one site. ${A.name} is in #${sa ? sa.siteNumber : "?"} and ${B.name} is in #${sb ? sb.siteNumber : "?"}. Use a wireless connection between sites.`;
+  }
   else if (A && B && links.some(l => l.id !== editingLinkId && l.type === linkType && ((l.a === a && l.b === b) || (l.a === b && l.b === a))))
     err = `✕ A ${linkType} connection between these two devices already exists`;
   else if (linkType === "wireless" && A && !hasWifi(A)) err = `✕ ${A.name} is a router without Wi-Fi. Use a wired connection or pick a wireless device.`;
@@ -5005,6 +5009,8 @@ function healthChecks(){
   add("warn", "Possible co-channel interference", cc.map(o => ({ sid: o.siteId, t: `${o.A.freq} / ${o.B.freq} MHz`, s: `${lbl(o.A)}  ×  ${lbl(o.B)} · ${siteTag(o.siteId)}`, open: () => openLink(o.A.id) })),
     "Two links at the same site use overlapping channels.");
   add("info", "Wireless links missing signal or frequency", wl.filter(l => !l.freq || l.signal === "" || l.signal === undefined || l.signal === null).map(l => ({ t: lbl(l), s: [!l.freq ? "no frequency" : "", l.signal === "" || l.signal == null ? "no signal" : ""].filter(Boolean).join(" · "), open: () => openLink(l.id) })), "");
+  add("crit", "Wired connections between different sites", links.filter(l => { const A = devById(l.a), B = devById(l.b); return l.type === "wired" && A && B && A.siteId !== B.siteId; })
+    .map(l => ({ t: lbl(l), s: `${siteTag(devById(l.a).siteId)} ⟷ ${siteTag(devById(l.b).siteId)}`, open: () => openLink(l.id), sid: devById(l.a).siteId })), "Wired links must stay inside one site. Change them to wireless or move a device.");
   add("info", "Connections without a link subnet", links.filter(l => !l.subnet && !(l.ipA || l.ipB)).map(l => ({ t: lbl(l), s: l.type, open: () => openLink(l.id) })), "Fine for bridged links; routed links need a /30 or /31.");
 
   // devices
