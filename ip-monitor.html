@@ -498,12 +498,32 @@ button.tag{cursor:pointer;font-size:.9rem;padding:5px 11px}
 .logday{font-weight:800;color:var(--muted);margin:18px 0 6px;font-size:1rem;letter-spacing:.04em;text-transform:uppercase}
 .loglist{display:flex;flex-direction:column;gap:6px}
 .logrow{display:grid;grid-template-columns:60px 1fr;gap:10px;background:var(--panel);border:1.5px solid var(--line);border-left-width:6px;border-radius:var(--r);padding:10px 12px;text-align:left;width:100%;font-size:1rem}
+.pwrow{display:flex !important;gap:8px;align-items:stretch;margin:0 !important}
+.pwrow input{flex:1;font-family:var(--mono)}
+.eye{border:1px solid var(--frame);background:var(--panel2);border-radius:12px;padding:0 14px;font-weight:700;cursor:pointer;color:var(--acc)}
+/* device details page */
+.dvhead{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:18px;border-radius:var(--r);border:1px solid var(--frame);background:var(--panel);box-shadow:var(--lift)}
+.dvico{width:64px;height:64px;border-radius:16px;display:grid;place-items:center;background:var(--acc-soft)}
+.dvico svg{width:40px;height:40px}
+.dvhead h2{margin:0;font-size:1.7rem}
+.dvsub{color:var(--muted);font-weight:600}
+.dvacts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.dvgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-top:14px}
+.dvgrid .card{margin:0}
+.secret{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.secret code{font-size:1rem}
+.mini{border:1px solid var(--frame);background:var(--panel2);border-radius:999px;padding:3px 10px;font-weight:700;font-size:.82rem;cursor:pointer;color:var(--acc)}
+.dvlist{margin:0;padding:0;list-style:none}
+.dvlist li{display:flex;justify-content:space-between;gap:12px;padding:9px 14px;border-top:1px solid var(--line);flex-wrap:wrap}
+.dvlist li:first-child{border-top:0}
+.dvlist li b{font-family:var(--mono)}
+.dvlist li span{color:var(--muted);font-weight:600}
 .kend{border:1.5px solid var(--line);border-radius:var(--r);background:var(--panel2);padding:10px 12px;margin-bottom:10px}
 .kend>span{display:block;font-size:.9rem;font-weight:600;color:var(--muted)}
 .kend b{font-family:var(--mono);font-size:1.05rem}
 .kend small{display:block;color:var(--muted);font-weight:600;font-size:.88rem}
 .kend .kip{width:100%;margin-top:8px;padding:10px 12px;border:1.5px solid var(--frame);border-radius:var(--rs);background:var(--panel);font-family:var(--mono);font-weight:700;font-size:1.05rem}
-.logrow.clear{border-left-color:var(--sig)} .lact.clear{color:var(--sig)}
+.logrow.clear{border-left-color:var(--sig)} .lact.clear{color:var(--sig)} .logrow.export{border-left-color:var(--data)} .lact.export{color:var(--data)}
 #logacts{margin:12px 0 0} #logacts[hidden]{display:none}
 .logrow.add{border-left-color:var(--ok)} .logrow.edit{border-left-color:var(--warn)} .logrow.delete{border-left-color:var(--sig)} .logrow.import{border-left-color:var(--data)}
 .logrow.go{cursor:pointer}
@@ -1092,6 +1112,8 @@ svg .sitebox{fill:color-mix(in srgb,var(--panel2) 85%,transparent);stroke:var(--
   </section>
 
   <!-- ============ ONE SITE ============ -->
+  <section class="page" id="page-device"><div id="devpage"></div></section>
+
   <section class="page" id="page-site">
     <div id="sitepage"></div>
   </section>
@@ -1158,6 +1180,7 @@ svg .sitebox{fill:color-mix(in srgb,var(--panel2) 85%,transparent);stroke:var(--
         <button class="btn btn-line btn-sm" id="expCsvLinks">Export connections (.csv)</button>
         <button class="btn btn-line btn-sm" id="expCsvIp">Export IP plan (.csv)</button>
         <button class="btn btn-line btn-sm" id="expJson">Export backup (.json)</button>
+        <button class="btn btn-line btn-sm" id="expCreds">Export MikroTik access list (.csv)</button>
         <button class="btn btn-line btn-sm" id="impBtn">Import / sync backup</button>
         <p style="margin-top:8px">To keep the online app and the offline copy the same: export a backup (.json) from one and import it into the other. Newer changes win, and accounts come along when an administrator exports.</p>
         <input type="file" id="impFile" accept=".json,application/json" hidden>
@@ -1371,6 +1394,25 @@ svg .sitebox{fill:color-mix(in srgb,var(--panel2) 85%,transparent);stroke:var(--
         <div class="fielderr" id="d-macerr"></div>
         <label class="field" id="d-roswrap"><span>RouterOS version</span><input id="d-ros" autocomplete="off" placeholder="e.g. 7.16"></label>
         <label class="field"><span>Notes</span><textarea id="d-notes"></textarea></label>
+      </div>
+      <div class="group" id="d-accgroup">
+        <h3>Access (MikroTik)</h3>
+        <div class="two">
+          <label class="field"><span>Username</span><input id="d-user" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="admin"></label>
+          <label class="field"><span>Winbox port</span><input id="d-winbox" inputmode="numeric" autocomplete="off" placeholder="8291"></label>
+        </div>
+        <label class="field"><span>Password</span><span class="pwrow"><input id="d-pass" type="password" autocomplete="new-password" spellcheck="false"><button type="button" class="eye" data-eye="d-pass" aria-label="Show password">Show</button></span></label>
+        <div class="fielderr" id="d-winerr"></div>
+        <p class="hint2" id="d-acchint">Only people with Write or Full access can see the password.</p>
+      </div>
+      <div class="group" id="d-wlgroup">
+        <h3>Wireless settings</h3>
+        <div class="two">
+          <label class="field"><span>Wireless protocol</span><select id="d-wproto"><option value="">—</option><option value="802.11">802.11</option><option value="nstreme">Nstreme</option><option value="nv2">NV2</option></select></label>
+          <label class="field"><span>Security</span><select id="d-wsec"><option value="">—</option><option value="none">None (open)</option><option value="wpa2-psk">WPA2-PSK</option><option value="wpa-wpa2-psk">WPA / WPA2-PSK</option><option value="wpa3-psk">WPA3-PSK</option></select></label>
+        </div>
+        <label class="field" id="d-pskwrap"><span>Pre-shared key</span><span class="pwrow"><input id="d-psk" type="password" autocomplete="new-password" spellcheck="false"><button type="button" class="eye" data-eye="d-psk" aria-label="Show key">Show</button></span></label>
+        <div class="fielderr" id="d-pskerr"></div>
       </div>
       <div class="group">
         <h3>Status &amp; tags</h3>
@@ -1886,6 +1928,7 @@ function currentRoute(){
   if (h === "#sites") return { page: "sites" };
   if (h === "#users") return { page: fullAccess ? "users" : "sites" };
   if (h.startsWith("#site/")) return { page: "site", id: decodeURIComponent(h.slice(6)) };
+  if (h.startsWith("#device/")) return { page: "device", id: decodeURIComponent(h.slice(8)) };
   return { page: "dash" };
 }
 function route(){
@@ -1898,8 +1941,8 @@ function route(){
 }
 function routeNow(){
   const r = currentRoute();
-  for (const p of ["dash","sites","site","ips","map","calc","backup","log","users"]) $("page-" + p).classList.toggle("on", r.page === p);
-  const tab = r.page === "site" ? "sites" : r.page;
+  for (const p of ["dash","sites","site","device","ips","map","calc","backup","log","users"]) $("page-" + p).classList.toggle("on", r.page === p);
+  const tab = r.page === "site" ? "sites" : r.page === "device" ? "map" : r.page;
   for (const t of ["dash","sites","ips","map","calc","backup","log","users"]) $("tab-" + t).setAttribute("aria-selected", tab === t);
   const at = $("tab-" + tab); if (at && at.scrollIntoView) at.scrollIntoView({ block: "nearest", inline: "nearest" });
   if (r.page === "map") renderMap();
@@ -1907,6 +1950,7 @@ function routeNow(){
   if (r.page === "users") renderUsers();
   if (r.page === "sites") renderSites();
   if (r.page === "site") renderSitePage();
+  if (r.page === "device") renderDevicePage();
   if (r.page === "calc") renderCalc();
   if (r.page === "backup") renderBackup();
   if (r.page === "log") renderLog();
@@ -1926,6 +1970,7 @@ function renderAll(){
   const r = currentRoute();
   if (r.page === "sites") renderSites();
   if (r.page === "site") renderSitePage();
+  if (r.page === "device") renderDevicePage();
   if (r.page === "calc") renderCalc();
   if (r.page === "backup") renderBackup();
   if (r.page === "users") renderUsers();
@@ -2589,6 +2634,7 @@ function renderBackup(){
   $("bkcount").textContent = `${sites.length} sites · ${networks.length} networks · ${h.toLocaleString()} hosts · ${devices.length} devices · ${links.length} connections · ${vlans.length} VLANs · ${configs.length} config backups · ${changes.length} history entries`;
   $("impBtn").hidden = !fullAccess;
   $("expApp").hidden = !fullAccess;
+  $("expCreds").hidden = !fullAccess;
 }
 const stamp = () => new Date().toISOString().slice(0, 10);
 async function saveFile(filename, data){
@@ -2662,7 +2708,7 @@ $("expJson").onclick = () => {
   saveFile(`ip-monitor-backup-${stamp()}.json`, JSON.stringify({ app: "ip-monitor", version: 3, layout: "site > network > host",
     exportedAt: new Date().toISOString(), source: IS_OFFLINE ? "offline copy" : "online",
     totals: { sites: sites.length, networks: networks.length, hosts: networks.reduce((a, n) => a + hostCount(n), 0) },
-    sites: tree, devices, links, vlans, configs, ...(fullAccess ? { users, changes } : {}) }, null, 2));
+    sites: tree, devices: fullAccess ? devices : devices.map(({ pass, psk, ...d }) => d), links, vlans, configs, ...(fullAccess ? { users, changes } : {}) }, null, 2));
 };
 
 /* ----- CSV: one organized table ----- */
@@ -2671,6 +2717,23 @@ function tableCSV(head, rows){
   const q = v => { const t = v === null || v === undefined ? "" : String(v); return /[",\n\r;]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
   return "\ufeff" + [head, ...rows.filter(r => !r.site).map(r => r.cells)].map(r => r.map(q).join(",")).join("\r\n");
 }
+/* every MikroTik device with how to reach it: management IP, Winbox, login and wireless security */
+function credsTable(){
+  const head = ["Site #","Site","Device","Model","Type","Role","Status","Management IP","Winbox port","Winbox address","Username","Password","Wireless protocol","Security","Pre-shared key","RouterOS","MAC","Notes"], rows = [];
+  for (const s of [...sites].sort(byNum)) for (const d of devices.filter(x => x.siteId === s.id && vendorOf(x) === "mikrotik").sort((a, b) => a.name.localeCompare(b.name))){
+    const port = d.winbox || "8291";
+    rows.push({ cells: [s.siteNumber, s.name, d.name, d.model, TYPE_LABEL[d.type] || d.type, ROLE_LABEL[d.role] || "", STATUS_LABEL[statusOf(d)], d.ip || "", port, d.ip ? `${d.ip}:${port}` : "",
+      d.user || "", d.pass || "", hasWifi(d) ? WPROTO_LABEL[d.wproto] || "" : "", hasWifi(d) ? WSEC_LABEL[d.wsec] || "" : "", hasWifi(d) ? d.psk || "" : "", d.ros || "", d.mac || "", d.notes || ""] });
+  }
+  return [head, rows];
+}
+$("expCreds").onclick = () => {
+  if (!fullAccess) return showAlert("Full access needed", "Only accounts with Full access can export passwords.");
+  const n = devices.filter(d => vendorOf(d) === "mikrotik").length;
+  showAlert("Export passwords?", `The file lists ${n} MikroTik device${n === 1 ? "" : "s"} with username, password, Winbox port, wireless protocol, security and pre-shared key in plain text. Keep it somewhere safe and delete it when you're done.`, [
+    { label: "Export", primary: true, run: () => { const [h, r] = credsTable(); saveFile(`ip-monitor-mikrotik-access-${stamp()}.csv`, tableCSV(h, r)); writeLog({ act: "export", kind: "device", ref: "", label: `MikroTik access list exported (${n} devices)`, siteId: "", lines: [] }); } },
+    { label: "Cancel" }]);
+};
 $("expCsvDev").onclick = () => { const [h, r] = devicesTable(); saveFile(`ip-monitor-devices-${stamp()}.csv`, tableCSV(h, r)); };
 $("expCsvLinks").onclick = () => { const [h, r] = linksTable(); saveFile(`ip-monitor-connections-${stamp()}.csv`, tableCSV(h, r)); };
 $("expCsvIp").onclick = () => { const [h, r] = ipPlanTable(); saveFile(`ip-monitor-ip-plan-${stamp()}.csv`, tableCSV(h, r)); };
@@ -3052,6 +3115,8 @@ async function importCore(data, opts = {}){
     const dev = { id: existing ? existing.id : (rid || newId()), siteId, type: DEV_TYPES.includes(raw.type) ? raw.type : "wireless", vendor: raw.vendor === "other" ? "other" : "mikrotik",
       uplink: raw.uplink && raw.uplink.deviceId && raw.uplink.bridge ? { deviceId: devMap.get(raw.uplink.deviceId) || String(raw.uplink.deviceId), bridge: String(raw.uplink.bridge) } : null,
       model: String(raw.model).trim(), name: String(raw.name).trim(), role: ["ap","station","ptp"].includes(raw.role) ? raw.role : "",
+      user: String(raw.user || "").slice(0, 64), pass: String(raw.pass || "").slice(0, 128), winbox: /^\d{1,5}$/.test(String(raw.winbox || "")) ? String(raw.winbox) : "",
+      wproto: ["802.11","nstreme","nv2"].includes(raw.wproto) ? raw.wproto : "", wsec: WSEC_LABEL[raw.wsec] ? raw.wsec : "", psk: String(raw.psk || "").slice(0, 63),
       ip: ip && ip.kind === "ip" ? ip.text : "", mac: normMac(raw.mac) || "", ros: String(raw.ros || ""), notes: String(raw.notes || ""),
       func: FUNC_LABEL[raw.func] ? raw.func : "", ...metaOf(raw),
       ports: Array.isArray(raw.ports) ? raw.ports.map(String).filter(p => /^[A-Za-z0-9._\-\/]{1,32}$/.test(p)).slice(0, 64) : [],
@@ -3170,6 +3235,8 @@ const DEV_TYPES = [...NET_TYPES, ...END_TYPES];
 const TYPE_LABEL = { router: "Router", wireless: "Wireless", both: "Router + Wi-Fi", pc: "PC", phone: "IP phone", server: "Server", dbserver: "Database server", nvr: "NVR", camera: "IP camera" };
 const TYPE_COLOR = { router: "var(--data)", wireless: "var(--sig)", both: "var(--ok)", pc: "var(--acc)", phone: "var(--acc)", server: "#8a5cf6", dbserver: "#8a5cf6", nvr: "#14b8a6", camera: "#14b8a6" };
 const ROLE_LABEL = { ap: "Access point", station: "Station", ptp: "PtP bridge" };
+const WPROTO_LABEL = { "802.11": "802.11", nstreme: "Nstreme", nv2: "NV2" };
+const WSEC_LABEL = { none: "None (open)", "wpa2-psk": "WPA2-PSK", "wpa-wpa2-psk": "WPA / WPA2-PSK", "wpa3-psk": "WPA3-PSK" };
 const MT_MODELS = {
   router: ["hEX (RB750Gr3)", "hEX S (RB760iGS)", "hEX lite", "hEX refresh", "RB4011iGS+", "RB5009UG+S+IN", "RB1100AHx4", "L009UiGS",
     "CCR2004-16G-2S+", "CCR2004-1G-12S+2XS", "CCR2116-12G-4S+", "CCR2216-1G-12XS-2XQ", "CCR1036-8G-2S+", "CCR1009-7G-1C-1S+",
@@ -3395,7 +3462,7 @@ function renderMap(){
     }).join("") + `</div>`;
   }
   $("devlist").innerHTML = dl || `<p class="hint2">No sites yet. Create a site on the Sites tab first.</p>`;
-  $("devlist").querySelectorAll(".drow").forEach(r => r.onclick = () => openDev(r.dataset.d));
+  $("devlist").querySelectorAll(".drow").forEach(r => r.onclick = () => showDevice(r.dataset.d));
 
   // connections list
   $("linkcount").textContent = `${shownLinks.length} total`;
@@ -3673,7 +3740,7 @@ function onMapUp(e){
   gest = null;
   if (!g.moved){
     mapDrag = null;
-    if (g.id && (g.type === "dev" || g.type === "tap-dev")) openDev(g.id);
+    if (g.id && (g.type === "dev" || g.type === "tap-dev")) showDevice(g.id);
     else if (g.id && g.type === "tap-link") openLink(g.id);
     else if (g.id && (g.type === "site" || g.type === "tap-site")){ mapFilter = g.id; renderMap(); }
     return;
@@ -3729,6 +3796,7 @@ function setDevType(t){
   $("d-type").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.t === t));
   $("d-models").innerHTML = devVendor === "other" || !MT_MODELS[t] ? "" : MT_MODELS[t].map(m => `<option value="${esc(m)}">`).join("");
   $("d-rolewrap").hidden = !hasWifi({ type: t });
+  $("d-wlgroup").hidden = devVendor !== "mikrotik" || !hasWifi({ type: t });
   validateDev();
 }
 /* MikroTik devices get interfaces, bridges and addresses; other brands take one IP from a MikroTik bridge subnet */
@@ -3739,7 +3807,7 @@ function setDevVendor(v){
   $("d-modellab").textContent = other ? "Brand & model" : "MikroTik model";
   $("d-model").placeholder = other ? "e.g. Ubiquiti LiteBeam 5AC, Hikvision camera" : "e.g. SXTsq 5 ac, LHG XL 5 ac";
   $("d-bipgroup").hidden = !other; $("d-brgroup").hidden = other; $("d-ipsec").hidden = other;
-  $("d-ipwrap").hidden = other; $("d-ipstate").hidden = other; $("d-roswrap").hidden = other;
+  $("d-ipwrap").hidden = other; $("d-ipstate").hidden = other; $("d-roswrap").hidden = other; $("d-accgroup").hidden = other;
   $("d-bipnext").hidden = readOnly;
   // PC, phone, servers, NVR and cameras are only offered for other brands
   $("d-type").querySelectorAll("[data-end]").forEach(b => b.hidden = !other);
@@ -3815,6 +3883,11 @@ function openDev(id, siteId){
   formAddrs = d && Array.isArray(d.addrs) ? d.addrs.map(a => ({ ...a })) : [];
   renderBridges(); renderAddrs();
   $("d-ip").value = d?.ip || ""; $("d-mac").value = d?.mac || ""; $("d-ros").value = d?.ros || ""; $("d-notes").value = d?.notes || "";
+  // access details: Read-only accounts never get the secrets in the form
+  $("d-user").value = d?.user || ""; $("d-winbox").value = d?.winbox || "";
+  $("d-pass").value = readOnly ? (d?.pass ? "hidden" : "") : d?.pass || ""; $("d-psk").value = readOnly ? (d?.psk ? "hidden" : "") : d?.psk || "";
+  ["d-pass", "d-psk"].forEach(k => { $(k).type = "password"; }); document.querySelectorAll("#devForm .eye").forEach(b => { b.hidden = readOnly; b.textContent = "Show"; });
+  $("d-wproto").value = d?.wproto || ""; $("d-wsec").value = d?.wsec || "";
   $("d-func").value = FUNC_LABEL[d?.func] ? d.func : "";
   $("dTitle").textContent = readOnly ? "Device" : d ? "Edit device" : "New device";
   $("dSave").hidden = readOnly; $("dDelete").hidden = !d || !fullAccess;
@@ -4027,10 +4100,21 @@ function validateDev(){
   const mac = normMac($("d-mac").value);
   $("d-macerr").textContent = mac === null ? "✕ MAC must be 12 hex digits, e.g. AA:BB:CC:DD:EE:FF" : "";
   if (mac === null) ok = false;
+  // access + wireless settings (MikroTik)
+  const wb = $("d-winbox").value.trim();
+  $("d-winerr").textContent = devVendor === "mikrotik" && wb && !(/^\d+$/.test(wb) && +wb >= 1 && +wb <= 65535) ? "✕ Winbox port must be 1 – 65535 (default 8291)" : "";
+  if ($("d-winerr").textContent) ok = false;
+  const wl = devVendor === "mikrotik" && hasWifi({ type: devType }), sec = $("d-wsec").value, needKey = wl && sec && sec !== "none";
+  $("d-pskwrap").hidden = !needKey;
+  const key = $("d-psk").value;
+  $("d-pskerr").textContent = needKey && key && !readOnly && (key.length < 8 || key.length > 63) ? "✕ A pre-shared key is 8 – 63 characters" : "";
+  if ($("d-pskerr").textContent) ok = false;
   $("dSave").disabled = !ok;
   return ok;
 }
-["d-model","d-name","d-ip","d-mac"].forEach(id => $(id).addEventListener("input", validateDev));
+["d-model","d-name","d-ip","d-mac","d-winbox","d-psk"].forEach(id => $(id).addEventListener("input", validateDev));
+$("d-wsec").addEventListener("change", validateDev);
+document.querySelectorAll("#devForm .eye").forEach(b => b.onclick = () => { const i = $(b.dataset.eye); i.type = i.type === "password" ? "text" : "password"; b.textContent = i.type === "password" ? "Show" : "Hide"; });
 $("d-ports").addEventListener("input", () => { portsEdited = true; renderBridges(); renderAddrs(); validateDev(); });
 $("d-role").addEventListener("change", validateDev);
 $("d-site").addEventListener("change", () => { if (devVendor === "other") fillBridgeSelect($("d-br").value || null); validateDev(); });
@@ -4045,6 +4129,9 @@ $("devForm").addEventListener("submit", async ev => {
   const dev = { ...(prev || {}), id: editingDevId || newId(), siteId: $("d-site").value, type: devType, vendor: devVendor,
     uplink: br ? { deviceId: br.dev.id, bridge: br.bridge } : null, func: $("d-func").value, ...readMeta("d"), model: $("d-model").value.trim(), name: $("d-name").value.trim(),
     role: hasWifi({ type: devType }) ? $("d-role").value : "", ip, mac: normMac($("d-mac").value) || "", ros: other ? "" : $("d-ros").value.trim(), notes: $("d-notes").value.trim(),
+    user: other ? "" : $("d-user").value.trim(), pass: other ? "" : $("d-pass").value, winbox: other ? "" : $("d-winbox").value.trim(),
+    ...(() => { const wl = !other && hasWifi({ type: devType }), sec = wl ? $("d-wsec").value : "";
+      return { wproto: wl ? $("d-wproto").value : "", wsec: sec, psk: sec && sec !== "none" ? $("d-psk").value : "" }; })(),
     ports: parsePorts($("d-ports").value),
     bridges: other ? [] : formBridges.map(b => ({ name: b.name.trim(), ports: b.ports.filter(p => parsePorts($("d-ports").value).includes(p)) })),
     addrs: other ? (prev?.addrs || []).filter(a => a.link) : (() => { const seen = new Set(); return formAddrs.map(a => ({ id: a.id || newId(), iface: a.iface, address: checkAddr(a, $("d-site").value, seen).norm || a.address.trim(), comment: a.comment || "", ...(a.link ? { link: a.link } : {}) })); })(),
@@ -4383,6 +4470,70 @@ $("kDelete").onclick = () => {
     { label: "Keep it" }]);
 };
 $("addLinkBtn").onclick = () => openLink(null);
+
+/* ======================= DEVICE DETAILS PAGE ======================= */
+/* MikroTik devices open their own page; other brands open the edit sheet */
+function showDevice(id){ const d = devById(id); if (d && vendorOf(d) === "mikrotik") location.hash = "#device/" + encodeURIComponent(id); else openDev(id); }
+function renderDevicePage(){
+  const r = currentRoute(), d = devById(r.id), box = $("devpage");
+  if (!d){ box.innerHTML = `<button class="back" id="dvBack">← Site map</button><div class="empty"><h2>Device not found</h2><p>It may have been deleted.</p></div>`; $("dvBack").onclick = () => { location.hash = "#map"; }; return; }
+  const s = sites.find(x => x.id === d.siteId), port = d.winbox || "8291", wl = hasWifi(d);
+  const kv = rows => `<dl class="kv">${rows.filter(Boolean).map(([k, v, raw]) => `<div><dt>${esc(k)}</dt><dd>${raw ? v : esc(v || "—")}</dd></div>`).join("")}</dl>`;
+  const secret = (v, key) => !v ? "—" : readOnly ? `<span class="secret"><code>••••••••</code></span>`
+    : `<span class="secret"><code data-sec="${key}">••••••••</code><button type="button" class="mini" data-show="${key}">Show</button><button type="button" class="mini" data-copy="${key}">Copy</button></span>`;
+  const secrets = { pass: d.pass || "", psk: d.psk || "", user: d.user || "", wbx: d.ip ? `${d.ip}:${port}` : "" };
+  const copyBtn = key => readOnly || !secrets[key] ? "" : ` <button type="button" class="mini" data-copy="${key}">Copy</button>`;
+  const ls = links.filter(l => l.a === d.id || l.b === d.id);
+  const kids = devices.filter(x => x.uplink && x.uplink.deviceId === d.id);
+  const vl = vlans.filter(v => v.deviceId === d.id);
+  const cf = cfgsOf(d.id), hist = changes.filter(c => c.ref === d.id || c.dev === d.id).sort((a, b) => byAt(b, a)).slice(0, 6);
+  const brOf = p => bridgeOf(d, p);
+  box.innerHTML = `
+    <button class="back" id="dvBack">← ${s ? `Site map · #${esc(s.siteNumber)} ${esc(s.name)}` : "Site map"}</button>
+    <div class="dvhead"><div class="dvico">${miniIcon(d.type).replace('width="26" height="26"', 'width="40" height="40"')}</div>
+      <div><h2>${esc(d.name)}</h2><div class="dvsub">MikroTik ${esc(d.model)} · ${esc(TYPE_LABEL[d.type] || "")}${d.role ? " · " + esc(ROLE_LABEL[d.role]) : ""}${d.func ? " · " + esc(FUNC_LABEL[d.func] || "") : ""}</div>
+        <div class="badges">${statusPill(d, true)}${(d.tags || []).map(tagChip).join("")}</div></div>
+      <div class="dvacts">${readOnly ? "" : `<button class="btn btn-primary btn-sm" id="dvEdit">Edit device</button>`}<button class="btn btn-line btn-sm" id="dvCfg">Config backups${cf.length ? " · " + cf.length : ""}</button>${s ? `<button class="btn btn-line btn-sm" id="dvSite">Site page</button>` : ""}</div></div>
+    <div class="dvgrid">
+      <div class="card"><div class="card-h"><h2>Access</h2><span>${readOnly ? "passwords hidden" : "Winbox"}</span></div>${kv([
+        ["Management IP", d.ip ? `<b class="mono">${esc(d.ip)}</b>` : "—", true],
+        ["Winbox port", `${esc(port)}${d.winbox ? "" : " (default)"}`, true],
+        ["Winbox address", secrets.wbx ? `<code>${esc(secrets.wbx)}</code>${copyBtn("wbx")}` : "—", true],
+        ["Username", d.user ? `<code>${esc(d.user)}</code>${copyBtn("user")}` : "—", true],
+        ["Password", secret(d.pass, "pass"), true],
+        ["MAC address", d.mac], ["RouterOS", d.ros]])}</div>
+      ${wl ? `<div class="card"><div class="card-h"><h2>Wireless</h2><span>${esc(d.role ? ROLE_LABEL[d.role] : "")}</span></div>${kv([
+        ["Protocol", WPROTO_LABEL[d.wproto] || ""], ["Security", WSEC_LABEL[d.wsec] || ""],
+        d.wsec && d.wsec !== "none" ? ["Pre-shared key", secret(d.psk, "psk"), true] : null,
+        ["Radios", devicePorts(d).filter(isWifiPort).join(", ")],
+        ...ls.filter(l => l.type === "wireless").map(l => [`Link to ${farName(l, d)}`, [l.ssid ? "SSID " + l.ssid : "", l.freq ? l.freq + " MHz" : "", l.width ? l.width + " MHz wide" : "", l.signal !== "" && l.signal != null ? l.signal + " dBm" : ""].filter(Boolean).join(" · ")])])}</div>` : ""}
+      <div class="card"><div class="card-h"><h2>Interfaces &amp; IPs</h2><span>${devicePorts(d).length} ports</span></div><ul class="dvlist">
+        ${(d.bridges || []).map(b => { const a = (d.addrs || []).find(x => x.iface === b.name); return `<li><span>${esc(b.name)} (bridge) · ${esc((b.ports || []).join(", ") || "no ports")}</span><b>${esc(a ? a.address : "—")}</b></li>`; }).join("")}
+        ${devicePorts(d).map(p => { const b = brOf(p), a = (d.addrs || []).find(x => x.iface === p), used = portUsers(d, p, null);
+          return `<li><span>${esc(p)}${b ? " · in " + esc(b.name) : ""}${used.length ? " → " + esc(used.map(l => farName(l, d)).join(", ")) : ""}</span><b>${esc(b ? "bridge IP" : a ? a.address : "—")}</b></li>`; }).join("")}
+        ${vl.map(v => { const a = (d.addrs || []).find(x => x.iface === v.ifname); return `<li><span>${esc(v.ifname)} (VLAN ${esc(v.vid)} on ${esc(v.parent)})</span><b>${esc(a ? a.address : "—")}</b></li>`; }).join("")}
+      </ul></div>
+      <div class="card"><div class="card-h"><h2>Connections</h2><span>${ls.length}</span></div><ul class="dvlist">
+        ${ls.length ? ls.map(l => { const mine = l.a === d.id ? "a" : "b", far = mine === "a" ? "b" : "a", fd = devById(l[far]);
+          return `<li data-link="${esc(l.id)}" style="cursor:pointer"><span>${esc(l.type === "wireless" ? "((·))" : "━━")} ${esc(mine === "a" ? l.portA || "?" : l.portB || "?")} → ${esc(fd ? fd.name : "?")} ${esc(far === "a" ? l.portA || "" : l.portB || "")}</span><b>${esc([mine === "a" ? l.ipA : l.ipB, far === "a" ? l.ipA : l.ipB].filter(Boolean).join(" ⟷ ") || l.subnet || "")}</b></li>`; }).join("") : `<li><span>No connections yet</span></li>`}
+      </ul></div>
+      ${kids.length ? `<div class="card"><div class="card-h"><h2>Devices on its bridges</h2><span>${kids.length}</span></div><ul class="dvlist">
+        ${kids.map(k => `<li data-dev="${esc(k.id)}" style="cursor:pointer"><span>${esc(k.name)} · ${esc(TYPE_LABEL[k.type] || "")} · ${esc(k.uplink.bridge)}</span><b>${esc(k.ip || "—")}</b></li>`).join("")}</ul></div>` : ""}
+      <div class="card"><div class="card-h"><h2>Recent changes</h2><span>${cf.length ? "last backup " + esc(fmtWhen(cf[0].at)) : "no config backup"}</span></div>
+        ${hist.length ? `<div class="loglist" style="padding:10px">${hist.map(c => logRowHTML(c, false)).join("")}</div>` : `<p class="hint2" style="margin:10px 14px 14px">No changes recorded yet.</p>`}</div>
+      ${d.notes ? `<div class="card"><div class="card-h"><h2>Notes</h2></div><p style="margin:12px 14px;white-space:pre-wrap">${esc(d.notes)}</p></div>` : ""}
+    </div>`;
+  $("dvBack").onclick = () => { mapFilter = d.siteId; location.hash = "#map"; };
+  const e = $("dvEdit"); if (e) e.onclick = () => openDev(d.id);
+  $("dvCfg").onclick = () => openCfg(d.id);
+  const sp = $("dvSite"); if (sp) sp.onclick = () => { location.hash = "#site/" + encodeURIComponent(d.siteId); };
+  box.querySelectorAll("[data-show]").forEach(b => b.onclick = () => { const c = box.querySelector(`[data-sec="${b.dataset.show}"]`), on = b.textContent === "Show";
+    c.textContent = on ? secrets[b.dataset.show] : "••••••••"; b.textContent = on ? "Hide" : "Show"; });
+  box.querySelectorAll("[data-copy]").forEach(b => b.onclick = async () => { try { await navigator.clipboard.writeText(secrets[b.dataset.copy]); b.textContent = "Copied"; setTimeout(() => { b.textContent = "Copy"; }, 1200); } catch { showAlert("Couldn't copy", "Your browser blocked the clipboard. Tap Show and copy it by hand."); } });
+  box.querySelectorAll("[data-link]").forEach(li => li.onclick = () => openLink(li.dataset.link));
+  box.querySelectorAll("li[data-dev]").forEach(li => li.onclick = () => showDevice(li.dataset.dev));
+  wireLogRows(box);
+}
 
 /* ======================= IPs & NETWORKS ======================= */
 let ipFilter = "all", ipView = "addr";
@@ -4816,9 +4967,9 @@ let logMuted = false, pruning = false;
 const LOG_MAX = 1500;
 const KIND_OF = { [COL_SITES]: "site", [COL_NETS]: "network", [COL_DEV]: "device", [COL_LINKS]: "connection", [COL_VLANS]: "vlan", [COL_CFG]: "config", [COL_USERS]: "user" };
 const KIND_LABEL = { history: "History", site: "Site", network: "Network", device: "Device", connection: "Connection", vlan: "VLAN", config: "Config backup", user: "Account", import: "Import" };
-const ACT_LABEL = { add: "ADDED", edit: "CHANGED", delete: "DELETED", import: "IMPORT", clear: "CLEARED" };
-const SKIP_KEYS = new Set(["id", "createdAt", "updatedAt", "mx", "my", "hosts", "salt", "hash", "iter", "text"]);
-const FIELD_LABEL = { name: "Name", siteNumber: "Site number", location: "Location", contact: "Contact", notes: "Notes", ip: "Address", kind: "Kind", vlan: "VLAN",
+const ACT_LABEL = { add: "ADDED", edit: "CHANGED", delete: "DELETED", import: "IMPORT", clear: "CLEARED", export: "EXPORTED" };
+const SKIP_KEYS = new Set(["id", "createdAt", "updatedAt", "mx", "my", "hosts", "salt", "hash", "iter", "text", "pass", "psk"]);
+const FIELD_LABEL = { user: "Username", winbox: "Winbox port", wproto: "Wireless protocol", wsec: "Security", name: "Name", siteNumber: "Site number", location: "Location", contact: "Contact", notes: "Notes", ip: "Address", kind: "Kind", vlan: "VLAN",
   gateway: "Gateway", siteId: "Site", type: "Type", model: "Model", role: "Role", func: "Function", mac: "MAC", ros: "RouterOS", status: "Status", tags: "Tags",
   ports: "Interfaces", subnet: "Link subnet", ipA: "IP on From", ipB: "IP on To", portA: "Interface on From", portB: "Interface on To", a: "From device", b: "To device",
   band: "Band", freq: "Frequency", width: "Width", ssid: "SSID", dist: "Distance", signal: "Signal", speed: "Speed", cable: "Cable", vid: "VLAN ID",
@@ -4833,6 +4984,8 @@ function fmtVal(k, v){
   if (k === "a" || k === "b" || k === "deviceId"){ const d = devById(v); return d ? d.name : "?"; }
   if (k === "status") return STATUS_LABEL[v] || v;
   if (k === "func") return FUNC_LABEL[v] || v;
+  if (k === "wproto") return WPROTO_LABEL[v] || v;
+  if (k === "wsec") return WSEC_LABEL[v] || v;
   if (Array.isArray(v)) return trunc(v.join(", "), 70);
   if (typeof v === "object") return "…";
   return trunc(String(v).replace(/\s+/g, " "), 60);
@@ -4840,6 +4993,8 @@ function fmtVal(k, v){
 function diffLines(col, a, b){
   const out = [];
   if (col === COL_USERS && a.hash !== b.hash) out.push("Password changed");
+  if (col === COL_DEV && (a.pass || "") !== (b.pass || "")) out.push("Device password changed");
+  if (col === COL_DEV && (a.psk || "") !== (b.psk || "")) out.push("Wireless pre-shared key changed");
   for (const k of new Set([...Object.keys(a), ...Object.keys(b)])){
     if (SKIP_KEYS.has(k)) continue;
     const x = a[k], y = b[k];
@@ -5324,11 +5479,12 @@ function vlansTable(){
 }
 
 /* ======================= APP SHELL (sidebar + top bar) ======================= */
-const PAGE_TITLE = { dash: ["Dashboard", "Health of the whole network"], sites: ["Sites", ""], site: ["Site", ""], ips: ["IPs & Networks", "Every address and subnet"],
+const PAGE_TITLE = { device: ["Device", ""], dash: ["Dashboard", "Health of the whole network"], sites: ["Sites", ""], site: ["Site", ""], ips: ["IPs & Networks", "Every address and subnet"],
   map: ["Site Map", "Devices and connections"], calc: ["Subnet calculator", "IPv4 and IPv6"], backup: ["Backup & export", "Excel, JSON, offline app"], log: ["History", "Who changed what, and when"], users: ["Users", "Accounts and permissions"] };
 function shellTitle(r){
   let [t, sub] = PAGE_TITLE[r.page] || ["IP Monitor", ""];
   if (r.page === "sites") sub = `${sites.length} site${sites.length === 1 ? "" : "s"} · ${networks.length} network${networks.length === 1 ? "" : "s"}`;
+  if (r.page === "device"){ const d = devById(r.id), s = d && sites.find(x => x.id === d.siteId); t = d ? d.name : "Device"; sub = d ? `${d.model} · ${TYPE_LABEL[d.type] || ""}${s ? ` · Site #${s.siteNumber} ${s.name}` : ""}` : ""; }
   if (r.page === "site"){ const s = sites.find(x => x.id === r.id); t = s ? s.name : r.id === "_none" ? "Unassigned networks" : "Site"; sub = s ? `Site #${s.siteNumber}${s.location ? " · " + s.location : ""}` : ""; }
   $("ptitle").textContent = t; $("psub").textContent = sub;
   document.title = `${t} · IP Monitor`;
