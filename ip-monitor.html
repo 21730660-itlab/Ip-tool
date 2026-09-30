@@ -1247,6 +1247,11 @@ svg .sitehdr-n{fill:var(--gold)}
           <label class="field"><span id="k-pblab">Interface on “To”</span><select id="k-pb"></select>
             <input id="k-pb-c" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type interface name" hidden style="margin-top:6px"></label>
         </div>
+        <div id="k-subwrap" hidden>
+          <label class="field"><span>Link subnet</span><input id="k-sub" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. 10.5.5.0/30"></label>
+          <div class="chips" id="k-subchips"></div>
+          <div id="k-substate"></div>
+        </div>
         <div class="two">
           <div class="kend"><span id="k-ialab">“From” end</span><div id="k-enda"></div>
             <input id="k-ipa" class="kip" hidden inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. 10.5.5.1/30"><div class="fielderr" id="k-ipaerr"></div></div>
@@ -3837,6 +3842,7 @@ function openLink(id){
   $("k-ssid").value = l?.ssid || ""; $("k-dist").value = l?.dist ?? ""; $("k-sig").value = l?.signal ?? "";
   pendingPorts = { a: l?.portA || "", b: l?.portB || "" };
   $("k-ipa").dataset.touched = ""; $("k-ipb").dataset.touched = "";
+  $("k-sub").value = l?.subnet || (() => { const x = l && parseRaw(endInfo(devById(l.a), l.portA).cidr || ""); return x && x.prefix !== null ? analyze(x.v, x.addr, x.prefix).text : ""; })();
   $("k-speed").value = l?.speed || ""; $("k-cable").value = l?.cable || "";
   $("k-notes").value = l?.notes || "";
   $("kTitle").textContent = readOnly ? "Connection" : l ? "Edit connection" : "New connection";
@@ -3917,6 +3923,8 @@ function fillPortSelects(){ fillPortSelect("a"); fillPortSelect("b"); pendingPor
   $("k-" + side).addEventListener("change", () => { pendingPorts[side] = ""; fillPortSelect(side); pendingPorts[side] = null; $("k-ip" + side).dataset.touched = ""; validateLink(); });
   $("k-p" + side).addEventListener("change", () => { $("k-ip" + side).dataset.touched = ""; validateLink(); });
   $("k-ip" + side).addEventListener("input", () => { $("k-ip" + side).dataset.touched = "1"; validateLink(); });
+  $("k-p" + side).addEventListener("change", () => { if ($("k-sub").value.trim()) applySubnet(); });
+  $("k-" + side).addEventListener("change", () => { if ($("k-sub").value.trim()) applySubnet(); });
 });
 function validatePortsLink(A, B){
   let err = "";
@@ -3985,6 +3993,35 @@ function wlanNet(n, A, B){
   return { subnet: n.text, msg: `✓ Both ends are in ${n.text} · saved as a new link network` };
 }
 let linkAddrPlan = null;
+/* wireless links: type the subnet and the ends get its 1st and 2nd usable IPs */
+function subnetState(){
+  const wrap = $("k-subwrap"), st = $("k-substate"), raw = $("k-sub").value.trim();
+  const ends = ["a", "b"].filter(x => !$("k-ip" + x).hidden);
+  wrap.hidden = linkType !== "wireless"; $("k-sub").readOnly = readOnly;
+  const base = raw.split("/")[0].trim();
+  $("k-subchips").innerHTML = readOnly || !base || (parseV4(base) === null && parseV6(base) === null) ? "" :
+    (base.includes(":") ? [127, 126, 64] : [30, 31, 29]).map(p => `<button type="button" class="chip" data-p="${p}">/${p}</button>`).join("");
+  $("k-subchips").querySelectorAll(".chip").forEach(c => c.onclick = () => { $("k-sub").value = base + "/" + c.dataset.p; applySubnet(); });
+  st.className = "hint2"; st.textContent = "";
+  if (!raw){ st.textContent = ends.length ? "Type the subnet to fill the IPs automatically, or type each IP below." : ""; return null; }
+  const e = parseEntry(raw);
+  if (!e || e.kind !== "subnet"){ st.className = "fielderr"; st.textContent = "✕ Type a subnet with its prefix, e.g. 10.5.5.0/30"; return null; }
+  if (e.usable < BigInt(Math.max(1, ends.length))){ st.className = "fielderr"; st.textContent = `✕ ${e.text} is too small for ${ends.length} IPs`; return null; }
+  if (!ends.length){ st.textContent = "Neither end has a WLAN interface that takes an IP (choose wlan interfaces not in a bridge)."; return e; }
+  st.textContent = ends.length === 2 ? `1st IP → ${$("k-ialab").textContent}, 2nd IP → ${$("k-iblab").textContent}` : `1st IP → the WLAN end`;
+  return e;
+}
+function applySubnet(){
+  validateLink();                                   // sets which ends take an IP
+  const e = subnetState(); if (!e || e.kind !== "subnet") return;
+  const fmt = e.v === 4 ? fmtV4 : fmtV6, first = e.v === 4 && e.prefix < 31 ? e.start + 1n : e.start;
+  let i = 0n;
+  for (const x of ["a", "b"]){
+    const inp = $("k-ip" + x); if (inp.hidden) continue;
+    inp.value = `${fmt(first + i)}/${e.prefix}`; inp.dataset.touched = "1"; i++;
+  }
+  validateLink();
+}
 function validateAddr(A, B){
   $("k-palab").textContent = `Interface on ${A ? "“" + trunc(A.name, 16) + "”" : "“From”"}`;
   $("k-pblab").textContent = `Interface on ${B ? "“" + trunc(B.name, 16) + "”" : "“To”"}`;
@@ -3995,7 +4032,15 @@ function validateAddr(A, B){
     : "IPs come from the interface you pick. Give an interface its IP on the device page. A port inside a bridge has no IP of its own: the IP belongs to the bridge.";
   const ra = wlanEnd("a", A, "b"), rb = wlanEnd("b", B, "a");
   const show = (id, r, typed) => { const e = r.e; $(id).innerHTML = typed ? `<b>${esc(portValue(id === "k-enda" ? "a" : "b"))}</b><small>WLAN IP</small>` : `<b>${esc(e.head)}</b><small>${esc(e.sub)}</small>`; };
-  show("k-enda", ra, !$("k-ipa").hidden); show("k-endb", rb, !$("k-ipb").hidden);
+  const show2 = () => { show("k-enda", ra, !$("k-ipa").hidden); show("k-endb", rb, !$("k-ipb").hidden); };
+  show2();
+  const sub = subnetState(), subTyped = linkType === "wireless" && $("k-sub").value.trim();
+  if (subTyped && !sub){ linkAddrPlan = null; $("k-netstate").className = ""; $("k-netstate").textContent = ""; show2(); return false; }
+  if (subTyped) for (const [x, r] of [["a", ra], ["b", rb]]){
+    const inp = $("k-ip" + x);
+    if (!inp.hidden && r.ip){ const q = parseRaw(r.ip); if (!q || !inCidr(sub.text, q.v, q.addr)){ $("k-ip" + x + "err").textContent = `✕ ${r.ip} is not inside ${sub.text}`; r.ok = false; } }
+  }
+
   const st = $("k-netstate"); st.className = ""; st.textContent = "";
   linkAddrPlan = null;
   if (!ra.ok || !rb.ok) return false;
@@ -4024,6 +4069,7 @@ function validateAddr(A, B){
   return true;
 }
 ["k-a","k-b","k-band","k-width"].forEach(id => $(id).addEventListener("change", validateLink));
+$("k-sub").addEventListener("input", applySubnet);
 ["k-freq","k-sig","k-dist"].forEach(id => $(id).addEventListener("input", validateLink));
 $("kCancel").onclick = () => $("linkSheet").close();
 $("linkForm").addEventListener("submit", async ev => {
