@@ -477,6 +477,8 @@ button.tag{cursor:pointer;font-size:.9rem;padding:5px 11px}
 .logday{font-weight:800;color:var(--muted);margin:18px 0 6px;font-size:1rem;letter-spacing:.04em;text-transform:uppercase}
 .loglist{display:flex;flex-direction:column;gap:6px}
 .logrow{display:grid;grid-template-columns:60px 1fr;gap:10px;background:var(--panel);border:1.5px solid var(--line);border-left-width:6px;border-radius:var(--r);padding:10px 12px;text-align:left;width:100%;font-size:1rem}
+.logrow.clear{border-left-color:var(--sig)} .lact.clear{color:var(--sig)}
+#logacts{margin:12px 0 0} #logacts[hidden]{display:none}
 .logrow.add{border-left-color:var(--ok)} .logrow.edit{border-left-color:var(--warn)} .logrow.delete{border-left-color:var(--sig)} .logrow.import{border-left-color:var(--data)}
 .logrow.go{cursor:pointer}
 .logrow.go:active{border-color:var(--data)}
@@ -975,6 +977,7 @@ svg .sitehdr-n{fill:var(--gold)}
     <div class="readouts" id="logreadouts"></div>
     <div class="mapfilter" id="logfilter" style="margin-top:12px"></div>
     <input class="search" id="logsearch" type="search" placeholder="Search person, site, IP, device…" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="btnrow" id="logacts" hidden><button type="button" class="btn btn-danger btn-sm" id="logClear" style="width:auto;margin:0">Clear history</button></div>
     <div id="loglist"></div>
   </section>
 
@@ -993,6 +996,7 @@ svg .sitehdr-n{fill:var(--gold)}
           <div>VLANs, status &amp; tags, config backups<span class="n">–</span><span class="y">✓</span><span class="y">✓</span></div>
           <div>Delete VLANs &amp; config backups<span class="n">–</span><span class="n">–</span><span class="y">✓</span></div>
           <div>See history of changes<span class="y">✓</span><span class="y">✓</span><span class="y">✓</span></div>
+          <div>Clear history<span class="n">–</span><span class="n">–</span><span class="y">✓</span></div>
           <div>Manage users<span class="n">–</span><span class="n">–</span><span class="y">✓</span></div>
         </div>
       </div>
@@ -4369,8 +4373,8 @@ const byAt = (a, b) => String(a.at).localeCompare(String(b.at));
 let logMuted = false, pruning = false;
 const LOG_MAX = 1500;
 const KIND_OF = { [COL_SITES]: "site", [COL_NETS]: "network", [COL_DEV]: "device", [COL_LINKS]: "connection", [COL_VLANS]: "vlan", [COL_CFG]: "config", [COL_USERS]: "user" };
-const KIND_LABEL = { site: "Site", network: "Network", device: "Device", connection: "Connection", vlan: "VLAN", config: "Config backup", user: "Account", import: "Import" };
-const ACT_LABEL = { add: "ADDED", edit: "CHANGED", delete: "DELETED", import: "IMPORT" };
+const KIND_LABEL = { history: "History", site: "Site", network: "Network", device: "Device", connection: "Connection", vlan: "VLAN", config: "Config backup", user: "Account", import: "Import" };
+const ACT_LABEL = { add: "ADDED", edit: "CHANGED", delete: "DELETED", import: "IMPORT", clear: "CLEARED" };
 const SKIP_KEYS = new Set(["id", "createdAt", "updatedAt", "mx", "my", "hosts", "salt", "hash", "iter", "text"]);
 const FIELD_LABEL = { name: "Name", siteNumber: "Site number", location: "Location", contact: "Contact", notes: "Notes", ip: "Address", kind: "Kind", vlan: "VLAN",
   gateway: "Gateway", siteId: "Site", type: "Type", model: "Model", role: "Role", func: "Function", mac: "MAC", ros: "RouterOS", status: "Status", tags: "Tags",
@@ -4501,6 +4505,7 @@ function renderLog(){
   $("logfilter").querySelectorAll("[data-k]").forEach(b => b.onclick = () => { logKind = b.dataset.k; logShown = 120; renderLog(); });
   const sx = $("logfilter").querySelector("[data-site]"); if (sx) sx.onclick = () => { logSite = ""; renderLog(); };
 
+  $("logacts").hidden = !fullAccess || !changes.length;
   const all = [...changes].sort((a, b) => byAt(b, a));
   const today = dayKey(new Date()), week = Date.now() - 7 * 864e5;
   $("logreadouts").innerHTML = [
@@ -4531,6 +4536,28 @@ function renderLog(){
   const m = $("logMore"); if (m) m.onclick = () => { logShown += 200; renderLog(); };
 }
 $("logsearch").addEventListener("input", () => { logShown = 120; renderLog(); });
+/* wipe every history entry, then leave one line saying who cleared it */
+async function clearHistory(){
+  if (!fullAccess) return;
+  const n = changes.length;
+  pruning = true;
+  try {
+    if (db){
+      const ids = changes.map(c => c.id);
+      for (let i = 0; i < ids.length; i += 50) await Promise.all(ids.slice(i, i + 50).map(id => db.collection(COL_LOG).doc(id).delete()));
+    } else { changes = []; saveLocal(); }
+  } catch { pruning = false; return showAlert("Couldn't clear", "Some history entries weren't deleted. Please try again."); }
+  pruning = false;
+  await writeLog({ act: "clear", kind: "history", ref: "", label: `${n} entr${n === 1 ? "y" : "ies"} removed`, siteId: "", lines: [] });
+  logShown = 120; renderLog();
+}
+$("logClear").onclick = () => {
+  if (!fullAccess) return;
+  const n = changes.length;
+  showAlert("Clear the whole history?", `All ${n} history entr${n === 1 ? "y" : "ies"} will be deleted for everyone. This can't be undone. Export a backup (.json) first if you want to keep a copy.`, [
+    { label: `Delete ${n} entr${n === 1 ? "y" : "ies"}`, danger: true, run: clearHistory },
+    { label: "Keep it" }]);
+};
 function recentSection(site){
   const list = changes.filter(c => c.siteId === site.id).sort((a, b) => byAt(b, a)).slice(0, 5);
   if (!list.length) return "";
