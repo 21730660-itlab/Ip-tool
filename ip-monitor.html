@@ -959,17 +959,17 @@ h1,h2,h3,.ptitle b,.sname,.dname,.gnum b,.kpi b,.ro b,.vid,.snum{font-family:var
 /* ---------- left navigation: icon rail that opens when you point at it ---------- */
 @media (min-width:981px){
   .side{width:var(--rail);padding:16px 12px 14px!important;overflow:hidden;transition:width .22s var(--ease),box-shadow .22s var(--ease);background:var(--side)!important}
-  .side:hover,.side:focus-within,body.navpin .side{width:var(--railw);box-shadow:var(--lift2)}
+  .side:hover,.side:focus-within,body.menu-pinned .side{width:var(--railw);box-shadow:var(--lift2)}
   .main{margin-left:var(--rail)!important}
-  body.navpin .main{margin-left:var(--railw)!important}
+  body.menu-pinned .main{margin-left:var(--railw)!important}
   .sbrand{padding:2px 4px 16px!important;gap:12px;white-space:nowrap}
   .sbrand>div:last-child,.side .tab span,.sfoot span:last-child,.navpin{opacity:0;transition:opacity .15s var(--ease)}
-  .side:hover .sbrand>div:last-child,.side:focus-within .sbrand>div:last-child,body.navpin .sbrand>div:last-child,
-  .side:hover .tab span,.side:focus-within .tab span,body.navpin .side .tab span,
-  .side:hover .sfoot span:last-child,.side:focus-within .sfoot span:last-child,body.navpin .sfoot span:last-child,
-  .side:hover .navpin,.side:focus-within .navpin,body.navpin .navpin{opacity:1}
+  .side:hover .sbrand>div:last-child,.side:focus-within .sbrand>div:last-child,body.menu-pinned .sbrand>div:last-child,
+  .side:hover .tab span,.side:focus-within .tab span,body.menu-pinned .side .tab span,
+  .side:hover .sfoot span:last-child,.side:focus-within .sfoot span:last-child,body.menu-pinned .sfoot span:last-child,
+  .side:hover .navpin,.side:focus-within .navpin,body.menu-pinned .navpin{opacity:1}
   .navgrp{height:1px;padding:0!important;margin:12px 10px!important;font-size:0!important;background:var(--side-line);overflow:hidden}
-  .side:hover .navgrp,.side:focus-within .navgrp,body.navpin .navgrp{height:auto;margin:0!important;padding:16px 14px 6px!important;font-size:.7rem!important;background:none}
+  .side:hover .navgrp,.side:focus-within .navgrp,body.menu-pinned .navgrp{height:auto;margin:0!important;padding:16px 14px 6px!important;font-size:.7rem!important;background:none}
   .side .tab{white-space:nowrap;padding:11px 14px!important}
   .sfoot{white-space:nowrap}
 }
@@ -5308,10 +5308,10 @@ async function exportHistoryPDF(){
 $("logPdf").onclick = exportHistoryPDF;
 /* left menu: tucks away to icons; pin it open if you prefer */
 (() => {
-  const set = on => { document.body.classList.toggle("navpin", on); $("navPin").setAttribute("aria-pressed", on); $("navPin").textContent = on ? "Auto-hide menu" : "Keep menu open"; };
+  const set = on => { document.body.classList.toggle("menu-pinned", on); $("navPin").setAttribute("aria-pressed", on); $("navPin").textContent = on ? "Auto-hide menu" : "Keep menu open"; };
   let on = false; try { on = localStorage.getItem("ipmonitor.navpin") === "1"; } catch {}
   set(on);
-  $("navPin").onclick = () => { on = !document.body.classList.contains("navpin"); set(on); try { localStorage.setItem("ipmonitor.navpin", on ? "1" : "0"); } catch {} };
+  $("navPin").onclick = () => { on = !document.body.classList.contains("menu-pinned"); set(on); if (!on) $("navPin").blur(); try { localStorage.setItem("ipmonitor.navpin", on ? "1" : "0"); } catch {} };
 })();
 /* wipe every history entry, then leave one line saying who cleared it */
 async function clearHistory(){
