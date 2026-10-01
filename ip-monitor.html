@@ -498,6 +498,12 @@ button.tag{cursor:pointer;font-size:.9rem;padding:5px 11px}
 .logday{font-weight:800;color:var(--muted);margin:18px 0 6px;font-size:1rem;letter-spacing:.04em;text-transform:uppercase}
 .loglist{display:flex;flex-direction:column;gap:6px}
 .logrow{display:grid;grid-template-columns:60px 1fr;gap:10px;background:var(--panel);border:1.5px solid var(--line);border-left-width:6px;border-radius:var(--r);padding:10px 12px;text-align:left;width:100%;font-size:1rem}
+.wbbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);background:var(--acc-soft)}
+.wbbar .wbt{flex-basis:100%}
+.wbbar .wbt b{display:block;font-size:.95rem}
+.wbbar .wbt small{color:var(--muted);font-size:.84rem}
+.wbbar .btn{text-decoration:none;width:auto;margin:0}
+.wbbar .linkbtn{flex-basis:100%;text-align:left;padding:0;font-size:.85rem}
 .pwrow{display:flex !important;gap:8px;align-items:stretch;margin:0 !important}
 .pwrow input{flex:1;font-family:var(--mono)}
 .eye{border:1px solid var(--frame);background:var(--panel2);border-radius:12px;padding:0 14px;font-weight:700;cursor:pointer;color:var(--acc)}
@@ -2701,7 +2707,7 @@ async function saveFile(filename, data){
     // Standalone copy (opened from a downloaded file): use a normal browser download.
     try {
       const type = filename.endsWith(".xlsx") ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        : filename.endsWith(".csv") ? "text/csv" : filename.endsWith(".html") ? "text/html" : filename.endsWith(".rsc") ? "text/plain" : filename.endsWith(".pdf") ? "application/pdf" : "application/json";
+        : filename.endsWith(".csv") ? "text/csv" : filename.endsWith(".html") ? "text/html" : filename.endsWith(".rsc") || filename.endsWith(".cmd") ? "text/plain" : filename.endsWith(".pdf") ? "application/pdf" : "application/json";
       const url = URL.createObjectURL(new Blob([data], { type }));
       const a = document.createElement("a");
       a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
@@ -4601,6 +4607,67 @@ function renderDevices(){
 $("dvsite").addEventListener("change", () => { dvSite = $("dvsite").value; renderDevices(); });
 $("dvsearch").addEventListener("input", () => renderDevices());
 
+/* ======================= WINBOX: open a MikroTik already logged in =======================
+   WinBox accepts "address user password" on its command line (WinBox 3 and 4).
+   1. winbox://open/?addr=…&user=…&pass=…  — works after a one-time setup that teaches Windows the link
+   2. a per-device .cmd launcher           — works with no setup, then deletes itself                */
+function winboxURL(d){
+  const port = d.winbox || "8291", q = new URLSearchParams({ addr: `${d.ip}:${port}`, user: d.user || "", pass: d.pass || "" });
+  return `winbox://open/?${q.toString()}`;
+}
+/* PowerShell that finds WinBox (remembered path, usual folders, PATH, or asks once) and starts it with the login */
+function winboxPS(fixed){
+  const lit = v => "'" + String(v ?? "").replace(/'/g, "''") + "'";
+  return [
+    fixed ? `$q = @{ addr = ${lit(fixed.addr)}; user = ${lit(fixed.user)}; pass = ${lit(fixed.pass)} }`
+      : String.raw`param([string]$u)
+$q = @{}
+try { $uri = [Uri]$u } catch { exit }
+foreach ($p in $uri.Query.TrimStart('?').Split('&')) { if ($p) { $kv = $p.Split('=', 2); $q[$kv[0]] = [Uri]::UnescapeDataString(($kv[1] -replace '\+', ' ')) } }`,
+    String.raw`Add-Type -AssemblyName System.Windows.Forms
+$cfg = Join-Path $env:APPDATA 'IPMonitor\winbox-path.txt'
+$wb = $null
+if (Test-Path $cfg) { $wb = (Get-Content $cfg -Raw).Trim() }
+if (-not $wb -or -not (Test-Path $wb)) {
+  $wb = @("$env:ProgramFiles\MikroTik\WinBox\WinBox.exe", "$env:LOCALAPPDATA\Programs\WinBox\WinBox.exe",
+          "$env:USERPROFILE\Desktop\WinBox.exe", "$env:USERPROFILE\Desktop\winbox64.exe", "$env:USERPROFILE\Desktop\winbox.exe",
+          "$env:USERPROFILE\Downloads\WinBox.exe", "$env:USERPROFILE\Downloads\winbox64.exe", "$env:USERPROFILE\Downloads\winbox.exe") |
+        Where-Object { Test-Path $_ } | Select-Object -First 1
+  if (-not $wb) { $c = Get-Command WinBox.exe, winbox64.exe, winbox.exe -ErrorAction SilentlyContinue | Select-Object -First 1; if ($c) { $wb = $c.Source } }
+}
+if (-not $wb) {
+  $f = New-Object System.Windows.Forms.OpenFileDialog
+  $f.Title = 'Where is WinBox? (asked only once)'; $f.Filter = 'WinBox (*.exe)|*.exe'
+  if ($f.ShowDialog() -ne 'OK') { exit }
+  $wb = $f.FileName
+}
+New-Item -ItemType Directory -Force -Path (Split-Path $cfg) | Out-Null
+Set-Content -Path $cfg -Value $wb
+$a = @($q['addr'], $q['user'], $q['pass']) | ForEach-Object { '"' + ([string]$_ -replace '"', '\"') + '"' }
+Start-Process -FilePath $wb -ArgumentList ($a -join ' ')`].join("\n");
+}
+const utf16b64 = t => { let b = ""; for (const ch of t){ const c = ch.charCodeAt(0); b += String.fromCharCode(c & 255, c >> 8); } return btoa(b); };
+const utf8b64 = t => btoa(String.fromCharCode(...new TextEncoder().encode(t)));
+function winboxLauncher(d){
+  const port = d.winbox || "8291", ps = winboxPS({ addr: `${d.ip}:${port}`, user: d.user || "", pass: d.pass || "" });
+  const cmd = ["@echo off", `rem IP Monitor - open ${d.name} (${d.ip}:${port}) in WinBox. This file deletes itself after use.`,
+    `powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -EncodedCommand ${utf16b64(ps)}`,
+    `(goto) 2>nul & del "%~f0"`].join("\r\n") + "\r\n";
+  saveFile(`winbox-${d.name.replace(/[^A-Za-z0-9._-]+/g, "_")}.cmd`, cmd);
+}
+function winboxSetup(){
+  const ps = winboxPS(null);
+  const cmd = ["@echo off", "rem IP Monitor - one-time setup so winbox:// links open WinBox already logged in (current Windows user only).",
+    "set \"DIR=%APPDATA%\\IPMonitor\"", "if not exist \"%DIR%\" mkdir \"%DIR%\"",
+    `powershell -NoProfile -Command "[IO.File]::WriteAllText($env:APPDATA + '\\IPMonitor\\winbox-link.ps1', [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${utf8b64(ps)}')))"`,
+    `reg add "HKCU\\Software\\Classes\\winbox" /ve /d "URL:WinBox login link" /f >nul`,
+    `reg add "HKCU\\Software\\Classes\\winbox" /v "URL Protocol" /d "" /f >nul`,
+    `reg add "HKCU\\Software\\Classes\\winbox\\shell\\open\\command" /ve /d "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \\"%DIR%\\winbox-link.ps1\\" \\"%%1\\"" /f >nul`,
+    "echo.", "echo Done. \"Open in Winbox\" buttons in IP Monitor now start WinBox already logged in.", "echo To undo: reg delete HKCU\\Software\\Classes\\winbox /f", "pause"].join("\r\n") + "\r\n";
+  showAlert("One-time setup for “Open in Winbox”", "Download and run this small file once on your Windows PC. It teaches Windows to open winbox:// links with WinBox. After that, “Open in Winbox” logs you in with one click. No admin rights needed.", [
+    { label: "Download setup (.cmd)", primary: true, run: () => saveFile("winbox-link-setup.cmd", cmd) }, { label: "Cancel" }]);
+}
+
 /* ======================= DEVICE DETAILS PAGE ======================= */
 /* MikroTik devices open their own page; other brands open the edit sheet */
 function showDevice(id){ if (devById(id)) location.hash = "#device/" + encodeURIComponent(id); }
@@ -4639,7 +4706,10 @@ function renderDevicePage(){
         ["Web address", web ? `<code>${esc(web)}</code>${copyBtn("wbx")}` : "—", true],
         ["Username", d.user ? `<code>${esc(d.user)}</code>${copyBtn("user")}` : "—", true],
         ["Password", secret(d.pass, "pass"), true],
-        ["MAC address", d.mac]])}</div>
+        ["MAC address", d.mac]])}${mt && !readOnly && d.ip ? `<div class="wbbar"><div class="wbt"><b>Log in with WinBox</b><small>Opens WinBox on your PC with ${esc(secrets.wbx)}${d.user ? ", user " + esc(d.user) : ""}${d.pass ? " and the saved password" : ""}.</small></div>
+          <a class="btn btn-primary btn-sm" id="wbOpen" href="${esc(winboxURL(d))}" target="_blank" rel="noopener">Open in WinBox</a>
+          <button type="button" class="btn btn-line btn-sm" id="wbCmd">Download launcher (.cmd)</button>
+          <button type="button" class="linkbtn" id="wbSetup">First time? Set up “Open in WinBox” on this PC</button></div>` : ""}</div>
       ${wl ? `<div class="card"><div class="card-h"><h2>Wireless</h2><span>${esc(d.role ? ROLE_LABEL[d.role] : "")}</span></div>${kv([
         mt ? ["Protocol", WPROTO_LABEL[d.wproto] || ""] : null, mt ? ["Security", WSEC_LABEL[d.wsec] || ""] : null,
         mt && d.wsec && d.wsec !== "none" ? ["Pre-shared key", secret(d.psk, "psk"), true] : null,
@@ -4664,6 +4734,8 @@ function renderDevicePage(){
   $("dvBack").onclick = () => { history.length > 1 ? history.back() : (location.hash = "#devices"); };
   const e = $("dvEdit"); if (e) e.onclick = () => openDev(d.id);
   const cb = $("dvCfg"); if (cb) cb.onclick = () => openCfg(d.id);
+  const wc = $("wbCmd"); if (wc) wc.onclick = () => winboxLauncher(d);
+  const ws = $("wbSetup"); if (ws) ws.onclick = winboxSetup;
   const sp = $("dvSite"); if (sp) sp.onclick = () => { location.hash = "#site/" + encodeURIComponent(d.siteId); };
   box.querySelectorAll("[data-show]").forEach(b => b.onclick = () => { const c = box.querySelector(`[data-sec="${b.dataset.show}"]`), on = b.textContent === "Show";
     c.textContent = on ? secrets[b.dataset.show] : "••••••••"; b.textContent = on ? "Hide" : "Show"; });
