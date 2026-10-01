@@ -5078,7 +5078,36 @@ function applyAuth(){
   }
   route();
 }
-function logout(){ me = null; clearSession(); $("l-pass").value = ""; showAuthTab("login"); applyAuth(); }
+function doLogout(){ me = null; clearSession(); $("l-pass").value = ""; showAuthTab("login"); applyAuth(); }
+function saveState(){
+  const n = DBF.name || DB_FILE;
+  if (IN_ARTIFACT) return { ok: true, msg: "Your changes are saved in the shared database." };
+  if (DBF.state === "live" && !DBF.dirty) return { ok: true, msg: `All changes are saved in the database file ${n}${DBF.savedAt ? ` (last saved ${dbfTime(DBF.savedAt)})` : ""}.` };
+  if (DBF.state === "live") return { ok: false, msg: `The last change is still being saved to ${n}.` };
+  if (DBF.state === "ask" || DBF.state === "error") return { ok: false, msg: `Your changes are NOT in the database file ${n} yet, because the file is not connected. Press Save to connect it and save.` };
+  if (DBF.state === "conflict") return { ok: false, msg: `${n} was changed somewhere else. Press Save to keep your version in the file, or Cancel and open Backup to choose.` };
+  if (DBF.state === "manual") return { ok: !DBF.dirty, msg: DBF.dirty ? `You have changes that are not in ${n}. Press Save to download the updated file, then replace the old file with it.` : `Nothing new since ${n} was opened or last downloaded.` };
+  return { ok: false, msg: "No database file is linked, so your data is only in this browser. Press Save to create the database file." };
+}
+async function saveNow(){
+  if (DBF.state === "live") await dbfWrite();
+  else if (DBF.state === "ask" || DBF.state === "error"){ if (DBF.handle && await dbfPerm(DBF.handle, true)) await dbfAttach(DBF.handle, false); else await dbfOpen(); }
+  else if (DBF.state === "conflict"){ DBF.state = "live"; await dbfWrite(true); }
+  else if (DBF.state === "manual"){ await saveFile(DBF.name || DB_FILE, dbfText()); DBF.dirty = false; dbfMark(false); dbfRender(); }
+  else if (!IN_ARTIFACT) await dbfCreate();
+  return saveState().ok;
+}
+function logout(){
+  const st = saveState();
+  showAlert("You are logging out", (st.ok ? "✓ " : "⚠ ") + st.msg + (st.ok ? "" : "\n\nPlease make sure your data is saved before you leave."), [
+    { label: st.ok ? "Save again and log out" : "Save and log out", primary: true, run: async () => {
+      const ok = await saveNow();
+      if (ok) doLogout();
+      else showAlert("Not saved yet", saveState().msg, [{ label: "Try again", primary: true, run: () => logout() }, { label: "Log out anyway", danger: true, run: doLogout }, { label: "Cancel" }]);
+    } },
+    { label: "Log out", danger: !st.ok, run: doLogout },
+    { label: "Cancel" }]);
+}
 
 function showAuthTab(t){
   $("aLoginTab").setAttribute("aria-selected", t === "login");
@@ -6359,7 +6388,7 @@ function dbfStatus(){
   const n = `<b>${esc(DBF.name || DB_FILE)}</b>`;
   switch (DBF.state){
     case "live": return [dbfDot(), `${n}<small>${DBF.dirty ? "Saving changes…" : `Linked · every change is saved to this file${DBF.savedAt ? ` · last saved ${dbfTime(DBF.savedAt)}` : ""}`}</small>`];
-    case "manual": return [dbfDot(), `${n}<small>${DBF.dirty ? "Unsaved changes: press Save database file and replace the old file." : "Opened. This browser can't write to files directly, so press Save database file after changes."}</small>`];
+    case "manual": return [dbfDot(), `${n}<small>${DBF.dirty ? "Unsaved changes: this browser can't write into files, so press “Download the updated database file” and replace the old file with it. Use Chrome or Edge for automatic saving." : "Opened. This browser can't write into files directly. Use Chrome or Edge for automatic saving, or download the updated file after changes."}</small>`];
     case "ask": return ["ask", `${n}<small>The browser needs your OK once per session to use this file. Press Reconnect.</small>`];
     case "conflict": return ["err", `${n}<small>The file was changed in another window or computer. Choose which version to keep.</small>`];
     case "error": return ["err", `${n}<small>${esc(DBF.err || "The file couldn't be used.")}</small>`];
@@ -6371,8 +6400,8 @@ function dbfButtons(where){
   const add = (id, label, primary) => b.push(`<button type="button" class="btn ${primary ? "btn-primary" : "btn-line"} btn-sm" data-dbf="${id}">${label}</button>`);
   if (DBF.state === "ask" || DBF.state === "error") add("reconnect", `Reconnect ${esc(DBF.name || "file")}`, true);
   if (DBF.state === "conflict"){ add("reload", "Load the file's version", true); add("overwrite", "Keep mine (overwrite file)"); }
-  if (DBF.state === "manual" && (DBF.dirty || where === "page")) add("save", "Save database file", DBF.dirty);
-  if (DBF.state === "live" && where === "page") add("save", "Save now");
+  if (DBF.state === "manual" && (DBF.dirty || where === "page")) add("save", "Download the updated database file", DBF.dirty);
+  if (DBF.state === "live" && where === "page") add("save", "Save to database file now");
   if (can && (DBF.state !== "live" || where === "page")) add("open", DBF.handle || DBF.state === "manual" ? "Open another database file" : "Open database file", DBF.state === "none");
   if (can && where === "page") add("create", DBF.handle ? "Save as new database file" : "Create database file from this data");
   if (where === "page" && fullAccess) add("download", "Download a copy (.json)");
@@ -6400,8 +6429,12 @@ function dbfSitesStatus(){
   else if (IS_OFFLINE) setStatus("live", "Offline app · database built in", `Carries data from ${SEED.snapshotLabel || "its last save"}. Changes save in this browser. Link a database file on the Backup page to keep them in a file.`);
   else setStatus("local", "Saved in this browser only", "No database file is linked. Go to Backup → Database file to open ip-monitor-db.json or create one.");
 }
+const DBF_PEND = "ipmonitor.dbfPending", DBF_SEEN = "ipmonitor.dbfSeen";
+const dbfPending = () => { try { return localStorage.getItem(DBF_PEND) === "1"; } catch { return false; } };
+function dbfMark(pending, mtime){ try { if (pending) localStorage.setItem(DBF_PEND, "1"); else localStorage.removeItem(DBF_PEND); if (mtime) localStorage.setItem(DBF_SEEN, String(mtime)); } catch {} }
 function dbfQueue(){
-  if (!DBF.ready) return;
+  // a change while the linked file waits for Reconnect: keep it, and write it to the file as soon as it is connected again
+  if (!DBF.ready){ if (DBF.handle && !DBF.loading && me) dbfMark(true); return; }
   DBF.dirty = true;
   if (DBF.state === "live"){ clearTimeout(DBF.timer); DBF.timer = setTimeout(dbfWrite, 350); }
   dbfRender();
@@ -6414,20 +6447,32 @@ async function dbfPerm(h, ask){
 /* load a database file's text: it replaces what's in the browser (the file is the source of truth) */
 async function dbfLoadText(text){
   const data = parseBackup(JSON.parse(text));
-  const was = DBF.ready; DBF.ready = false;
-  try { return await replaceAll(data); } finally { DBF.ready = was; }
+  const was = DBF.ready; DBF.ready = false; DBF.loading = true;
+  try { return await replaceAll(data); } finally { DBF.ready = was; DBF.loading = false; }
 }
 async function dbfAttach(h, create){
   try {
     if (!await dbfPerm(h, false)){ DBF.handle = h; DBF.name = h.name; DBF.state = "ask"; return dbfRender(); }
     const f = await h.getFile(), text = await f.text();
     DBF.handle = h; DBF.name = h.name; DBF.err = "";
+    let seen = 0; try { seen = Number(localStorage.getItem(DBF_SEEN)) || 0; } catch {}
     if (create || !text.trim()){ DBF.ready = true; DBF.state = "live"; DBF.mtime = 0; await dbfWrite(); }
+    else if (dbfPending() && seen && f.lastModified <= seen + 1500){
+      // changes were made here while the file was not connected, and nobody changed the file since: save them into it
+      DBF.ready = true; DBF.state = "live"; DBF.mtime = f.lastModified; await dbfWrite(true);
+      if (DBF.state === "live") toast(`Changes made while the file was disconnected are now saved in ${h.name}.`);
+    }
+    else if (dbfPending()){
+      // both changed: let the person choose (Backup page → keep mine / load the file's version)
+      DBF.ready = true; DBF.state = "conflict"; DBF.mtime = f.lastModified;
+      toast("You made changes while the database file was disconnected, and the file was changed too. Open Backup to choose which to keep.");
+    }
     else {
       DBF.ready = false;
       try { await dbfLoadText(text); }
       catch { DBF.state = "error"; DBF.err = "This file isn't an IP Monitor database. Open the right .json file."; return dbfRender(); }
       DBF.mtime = f.lastModified; DBF.ready = true; DBF.dirty = false; DBF.state = "live"; DBF.savedAt = new Date(f.lastModified).toISOString();
+      dbfMark(false, f.lastModified);
     }
     try { await kvSet("dbfile", h); } catch {}
   } catch { DBF.state = "error"; DBF.err = "The file couldn't be read. It may have been moved or renamed: open it again."; DBF.ready = false; }
@@ -6444,7 +6489,8 @@ async function dbfWrite(force){
     const w = await DBF.handle.createWritable();
     await w.write(dbfText()); await w.close();
     DBF.mtime = (await DBF.handle.getFile()).lastModified; DBF.dirty = false; DBF.savedAt = new Date().toISOString();
-  } catch { DBF.state = "error"; DBF.err = "Couldn't save to the file (it may be moved, open in another program, or permission was removed). Press Reconnect; your changes are kept here meanwhile."; }
+    dbfMark(false, DBF.mtime);
+  } catch { DBF.state = "error"; DBF.ready = false; dbfMark(true); DBF.err = "Couldn't save to the file (it may be moved, open in another program, or permission was removed). Press Reconnect; your changes are kept here meanwhile."; }
   finally {
     DBF.writing = false; dbfRender();
     if (DBF.again){ DBF.again = false; if (DBF.state === "live") dbfWrite(); }
@@ -6460,7 +6506,10 @@ async function dbfCheckExternal(){
 }
 document.addEventListener("visibilitychange", () => { if (!document.hidden) dbfCheckExternal(); });
 window.addEventListener("focus", dbfCheckExternal);
-window.addEventListener("beforeunload", e => { if (DBF.dirty){ if (DBF.state === "live") dbfWrite(); e.preventDefault(); e.returnValue = ""; } });
+window.addEventListener("beforeunload", e => {
+  if (DBF.dirty && DBF.state === "live") dbfWrite();
+  if (me || DBF.dirty || dbfPending()){ e.preventDefault(); e.returnValue = ""; }   // browsers show their own "Leave site?" box here
+});
 
 function dbfHasLocalData(){ return sites.length || networks.length || devices.length; }
 async function dbfOpen(){
@@ -6488,10 +6537,10 @@ document.addEventListener("click", async e => {
   const a = b.dataset.dbf;
   if (a === "open") dbfOpen();
   else if (a === "create") dbfCreate();
-  else if (a === "reconnect"){ if (DBF.handle && await dbfPerm(DBF.handle, true)) dbfAttach(DBF.handle, false); else dbfOpen(); }
+  else if (a === "reconnect"){ if (DBF.state === "live") return; if (DBF.handle && await dbfPerm(DBF.handle, true)) dbfAttach(DBF.handle, false); else dbfOpen(); }
   else if (a === "save"){ if (DBF.state === "live") dbfWrite(); else { await saveFile(DBF.name || DB_FILE, dbfText()); DBF.dirty = false; dbfRender(); } }
   else if (a === "download") saveFile(`ip-monitor-db-${stamp()}.json`, dbfText());
-  else if (a === "reload"){ DBF.state = "live"; DBF.dirty = false; DBF.mtime = 0; dbfAttach(DBF.handle, false); }
+  else if (a === "reload"){ DBF.state = "live"; DBF.dirty = false; DBF.mtime = 0; dbfMark(false); dbfAttach(DBF.handle, false); }
   else if (a === "overwrite"){ DBF.state = "live"; dbfWrite(true); }
   else if (a === "forget") showAlert("Unlink database file?", "The app stops saving to the file. The file itself is not deleted, and the data stays in this browser.", [
     { label: "Unlink", primary: true, run: async () => { try { await kvSet("dbfile", undefined); } catch {} Object.assign(DBF, { handle: null, name: "", state: "none", ready: false, dirty: false }); dbfRender(); renderAll(); } },
@@ -6503,6 +6552,16 @@ $("dbfInput").onchange = async () => {
   try { await dbfLoadText(await f.text()); } catch { return showAlert("Can't open", "That file isn't an IP Monitor database (.json)."); }
   Object.assign(DBF, { handle: null, name: f.name, state: "manual", ready: true, dirty: false, savedAt: "" }); dbfRender();
 };
+let dbfAsking = false;
+async function dbfAutoReconnect(){
+  if (dbfAsking || !["ask", "error"].includes(DBF.state) || !DBF.handle) return;
+  dbfAsking = true;
+  try { if (await dbfPerm(DBF.handle, true)) await dbfAttach(DBF.handle, false); } finally { dbfAsking = false; }
+}
+document.addEventListener("pointerdown", dbfAutoReconnect, true);
+document.addEventListener("keydown", dbfAutoReconnect, true);
+/* write anything not saved yet when the page is hidden or closed */
+document.addEventListener("visibilitychange", () => { if (document.hidden && DBF.dirty && DBF.state === "live") dbfWrite(); });
 async function dbfInit(){
   if (IN_ARTIFACT || typeof indexedDB === "undefined") return dbfRender();
   let h = null; try { h = await kvGet("dbfile"); } catch {}
