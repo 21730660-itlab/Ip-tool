@@ -3097,7 +3097,16 @@ $("expXlsx").onclick = async () => {
     await saveFile(`ip-monitor-${stamp()}.xlsx`, data);
   } catch { showAlert("Export failed", "The Excel file couldn't be built. Please try the CSV export."); }
 };
-$("impBtn").onclick = () => { $("impFile").value = ""; $("impFile").click(); };
+$("impBtn").onclick = async () => {
+  if (!fullAccess) return;
+  // Chrome / Edge: pick the file with its handle, so it can become the database that every change is saved into
+  if (FS_API && !IN_ARTIFACT){
+    let h; try { [h] = await window.showOpenFilePicker(DB_PICK); } catch { return; }
+    let text; try { text = await (await h.getFile()).text(); } catch { return showAlert("Can't read", "The file couldn't be read."); }
+    return importText(text, h.name, h);
+  }
+  $("impFile").value = ""; $("impFile").click();
+};
 /* any IP Monitor file (backup .json, database file, old v1 list) -> flat { sites, networks, devices, ... } */
 function parseBackup(j){
   let data;
@@ -3124,15 +3133,25 @@ function parseBackup(j){
 }
 $("impFile").onchange = async () => {
   const f = $("impFile").files[0]; if (!f || !fullAccess) return;
+  importText(await f.text(), f.name, null);
+};
+function importText(text, fname, handle){
+  const f = { name: fname };
   let data;
-  try { data = parseBackup(JSON.parse(await f.text())); }
+  try { data = parseBackup(JSON.parse(text)); }
   catch { return showAlert("Can't import", "That file isn't an IP Monitor backup (.json)."); }
-  showAlert("Restore backup?", `${data.sites.length} sites, ${data.networks.length} networks${data.devices ? `, ${data.devices.length} devices, ${(data.links || []).length} connections` : ""}${data.vlans ? `, ${data.vlans.length} VLANs` : ""}${data.configs ? `, ${data.configs.length} config backups` : ""}${data.users ? ` and ${data.users.length} accounts` : ""} found.\n\nRestore: everything is put back exactly as it was in the backup, every network in its own site. The current sites, networks, devices and connections are replaced.\n\nMerge: keep what is here and add the backup's items. Newer changes win; anything that would overlap is skipped.`, [
-    { label: "Restore (replace all)", primary: true, run: async () => { const r = await replaceAll(data, { log: "Restored from backup " + f.name }); showAlert("Backup restored", resultText(r)); } },
-    { label: "Merge", run: async () => showAlert("Import finished", resultText(await importData(data))) },
+  const link = handle ? [{ label: "Use this file as the database (saves into it automatically)", primary: true, run: async () => {
+    if (!await dbfPerm(handle, true)) return showAlert("Permission needed", "Allow the browser to edit the file (choose Edit / Allow), so every change can be saved into it.");
+    dbfMark(false); await dbfAttach(handle, false);
+    if (DBF.state === "live") showAlert("Database linked", `${handle.name} is now your database. Every change is saved into this same file automatically. No download needed.`);
+  } }] : [];
+  showAlert("Restore backup?", `${data.sites.length} sites, ${data.networks.length} networks${data.devices ? `, ${data.devices.length} devices, ${(data.links || []).length} connections` : ""}${data.vlans ? `, ${data.vlans.length} VLANs` : ""}${data.configs ? `, ${data.configs.length} config backups` : ""}${data.users ? ` and ${data.users.length} accounts` : ""} found.${handle ? `\n\nUse as the database: this file becomes your database, and every change is saved into it automatically.` : ""}\n\nRestore: everything is put back exactly as it was in the backup, every network in its own site. The current sites, networks, devices and connections are replaced.\n\nMerge: keep what is here and add the backup's items. Newer changes win; anything that would overlap is skipped.`, [
+    ...link,
+    { label: "Restore (replace all)", primary: !handle, run: async () => { const r = await replaceAll(data, { log: "Restored from backup " + f.name }); showAlert("Backup restored", resultText(r) + (DBF.state === "live" ? ` Saved into ${DBF.name}.` : "")); } },
+    { label: "Merge", run: async () => showAlert("Import finished", resultText(await importData(data)) + (DBF.state === "live" ? ` Saved into ${DBF.name}.` : "")) },
     { label: "Cancel" }
   ]);
-};
+}
 function resultText(r){
   let t = `${r.sites} sites, ${r.nets} networks${r.devs ? `, ${r.devs} devices` : ""}${r.links ? `, ${r.links} connections` : ""}${r.vlans ? `, ${r.vlans} VLANs` : ""}${r.cfgs ? `, ${r.cfgs} config backups` : ""} added, ${r.updated || 0} updated${r.users ? `, ${r.users} accounts synced` : ""}.`;
   if (r.skipped.length) t += ` ${r.skipped.length} skipped: ` + r.skipped.slice(0, 4).join("; ") + (r.skipped.length > 4 ? "…" : "");
@@ -6392,7 +6411,8 @@ function dbfStatus(){
     case "ask": return ["ask", `${n}<small>The browser needs your OK once per session to use this file. Press Reconnect.</small>`];
     case "conflict": return ["err", `${n}<small>The file was changed in another window or computer. Choose which version to keep.</small>`];
     case "error": return ["err", `${n}<small>${esc(DBF.err || "The file couldn't be used.")}</small>`];
-    default: return ["local", `<b>No database file linked</b><small>Data is kept only in this browser. Open your ${DB_FILE}, or create one from the data here.</small>`];
+    default: return ["local", FS_API ? `<b>No database file linked</b><small>Data is kept only in this browser. Open your ${DB_FILE} and every change is saved into it automatically.</small>`
+      : `<b>This browser can't save into a file</b><small>Automatic saving into ${DB_FILE} works in Google Chrome or Microsoft Edge on a computer. Open IP-Monitor.html there.</small>`];
   }
 }
 function dbfButtons(where){
