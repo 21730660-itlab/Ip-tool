@@ -504,6 +504,11 @@ button.tag{cursor:pointer;font-size:.9rem;padding:5px 11px}
 .wbbar .wbt small{color:var(--muted);font-size:.84rem}
 .wbbar .btn{text-decoration:none;width:auto;margin:0}
 .wbbar .linkbtn{flex-basis:100%;text-align:left;padding:0;font-size:.85rem}
+.wbnote{flex-basis:100%;color:var(--muted);font-size:.8rem}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--side);color:#fff;padding:10px 16px;border-radius:8px;font-weight:600;font-size:.92rem;z-index:100;box-shadow:var(--lift2);animation:toastin .2s ease}
+@keyframes toastin{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+.dvc-web{grid-area:st;justify-self:end;align-self:end;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--acc);border:1px solid var(--frame);border-radius:6px;padding:3px 9px;background:var(--panel)}
+.dvc-web:hover{border-color:var(--acc);background:var(--acc-soft)}
 .pwrow{display:flex !important;gap:8px;align-items:stretch;margin:0 !important}
 .pwrow input{flex:1;font-family:var(--mono)}
 .eye{border:1px solid var(--frame);background:var(--panel2);border-radius:12px;padding:0 14px;font-weight:700;cursor:pointer;color:var(--acc)}
@@ -4601,11 +4606,27 @@ function renderDevices(){
       <span class="dvc-type">${esc(TYPE_LABEL[d.type] || "")}</span>
       <span class="dvc-ip">${esc(d.ip || firstAddr(d) || "no IP")}${up ? `<small>via ${esc(d.uplink.bridge)} · ${esc(up.name)}</small>` : ""}</span>
       <span class="dvc-meta">${s ? `#${esc(s.siteNumber)} ${esc(s.name)}` : ""}${d.user ? ` · 👤 ${esc(d.user)}` : ""}${d.pass ? " · 🔒" : ""}</span>
-      ${statusPill(d) ? `<span class="dvc-st">${statusPill(d)}</span>` : ""}</button>`; }).join("") + `</div>`;
-  $("dvcards").querySelectorAll("[data-d]").forEach(b => b.onclick = () => showDevice(b.dataset.d));
+      ${statusPill(d) ? `<span class="dvc-st">${statusPill(d)}</span>` : ""}${!mt && d.ip ? `<a class="dvc-web" href="${esc(webURL(d))}" target="_blank" rel="noopener" data-web="${esc(d.id)}" title="Open the web page${d.pass && !readOnly ? " and copy the password" : ""}">Web ↗</a>` : ""}</button>`; }).join("") + `</div>`;
+  $("dvcards").querySelectorAll("[data-d]").forEach(b => b.onclick = e => { if (e.target.closest("[data-web]")) return; showDevice(b.dataset.d); });
+  $("dvcards").querySelectorAll("[data-web]").forEach(a => a.addEventListener("click", e => { e.stopPropagation(); webCopyPass(devById(a.dataset.web)); }));
 }
 $("dvsite").addEventListener("change", () => { dvSite = $("dvsite").value; renderDevices(); });
 $("dvsearch").addEventListener("input", () => renderDevices());
+
+/* ======================= WEB LOGIN for other-brand devices ======================= */
+/* address of the device's web page; with creds=true the login rides in the link (http://user:pass@ip:port/) */
+function webURL(d, creds){
+  const port = String(d.winbox || ""), https = port === "443", host = d.ip + (port && port !== "80" && port !== "443" ? ":" + port : "");
+  const auth = creds && (d.user || d.pass) ? `${encodeURIComponent(d.user || "")}${d.pass ? ":" + encodeURIComponent(d.pass) : ""}@` : "";
+  return `${https ? "https" : "http"}://${auth}${host}/`;
+}
+function toast(msg){ const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3200); }
+/* opening the page also puts the password on the clipboard, ready to paste into the device's login form */
+async function webCopyPass(d){
+  if (readOnly || !d.pass) return;
+  try { await navigator.clipboard.writeText(d.pass); toast(`Password for ${d.name} copied${d.user ? ` · user: ${d.user}` : ""} — paste it on the login page`); }
+  catch { toast(`Opening ${d.name} · user: ${d.user || "—"} (couldn't copy the password, use Show on the device page)`); }
+}
 
 /* ======================= WINBOX: open a MikroTik already logged in =======================
    WinBox accepts "address user password" on its command line (WinBox 3 and 4).
@@ -4709,7 +4730,10 @@ function renderDevicePage(){
         ["MAC address", d.mac]])}${mt && !readOnly && d.ip ? `<div class="wbbar"><div class="wbt"><b>Log in with WinBox</b><small>Opens WinBox on your PC with ${esc(secrets.wbx)}${d.user ? ", user " + esc(d.user) : ""}${d.pass ? " and the saved password" : ""}.</small></div>
           <a class="btn btn-primary btn-sm" id="wbOpen" href="${esc(winboxURL(d))}" target="_blank" rel="noopener">Open in WinBox</a>
           <button type="button" class="btn btn-line btn-sm" id="wbCmd">Download launcher (.cmd)</button>
-          <button type="button" class="linkbtn" id="wbSetup">First time? Set up “Open in WinBox” on this PC</button></div>` : ""}</div>
+          <button type="button" class="linkbtn" id="wbSetup">First time? Set up “Open in WinBox” on this PC</button></div>` : ""}${!mt && d.ip ? `<div class="wbbar"><div class="wbt"><b>Log in through the web page</b><small>${esc(webURL(d))}${d.user ? " · user " + esc(d.user) : ""}${readOnly ? "" : d.pass ? " · the password is copied when you open it — just paste it" : " · no password saved"}</small></div>
+          <a class="btn btn-primary btn-sm" id="webOpen" href="${esc(webURL(d))}" target="_blank" rel="noopener">Open web page</a>
+          ${!readOnly && (d.user || d.pass) ? `<a class="btn btn-line btn-sm" id="webAuth" href="${esc(webURL(d, true))}" target="_blank" rel="noopener">Open with login in the link</a>
+          <span class="wbnote">“Login in the link” signs in straight away on devices that use the browser’s own sign-in pop-up (many cameras, NVRs and phones). For devices with their own login form, use “Open web page” and paste.</span>` : ""}</div>` : ""}</div>
       ${wl ? `<div class="card"><div class="card-h"><h2>Wireless</h2><span>${esc(d.role ? ROLE_LABEL[d.role] : "")}</span></div>${kv([
         mt ? ["Protocol", WPROTO_LABEL[d.wproto] || ""] : null, mt ? ["Security", WSEC_LABEL[d.wsec] || ""] : null,
         mt && d.wsec && d.wsec !== "none" ? ["Pre-shared key", secret(d.psk, "psk"), true] : null,
@@ -4735,6 +4759,7 @@ function renderDevicePage(){
   const e = $("dvEdit"); if (e) e.onclick = () => openDev(d.id);
   const cb = $("dvCfg"); if (cb) cb.onclick = () => openCfg(d.id);
   const wc = $("wbCmd"); if (wc) wc.onclick = () => winboxLauncher(d);
+  const wo = $("webOpen"); if (wo) wo.addEventListener("click", () => webCopyPass(d));
   const ws = $("wbSetup"); if (ws) ws.onclick = winboxSetup;
   const sp = $("dvSite"); if (sp) sp.onclick = () => { location.hash = "#site/" + encodeURIComponent(d.siteId); };
   box.querySelectorAll("[data-show]").forEach(b => b.onclick = () => { const c = box.querySelector(`[data-sec="${b.dataset.show}"]`), on = b.textContent === "Show";
