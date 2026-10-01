@@ -269,6 +269,16 @@ body.locked .wrap,body.locked #fab{display:none!important}
 .authbody .btn-primary{width:100%;margin-top:6px;padding:15px}
 .autherr{color:var(--sig);font-weight:700;min-height:1.4em;margin:6px 0}
 .authnote{color:var(--muted);font-size:.92rem;padding:0 18px 18px;margin:0}
+#alertMsg{white-space:pre-line}
+.dbfbar{margin:0 18px 18px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2, rgba(29,78,216,.05));display:grid;gap:10px;font-size:.92rem}
+.dbfbar .btnrow,.dbfbtns{display:flex;flex-wrap:wrap;gap:8px}
+.dbfst{display:flex;align-items:flex-start;gap:10px;line-height:1.4}
+.dbfst .dbdot{margin-top:6px}
+.dbfst b{word-break:break-all}
+.dbfst small{display:block;color:var(--muted);font-size:.85rem}
+.dbdot.ask{background:#F59E0B} .dbdot.err{background:#EF4444} .dbdot.dirty{background:#F59E0B}
+.dbfhelp{color:var(--muted);font-size:.9rem;margin-top:12px}
+.dbfcard{border-left:4px solid var(--gold, #C9A227)}
 .types{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .type{border:1.5px solid var(--line);background:var(--panel2);border-radius:var(--r);padding:12px;text-align:left;cursor:pointer}
 .type b{display:block;font-size:1.1rem}
@@ -1106,6 +1116,7 @@ svg .sitebox{fill:var(--panel2);stroke:var(--frame)}
       <button class="btn btn-primary" id="r-btn" type="submit">Create account</button>
     </form>
     <p class="authnote" id="authnote"></p>
+    <div class="dbfbar" id="dbfLogin" hidden></div>
   </div>
 </div>
 
@@ -1223,6 +1234,15 @@ svg .sitebox{fill:var(--panel2);stroke:var(--frame)}
 
   <!-- ============ BACKUP ============ -->
   <section class="page" id="page-backup">
+    <div class="card dbfcard" id="dbfCard" hidden>
+      <div class="card-h"><h2>Database file</h2><span>the app's data, kept in its own file</span></div>
+      <div class="card-b">
+        <div class="dbfstate" id="dbfState"></div>
+        <div class="btnrow dbfbtns" id="dbfBtns"></div>
+        <p class="dbfhelp">The app and the data are two separate files: <b>IP-Monitor.html</b> is the program, <b>ip-monitor-db.json</b> is the database.
+          Link the database once and every change is written to it straight away. Keep both files together, copy the .json to back it up, and open the same .json from another computer to see the same data.</p>
+      </div>
+    </div>
     <div class="card">
       <div class="card-h"><h2>Backup</h2><span>JSON · CSV</span></div>
       <div class="card-b">
@@ -1247,6 +1267,7 @@ svg .sitebox{fill:var(--panel2);stroke:var(--frame)}
         <button class="btn btn-line btn-sm" id="impBtn">Import / sync backup</button>
         <p style="margin-top:8px">To keep the online app and the offline copy the same: export a backup (.json) from one and import it into the other. Newer changes win, and accounts come along when an administrator exports.</p>
         <input type="file" id="impFile" accept=".json,application/json" hidden>
+        <input type="file" id="dbfInput" accept=".json,application/json" hidden>
       </div>
     </div>
   </section>
@@ -1699,6 +1720,13 @@ const IS_OFFLINE = !!SEED;
 const PSK_SHA256 = "8b3ce0c3977ee6e8d53efeb1fb5b4f82bfb85e44b706c4eded197bd78875da67";
 let db = null, downloads = null, readOnly = true, dbReadOnly = false, fullAccess = false;
 let sites = [], networks = [], users = [], devices = [], links = [], vlans = [], configs = [], changes = [], me = null, usersLoaded = false;
+/* database file (offline): see DATABASE FILE below */
+const IN_ARTIFACT = !!(window.claude && window.claude.use);
+const FS_API = typeof window.showOpenFilePicker === "function" && typeof window.showSaveFilePicker === "function";
+const DB_FILE = "ip-monitor-db.json";
+const DB_PICK = { types: [{ description: "IP Monitor database", accept: { "application/json": [".json"] } }] };
+// state: none | ask (remembered, needs one click to allow) | live (auto-saving) | manual (save by download) | conflict | error
+const DBF = { handle: null, name: "", state: "none", ready: false, dirty: false, timer: 0, mtime: 0, savedAt: "", writing: false, again: false, err: "" };
 let editingSiteId = null, editingNetId = null, editingHostId = null, formHosts = [];
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1914,8 +1942,10 @@ function markSeed(){ try { if (SEED && SEED.snapshotAt) localStorage.setItem(SEE
 function seedIsNewer(){ try { const last = localStorage.getItem(SEED_KEY); return !!(SEED && SEED.snapshotAt && (!last || SEED.snapshotAt > last)); } catch { return false; } }
 let storageWarned = false;
 function saveLocal(){
+  dbfQueue();
   try { localStorage.setItem(LOCAL_V2, JSON.stringify({ sites, networks, users, devices, links, vlans, configs, changes })); return true; }
   catch {
+    if (DBF.ready) return true;          // the database file holds the data; the browser copy is only a cache
     if (!storageWarned && (IS_OFFLINE || !db)){ storageWarned = true; setTimeout(() => showAlert("Browser storage is full", "The last change may not be kept after closing. Export a backup (.json) now, then delete old config backups or history to free space."), 0); }
     return false;
   }
@@ -1961,7 +1991,7 @@ async function putDoc(col, obj){
   else {
     const arr = arrOf(col), i = arr.findIndex(x => x.id === obj.id);
     if (i >= 0) arr[i] = obj; else arr.push(obj);
-    saveLocal(); renderAll();
+    if (!bulk){ saveLocal(); renderAll(); }
   }
   logWrite(col, before, obj);
 }
@@ -3068,33 +3098,38 @@ $("expXlsx").onclick = async () => {
   } catch { showAlert("Export failed", "The Excel file couldn't be built. Please try the CSV export."); }
 };
 $("impBtn").onclick = () => { $("impFile").value = ""; $("impFile").click(); };
+/* any IP Monitor file (backup .json, database file, old v1 list) -> flat { sites, networks, devices, ... } */
+function parseBackup(j){
+  let data;
+  if (Array.isArray(j)) data = convertV1(j);
+  else if (Array.isArray(j.sites) && j.sites.some(x => Array.isArray(x && x.networks))){
+    data = { sites: [], networks: [] };
+    for (const st of j.sites){
+      const { networks: nets, ...siteRest } = st;
+      const sid = siteRest.id || newId();
+      if (siteRest.name !== "Unassigned networks" || siteRest.siteNumber) data.sites.push({ ...siteRest, id: sid });
+      for (const n of nets || []) data.networks.push({ ...n, siteId: sid });
+    }
+  }
+  else if (Array.isArray(j.networks) && Array.isArray(j.sites)) data = { sites: j.sites, networks: j.networks };
+  else if (Array.isArray(j.sites)) data = convertV1(j.sites);
+  else throw 0;
+  if (Array.isArray(j.users)) data.users = j.users;
+  if (Array.isArray(j.devices)) data.devices = j.devices;
+  if (Array.isArray(j.links)) data.links = j.links;
+  if (Array.isArray(j.vlans)) data.vlans = j.vlans;
+  if (Array.isArray(j.configs)) data.configs = j.configs;
+  if (Array.isArray(j.changes)) data.changes = j.changes;
+  return data;
+}
 $("impFile").onchange = async () => {
   const f = $("impFile").files[0]; if (!f || !fullAccess) return;
   let data;
-  try {
-    const j = JSON.parse(await f.text());
-    if (Array.isArray(j)) data = convertV1(j);
-    else if (Array.isArray(j.sites) && j.sites.some(x => Array.isArray(x && x.networks))){
-      data = { sites: [], networks: [] };
-      for (const st of j.sites){
-        const { networks: nets, ...siteRest } = st;
-        const sid = siteRest.id || newId();
-        if (siteRest.name !== "Unassigned networks" || siteRest.siteNumber) data.sites.push({ ...siteRest, id: sid });
-        for (const n of nets || []) data.networks.push({ ...n, siteId: sid });
-      }
-    }
-    else if (Array.isArray(j.networks) && Array.isArray(j.sites)) data = { sites: j.sites, networks: j.networks };
-    else if (Array.isArray(j.sites)) data = convertV1(j.sites);
-    else throw 0;
-    if (Array.isArray(j.users)) data.users = j.users;
-    if (Array.isArray(j.devices)) data.devices = j.devices;
-    if (Array.isArray(j.links)) data.links = j.links;
-    if (Array.isArray(j.vlans)) data.vlans = j.vlans;
-    if (Array.isArray(j.configs)) data.configs = j.configs;
-    if (Array.isArray(j.changes)) data.changes = j.changes;
-  } catch { return showAlert("Can't import", "That file isn't an IP Monitor backup (.json)."); }
-  showAlert("Import / sync backup?", `${data.sites.length} sites, ${data.networks.length} networks${data.devices ? `, ${data.devices.length} devices, ${(data.links || []).length} connections` : ""}${data.vlans ? `, ${data.vlans.length} VLANs` : ""}${data.configs ? `, ${data.configs.length} config backups` : ""}${data.users ? ` and ${data.users.length} accounts` : ""} found. Newer changes replace older ones, new items are added, and anything that would overlap is skipped.`, [
-    { label: "Import", primary: true, run: async () => showAlert("Import finished", resultText(await importData(data))) },
+  try { data = parseBackup(JSON.parse(await f.text())); }
+  catch { return showAlert("Can't import", "That file isn't an IP Monitor backup (.json)."); }
+  showAlert("Restore backup?", `${data.sites.length} sites, ${data.networks.length} networks${data.devices ? `, ${data.devices.length} devices, ${(data.links || []).length} connections` : ""}${data.vlans ? `, ${data.vlans.length} VLANs` : ""}${data.configs ? `, ${data.configs.length} config backups` : ""}${data.users ? ` and ${data.users.length} accounts` : ""} found.\n\nRestore: everything is put back exactly as it was in the backup, every network in its own site. The current sites, networks, devices and connections are replaced.\n\nMerge: keep what is here and add the backup's items. Newer changes win; anything that would overlap is skipped.`, [
+    { label: "Restore (replace all)", primary: true, run: async () => { const r = await replaceAll(data, { log: "Restored from backup " + f.name }); showAlert("Backup restored", resultText(r)); } },
+    { label: "Merge", run: async () => showAlert("Import finished", resultText(await importData(data))) },
     { label: "Cancel" }
   ]);
 };
@@ -3117,12 +3152,32 @@ function cleanHosts(e, list){
   }
   return out;
 }
+let bulk = false;   // during an import/restore: save and redraw once at the end, not after every item
 async function importData(data, opts = {}){
-  logMuted = true;
+  logMuted = true; bulk = true;
   let res;
-  try { res = await importCore(data, opts); } finally { logMuted = false; }
+  try { res = await importCore(data, opts); } finally { logMuted = false; bulk = false; if (!db) saveLocal(); renderAll(); }
   if (res.sites || res.nets || res.updated || res.devs || res.links || res.vlans || res.cfgs)
     writeLog({ act: "import", kind: "import", ref: "", label: resultText(res), siteId: "", lines: [] });
+  return res;
+}
+/* restore: wipe sites, networks, devices, connections, VLANs and configs, then load the file exactly as it is (same ids, same sites).
+   Accounts and history are replaced only when the file carries them. */
+async function replaceAll(data, opts = {}){
+  logMuted = true; bulk = true;
+  let res;
+  try {
+    const wipe = [[COL_CFG, configs], [COL_LINKS, links], [COL_VLANS, vlans], [COL_DEV, devices], [COL_NETS, networks], [COL_SITES, sites]];
+    const keepUsers = !(Array.isArray(data.users) && data.users.length);
+    if (db){ for (const [col, arr] of wipe) for (const x of [...arr]) { try { await db.collection(col).doc(x.id).delete(); } catch {} } }
+    sites = []; networks = []; devices = []; links = []; vlans = []; configs = [];
+    if (!db && !keepUsers) users = [];
+    if (!db && Array.isArray(data.changes)) changes = [];
+    res = await importCore(data, { ...opts, trusted: true });
+  } finally { logMuted = false; bulk = false; }
+  if (!db) saveLocal();
+  if (opts.log) writeLog({ act: "import", kind: "import", ref: "", label: `${opts.log}: ${resultText(res)}`, siteId: "", lines: [] });
+  syncSession(); renderAll();
   return res;
 }
 async function importCore(data, opts = {}){
@@ -3133,7 +3188,8 @@ async function importCore(data, opts = {}){
     const num = String(raw.siteNumber ?? "").trim() || "?";
     const rid = cleanId(raw.id);
     const sameId = rid && sites.find(s => s.id === rid);
-    const sameNum = sites.find(s => String(s.siteNumber).trim().toLowerCase() === num.toLowerCase());
+    // match by id only: matching by site number put networks into the wrong site when two databases numbered sites alike
+    const sameNum = !rid && num !== "?" && sites.find(s => String(s.siteNumber).trim().toLowerCase() === num.toLowerCase());
     const target = sameId || sameNum;
     const clean = { name: String(raw.name).trim(), siteNumber: num, location: String(raw.location || ""), contact: String(raw.contact || ""),
       notes: String(raw.notes || ""), ...metaOf(raw), createdAt: raw.createdAt || new Date().toISOString(), updatedAt: raw.updatedAt || new Date().toISOString(),
@@ -3147,6 +3203,8 @@ async function importCore(data, opts = {}){
       }
       continue;
     }
+    const taken = n => sites.some(s => String(s.siteNumber).trim().toLowerCase() === n.toLowerCase());
+    if (taken(clean.siteNumber)){ let k = 2; while (taken(`${num}-${k}`)) k++; clean.siteNumber = `${num}-${k}`; }
     const site = { id: rid || newId(), ...clean };
     try { await putDoc(COL_SITES, site); if (db) sites.push(site); idMap.set(raw.id, site.id); res.sites++; }
     catch { res.skipped.push(`site ${site.name} (save failed)`); }
@@ -5006,6 +5064,7 @@ function applyAuth(){
   fullAccess = !dbReadOnly && perm === "full";
   document.body.classList.toggle("locked", !me);
   $("tab-users").hidden = !fullAccess;
+  dbfRender();
   if (me){
     $("who").innerHTML = `<div class="uchip"><span class="avatar">${esc(String(me.username).slice(0, 2).toUpperCase())}</span><span class="uinfo"><b>${esc(me.username)}</b><small>${me.role === "admin" ? "Administrator" : "Guest"} · <span class="perm ${perm}">${PERM_LABEL[perm]}</span></small></span></div><button type="button" id="logoutBtn" class="logout" aria-label="Log out"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"/></svg><span>Log out</span></button>`;
     $("logoutBtn").onclick = logout;
@@ -5765,7 +5824,8 @@ function shellTitle(r){
   if (r.page === "site"){ const s = sites.find(x => x.id === r.id); t = s ? s.name : r.id === "_none" ? "Unassigned networks" : "Site"; sub = s ? `Site #${s.siteNumber}${s.location ? " · " + s.location : ""}` : ""; }
   $("ptitle").textContent = t; $("psub").textContent = sub;
   document.title = `${t} · IP Monitor`;
-  $("sfoot").innerHTML = `<span class="dbdot ${IS_OFFLINE ? "off" : db ? (dbReadOnly ? "ro" : "live") : "local"}"></span><span>${IS_OFFLINE ? "Offline copy" : db ? (dbReadOnly ? "Shared database · view only" : "Shared database") : "Saved on this device"}</span>`;
+  $("sfoot").innerHTML = DBF.handle || DBF.state === "manual" ? `<span class="dbdot ${dbfDot()}"></span><span>${esc(dbfShort())}</span>`
+    : `<span class="dbdot ${IS_OFFLINE ? "off" : db ? (dbReadOnly ? "ro" : "live") : "local"}"></span><span>${IS_OFFLINE ? "Offline copy" : db ? (dbReadOnly ? "Shared database · view only" : "Shared database") : "Saved on this device"}</span>`;
 }
 function openMenu(){ document.body.classList.add("navopen"); }
 function closeMenu(){ document.body.classList.remove("navopen"); }
@@ -6277,17 +6337,179 @@ async function exportMapPDF(scope){
 $("pdfAllBtn").onclick = () => exportMapPDF("all");
 $("pdfSiteBtn").onclick = () => { if (mapFilter !== "all") exportMapPDF(mapFilter); };
 
+/* ======================= DATABASE FILE ======================= */
+// Offline the data lives in its own file (ip-monitor-db.json) next to the app. The app reads it on start and writes
+// every change back to it (Chrome / Edge: File System Access API). Other browsers open it and save it by download.
+
+function idbOpen(){ return new Promise((res, rej) => { const r = indexedDB.open("ipmonitor", 1); r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+async function kvGet(k){ const d = await idbOpen(); return new Promise((res, rej) => { const q = d.transaction("kv").objectStore("kv").get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); }
+async function kvSet(k, v){ const d = await idbOpen(); return new Promise((res, rej) => { const t = d.transaction("kv", "readwrite"), o = t.objectStore("kv"); v === undefined ? o.delete(k) : o.put(v, k); t.oncomplete = () => res(); t.onerror = () => rej(t.error); }); }
+
+function dbfText(){
+  return JSON.stringify({ app: "ip-monitor", kind: "database", version: 4, savedAt: new Date().toISOString(), savedBy: me ? me.username : "",
+    sites, networks, devices, links, vlans, configs, changes, users }, null, 1);
+}
+const dbfTime = iso => iso ? new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+function dbfDot(){ return { live: DBF.dirty ? "dirty" : "live", manual: DBF.dirty ? "dirty" : "live", ask: "ask", conflict: "err", error: "err" }[DBF.state] || "local"; }
+function dbfShort(){
+  return { live: DBF.dirty ? "Saving…" : `Database · ${DBF.name}`, manual: DBF.dirty ? "Database · unsaved changes" : `Database · ${DBF.name}`,
+    ask: "Database locked · reconnect", conflict: "Database changed elsewhere", error: "Database file error" }[DBF.state] || "Saved on this device";
+}
+function dbfStatus(){
+  const n = `<b>${esc(DBF.name || DB_FILE)}</b>`;
+  switch (DBF.state){
+    case "live": return [dbfDot(), `${n}<small>${DBF.dirty ? "Saving changes…" : `Linked · every change is saved to this file${DBF.savedAt ? ` · last saved ${dbfTime(DBF.savedAt)}` : ""}`}</small>`];
+    case "manual": return [dbfDot(), `${n}<small>${DBF.dirty ? "Unsaved changes: press Save database file and replace the old file." : "Opened. This browser can't write to files directly, so press Save database file after changes."}</small>`];
+    case "ask": return ["ask", `${n}<small>The browser needs your OK once per session to use this file. Press Reconnect.</small>`];
+    case "conflict": return ["err", `${n}<small>The file was changed in another window or computer. Choose which version to keep.</small>`];
+    case "error": return ["err", `${n}<small>${esc(DBF.err || "The file couldn't be used.")}</small>`];
+    default: return ["local", `<b>No database file linked</b><small>Data is kept only in this browser. Open your ${DB_FILE}, or create one from the data here.</small>`];
+  }
+}
+function dbfButtons(where){
+  const b = [], can = !me || fullAccess;        // anyone on the sign-in screen; after sign-in only Full access
+  const add = (id, label, primary) => b.push(`<button type="button" class="btn ${primary ? "btn-primary" : "btn-line"} btn-sm" data-dbf="${id}">${label}</button>`);
+  if (DBF.state === "ask" || DBF.state === "error") add("reconnect", `Reconnect ${esc(DBF.name || "file")}`, true);
+  if (DBF.state === "conflict"){ add("reload", "Load the file's version", true); add("overwrite", "Keep mine (overwrite file)"); }
+  if (DBF.state === "manual" && (DBF.dirty || where === "page")) add("save", "Save database file", DBF.dirty);
+  if (DBF.state === "live" && where === "page") add("save", "Save now");
+  if (can && (DBF.state !== "live" || where === "page")) add("open", DBF.handle || DBF.state === "manual" ? "Open another database file" : "Open database file", DBF.state === "none");
+  if (can && where === "page") add("create", DBF.handle ? "Save as new database file" : "Create database file from this data");
+  if (where === "page" && fullAccess) add("download", "Download a copy (.json)");
+  if (can && where === "page" && (DBF.handle || DBF.state === "manual")) add("forget", "Unlink");
+  return b.join("");
+}
+function dbfRender(){
+  const show = !IN_ARTIFACT;
+  const [dot, html] = dbfStatus();
+  const st = `<div class="dbfst"><span class="dbdot ${dot}"></span><div>${html}</div></div>`;
+  $("dbfLogin").hidden = !show;
+  if (show) $("dbfLogin").innerHTML = st + `<div class="btnrow">${dbfButtons("login")}</div>`;
+  $("dbfCard").hidden = !show || !me;
+  if (show){ $("dbfState").innerHTML = st; $("dbfBtns").innerHTML = dbfButtons("page"); }
+  if ($("sfoot") && (DBF.handle || DBF.state === "manual")) $("sfoot").innerHTML = `<span class="dbdot ${dbfDot()}"></span><span>${esc(dbfShort())}</span>`;
+}
+function dbfQueue(){
+  if (!DBF.ready) return;
+  DBF.dirty = true;
+  if (DBF.state === "live"){ clearTimeout(DBF.timer); DBF.timer = setTimeout(dbfWrite, 350); }
+  dbfRender();
+}
+async function dbfPerm(h, ask){
+  const o = { mode: "readwrite" };
+  try { if (await h.queryPermission(o) === "granted") return true; if (ask) return await h.requestPermission(o) === "granted"; } catch {}
+  return false;
+}
+/* load a database file's text: it replaces what's in the browser (the file is the source of truth) */
+async function dbfLoadText(text){
+  const data = parseBackup(JSON.parse(text));
+  const was = DBF.ready; DBF.ready = false;
+  try { return await replaceAll(data); } finally { DBF.ready = was; }
+}
+async function dbfAttach(h, create){
+  try {
+    if (!await dbfPerm(h, false)){ DBF.handle = h; DBF.name = h.name; DBF.state = "ask"; return dbfRender(); }
+    const f = await h.getFile(), text = await f.text();
+    DBF.handle = h; DBF.name = h.name; DBF.err = "";
+    if (create || !text.trim()){ DBF.ready = true; DBF.state = "live"; DBF.mtime = 0; await dbfWrite(); }
+    else {
+      DBF.ready = false;
+      try { await dbfLoadText(text); }
+      catch { DBF.state = "error"; DBF.err = "This file isn't an IP Monitor database. Open the right .json file."; return dbfRender(); }
+      DBF.mtime = f.lastModified; DBF.ready = true; DBF.dirty = false; DBF.state = "live"; DBF.savedAt = new Date(f.lastModified).toISOString();
+    }
+    try { await kvSet("dbfile", h); } catch {}
+  } catch { DBF.state = "error"; DBF.err = "The file couldn't be read. It may have been moved or renamed: open it again."; DBF.ready = false; }
+  dbfRender();
+}
+async function dbfWrite(force){
+  clearTimeout(DBF.timer); DBF.timer = 0;
+  if (!DBF.handle || !DBF.ready || DBF.state !== "live") return;
+  if (DBF.writing){ DBF.again = true; return; }
+  DBF.writing = true;
+  try {
+    const cur = await DBF.handle.getFile();
+    if (!force && DBF.mtime && cur.lastModified > DBF.mtime + 1500){ DBF.state = "conflict"; toast("The database file was changed elsewhere. Open Backup to choose which version to keep."); return; }
+    const w = await DBF.handle.createWritable();
+    await w.write(dbfText()); await w.close();
+    DBF.mtime = (await DBF.handle.getFile()).lastModified; DBF.dirty = false; DBF.savedAt = new Date().toISOString();
+  } catch { DBF.state = "error"; DBF.err = "Couldn't save to the file (it may be moved, open in another program, or permission was removed). Press Reconnect; your changes are kept here meanwhile."; }
+  finally {
+    DBF.writing = false; dbfRender();
+    if (DBF.again){ DBF.again = false; if (DBF.state === "live") dbfWrite(); }
+  }
+}
+/* another window or computer saved the file: pick it up when this window comes back */
+async function dbfCheckExternal(){
+  if (DBF.state !== "live" || !DBF.handle || DBF.dirty || DBF.writing) return;
+  try {
+    const f = await DBF.handle.getFile();
+    if (f.lastModified > DBF.mtime + 1500){ await dbfLoadText(await f.text()); DBF.mtime = f.lastModified; DBF.savedAt = new Date(f.lastModified).toISOString(); dbfRender(); toast("Database reloaded: the file was changed in another window."); }
+  } catch {}
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) dbfCheckExternal(); });
+window.addEventListener("focus", dbfCheckExternal);
+window.addEventListener("beforeunload", e => { if (DBF.dirty){ if (DBF.state === "live") dbfWrite(); e.preventDefault(); e.returnValue = ""; } });
+
+function dbfHasLocalData(){ return sites.length || networks.length || devices.length; }
+async function dbfOpen(){
+  const go = async () => {
+    if (FS_API){
+      let h; try { [h] = await window.showOpenFilePicker(DB_PICK); } catch { return; }
+      if (!await dbfPerm(h, true)) return showAlert("Permission needed", "The app needs permission to edit the file so it can save your changes. Open it again and choose Edit / Allow.");
+      return dbfAttach(h, false);
+    }
+    $("dbfInput").value = ""; $("dbfInput").click();
+  };
+  if (!DBF.handle && DBF.state !== "manual" && dbfHasLocalData() && me) return showAlert("Open database file?", "The data shown now (kept in this browser) will be replaced by the file's data. If you want to keep it, use “Create database file from this data” instead, or export a backup first.", [
+    { label: "Open file", primary: true, run: go }, { label: "Cancel" }]);
+  go();
+}
+async function dbfCreate(){
+  if (FS_API){
+    let h; try { h = await window.showSaveFilePicker({ suggestedName: DB_FILE, ...DB_PICK }); } catch { return; }
+    return dbfAttach(h, true);
+  }
+  await saveFile(DB_FILE, dbfText()); DBF.name = DB_FILE; DBF.state = "manual"; DBF.ready = true; DBF.dirty = false; dbfRender();
+}
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-dbf]"); if (!b) return;
+  const a = b.dataset.dbf;
+  if (a === "open") dbfOpen();
+  else if (a === "create") dbfCreate();
+  else if (a === "reconnect"){ if (DBF.handle && await dbfPerm(DBF.handle, true)) dbfAttach(DBF.handle, false); else dbfOpen(); }
+  else if (a === "save"){ if (DBF.state === "live") dbfWrite(); else { await saveFile(DBF.name || DB_FILE, dbfText()); DBF.dirty = false; dbfRender(); } }
+  else if (a === "download") saveFile(`ip-monitor-db-${stamp()}.json`, dbfText());
+  else if (a === "reload"){ DBF.state = "live"; DBF.dirty = false; DBF.mtime = 0; dbfAttach(DBF.handle, false); }
+  else if (a === "overwrite"){ DBF.state = "live"; dbfWrite(true); }
+  else if (a === "forget") showAlert("Unlink database file?", "The app stops saving to the file. The file itself is not deleted, and the data stays in this browser.", [
+    { label: "Unlink", primary: true, run: async () => { try { await kvSet("dbfile", undefined); } catch {} Object.assign(DBF, { handle: null, name: "", state: "none", ready: false, dirty: false }); dbfRender(); renderAll(); } },
+    { label: "Cancel" }]);
+});
+$("dbfInput").onchange = async () => {
+  const f = $("dbfInput").files[0]; if (!f) return;
+  DBF.ready = false;
+  try { await dbfLoadText(await f.text()); } catch { return showAlert("Can't open", "That file isn't an IP Monitor database (.json)."); }
+  Object.assign(DBF, { handle: null, name: f.name, state: "manual", ready: true, dirty: false, savedAt: "" }); dbfRender();
+};
+async function dbfInit(){
+  if (IN_ARTIFACT || typeof indexedDB === "undefined") return dbfRender();
+  let h = null; try { h = await kvGet("dbfile"); } catch {}
+  if (h) await dbfAttach(h, false); else dbfRender();
+}
+
 /* ======================= START ======================= */
 loadLocal();
 usersLoaded = true;
 syncSession();
-if (SEED && seedIsNewer() && !(window.claude && window.claude.use)){
-  // This file carries newer data than what this browser has: merge it in (newer changes win).
+dbfInit().then(() => {
+  // A linked database file wins. Without one, an offline copy carrying newer data merges it in (newer changes win).
+  if (DBF.handle || !SEED || !seedIsNewer() || IN_ARTIFACT) return;
   importData(SEED, { trusted: true }).then(r => {
     markSeed(); syncSession();
     if (r.sites || r.nets || r.updated || r.users) showAlert("Database updated", "This file carried newer data. " + resultText(r), [{ label: "OK", primary: true }]);
   });
-}
+});
 
 </script>
 </body>
