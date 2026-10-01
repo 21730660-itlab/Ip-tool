@@ -6387,7 +6387,18 @@ function dbfRender(){
   if (show) $("dbfLogin").innerHTML = st + `<div class="btnrow">${dbfButtons("login")}</div>`;
   $("dbfCard").hidden = !show || !me;
   if (show){ $("dbfState").innerHTML = st; $("dbfBtns").innerHTML = dbfButtons("page"); }
+  if (show) dbfSitesStatus();
   if ($("sfoot") && (DBF.handle || DBF.state === "manual")) $("sfoot").innerHTML = `<span class="dbdot ${dbfDot()}"></span><span>${esc(dbfShort())}</span>`;
+}
+/* the status box on the Sites page tells where the data is really kept */
+function dbfSitesStatus(){
+  const n = DBF.name || DB_FILE;
+  if (DBF.state === "live") setStatus(DBF.dirty ? "local" : "live", `Saved in the database file · ${n}`, DBF.dirty ? "Saving the latest change…" : `Every change is written to ${n} straight away${DBF.savedAt ? ` · last saved ${dbfTime(DBF.savedAt)}` : ""}.`);
+  else if (DBF.state === "manual") setStatus(DBF.dirty ? "local" : "live", `Database file · ${n}`, DBF.dirty ? "Unsaved changes: go to Backup and press Save database file." : "This browser saves the file by download: press Save database file after changes.");
+  else if (DBF.state === "ask") setStatus("local", `Database file not connected · ${n}`, "Changes are kept in this browser only until you press Reconnect (Backup page or sign-in screen).");
+  else if (DBF.state === "conflict" || DBF.state === "error") setStatus("local", `Database file problem · ${n}`, DBF.state === "conflict" ? "The file was changed elsewhere. Open Backup to choose which version to keep." : DBF.err || "Open Backup to reconnect the file.");
+  else if (IS_OFFLINE) setStatus("live", "Offline app · database built in", `Carries data from ${SEED.snapshotLabel || "its last save"}. Changes save in this browser. Link a database file on the Backup page to keep them in a file.`);
+  else setStatus("local", "Saved in this browser only", "No database file is linked. Go to Backup → Database file to open ip-monitor-db.json or create one.");
 }
 function dbfQueue(){
   if (!DBF.ready) return;
