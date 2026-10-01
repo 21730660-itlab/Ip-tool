@@ -1086,61 +1086,6 @@ svg .sitebox{fill:var(--panel2);stroke:var(--frame)}
 .dvc-meta{grid-area:meta;color:var(--muted);font-size:.85rem}
 .dvc-st{grid-area:st}
 .logtools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-
-/* ======================= PRODUCTIVITY TOOLS ======================= */
-.searchbtn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:10px;padding:7px 10px 7px 11px;font:inherit;font-weight:600;font-size:.95rem;cursor:pointer}
-.searchbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
-.searchbtn kbd{font-family:var(--mono);font-size:.72rem;border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--muted);background:var(--panel)}
-@media (max-width:760px){.searchbtn span,.searchbtn kbd{display:none}}
-dialog.paldlg{width:min(680px,calc(100vw - 32px));max-width:none;margin:9vh auto auto;padding:0;border-radius:14px}
-.palbox{display:flex;flex-direction:column;max-height:76vh}
-.palbox input{border:0;border-bottom:1px solid var(--line);padding:18px 20px;font-size:1.2rem;background:var(--panel);color:var(--ink);outline:none;border-radius:14px 14px 0 0}
-.pallist{overflow:auto;border:0;border-radius:0;margin:0;flex:1}
-.pallist .qrow{width:100%}
-.pallist .qrow.sel{background:var(--panel2);box-shadow:inset 3px 0 0 var(--acc)}
-.palfoot{margin:0;padding:10px 16px;font-size:.85rem;color:var(--muted);border-top:1px solid var(--line)}
-.livepill{display:inline-block;font-size:.8rem;font-weight:700;border-radius:999px;padding:2px 9px;margin-left:6px;vertical-align:middle}
-.livepill.up{color:#15803D;background:rgba(34,197,94,.14)} .livepill.down{color:#B91C1C;background:rgba(239,68,68,.14)}
-svg .node.live-up .body{stroke:#22C55E;stroke-width:2.6} svg .node.live-down .body{stroke:#EF4444;stroke-width:3;stroke-dasharray:6 3}
-.audit{display:grid;gap:12px;margin-top:14px}
-.acard{border:1px solid var(--line);border-left:5px solid var(--ok);border-radius:12px;background:var(--panel);padding:12px 14px}
-.acard.crit{border-left-color:var(--sig)} .acard.warn{border-left-color:var(--warn)} .acard.info{border-left-color:var(--data)}
-.ah{display:grid;grid-template-columns:54px 1fr auto;gap:12px;align-items:center;font-size:1.05rem}
-.ah .cn{font-family:var(--mono);font-weight:800}
-.acard .hint2{margin:6px 0 0}
-.aitems{margin-top:8px;display:grid;gap:2px}
-.aitem{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 4px;border-top:1px solid var(--line)}
-.aitem span{min-width:0} .aitem b{display:block;overflow-wrap:anywhere} .aitem small{color:var(--muted);overflow-wrap:anywhere}
-.aitem .mini{flex:none}
-.fslist{display:grid;gap:6px;margin:8px 0}
-.fsrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
-.fsrow code{font-weight:700;font-size:1.02rem} .fsrow span{color:var(--muted);font-size:.9rem} .fsrow .mini:first-of-type{margin-left:auto}
-.fsrow .bad{color:var(--sig);font-weight:700}
-.fsbig{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:6px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
-.fsbig code{font-size:1.3rem;font-weight:800} .fsbig span{color:var(--muted)}
-.bkfolder{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:4px 0 10px;font-size:.95rem}
-.snaplist{display:grid;gap:6px;margin-top:12px;max-height:420px;overflow:auto}
-.snaprow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:10px}
-.snaprow small{display:block;color:var(--muted);font-size:.85rem} .snapacts{display:flex;gap:6px;flex:none}
-.tphead,.tprow{display:grid;grid-template-columns:1fr 84px 128px 40px;gap:8px;align-items:center}
-.tphead{font-size:.82rem;font-weight:700;color:var(--muted);margin:4px 0}
-.tprow{margin-bottom:6px}
-@media (max-width:560px){
-  .tphead{display:none}
-  .tprow{grid-template-columns:72px minmax(0,1fr) 40px;grid-template-areas:"n n x" "v p p";padding:8px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
-  .tprow [data-tn]{grid-area:n} .tprow [data-tv]{grid-area:v} .tprow select{grid-area:p} .tprow .xbtn{grid-area:x}
-}
-.tprow input,.tprow select{width:100%;padding:10px;border-radius:var(--r);border:1.5px solid var(--line);background:var(--panel2);font:inherit;color:var(--ink);min-width:0}
-.pwbtns{display:grid;gap:8px;margin-top:6px}
-.mini.undo{margin-top:6px;color:var(--acc)}
-.lm.undone{color:var(--muted);font-style:italic;margin-top:4px}
-.pagebtns{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
-[hidden]{display:none!important}
-.bulktext{min-height:150px}
-#bulkPrev .dt td{white-space:nowrap} #bulkPrev tr.skip td{color:var(--muted)} #bulkPrev td.good{color:var(--ok);font-weight:600} #bulkPrev td.bad{color:var(--sig);font-weight:600}
-#bulkGo,#tp-go{width:100%;margin-top:12px}
-#d-fromexp{margin-top:8px}
-.dvexp .btn{margin:0}
 </style>
 </head>
 <body class="locked">
@@ -1187,7 +1132,6 @@ svg .node.live-up .body{stroke:#22C55E;stroke-width:2.6} svg .node.live-down .bo
     <button class="tab" role="tab" id="tab-ips" data-page="ips"><svg class="nico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></svg><span>IPs &amp; Networks</span></button>
     <button class="tab" role="tab" id="tab-devices" data-page="devices"><svg class="nico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01M11 7h6M11 17h6"/></svg><span>Devices</span></button>
     <button class="tab" role="tab" id="tab-map" data-page="map"><svg class="nico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="6" r="2.5"/><circle cx="19" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M7.5 6h9M6.3 8.2l4.4 7.6M17.7 8.2l-4.4 7.6"/></svg><span>Site Map</span></button>
-    <button class="tab" role="tab" id="tab-audit" data-page="audit"><svg class="nico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><span>Health check</span></button>
     <div class="navgrp">Tools</div>
     <button class="tab" role="tab" id="tab-calc" data-page="calc"><svg class="nico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg><span>Calculator</span></button>
     <button class="tab" role="tab" id="tab-backup" data-page="backup"><svg class="nico" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg><span>Backup</span></button>
@@ -1204,7 +1148,6 @@ svg .node.live-up .body{stroke:#22C55E;stroke-width:2.6} svg .node.live-down .bo
     <button type="button" class="menubtn" id="menuBtn" aria-label="Open menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
     <div class="ptitle"><b id="ptitle">Dashboard</b><small id="psub"></small></div>
     <div class="tools">
-      <button type="button" class="searchbtn" id="searchBtn" aria-label="Search (Ctrl+K)"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span>Search</span><kbd>Ctrl K</kbd></button>
       <div class="clockbox"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ver" id="clock"></span></div>
       <button type="button" class="themebtn" id="themeBtn" aria-label="Theme">Auto</button>
       <div class="who" id="who"></div>
@@ -1214,15 +1157,11 @@ svg .node.live-up .body{stroke:#22C55E;stroke-width:2.6} svg .node.live-down .bo
   <!-- ============ DASHBOARD ============ -->
   <section class="page" id="page-dash"><div id="dash"></div></section>
 
-  <!-- ============ HEALTH CHECK ============ -->
-  <section class="page" id="page-audit"><div id="audit"></div></section>
-
   <!-- ============ SITES LIST ============ -->
   <section class="page" id="page-sites">
     <div class="readouts" id="readouts"></div>
     <div class="dbstat local" id="dbstat"><i></i><div><span id="dbtitle">Connecting to database…</span><small id="dbsub"></small></div></div>
     <div class="banner" id="migrate" hidden><p id="migtext"></p><button class="btn btn-primary btn-sm" id="migBtn">Move into database</button></div>
-    <div class="btnrow pagebtns" id="sitesActs"><button type="button" class="btn btn-primary btn-sm" id="tplBtn">+ New site from template</button><button type="button" class="btn btn-line btn-sm" id="bulkBtnS">Bulk import</button></div>
     <input class="search" id="search" type="search" placeholder="Search site, number, location or an IP" autocomplete="off" autocapitalize="off" spellcheck="false">
     <div class="hint" id="searchhint"></div>
     <div class="tagbar" id="tagbar"></div>
@@ -1305,24 +1244,6 @@ svg .node.live-up .body{stroke:#22C55E;stroke-width:2.6} svg .node.live-down .bo
       </div>
     </div>
     <div class="card">
-      <div class="card-h"><h2>Restore points</h2><span>automatic dated backups</span></div>
-      <div class="card-b">
-        <p class="hint2" style="margin-top:0">A copy of all data is saved every day, and before every restore, template or bulk import. The newest 30 are kept. Press <b>Restore</b> to go back to one.</p>
-        <div class="bkfolder" id="bkFolder"></div>
-        <button type="button" class="btn btn-line btn-sm" id="snapNow">Make a restore point now</button>
-        <div id="snapList" class="snaplist"></div>
-      </div>
-    </div>
-    <div class="card" id="liveCard">
-      <div class="card-h"><h2>Live status (ping)</h2><span>which devices answer</span></div>
-      <div class="card-b">
-        <div id="liveState"></div>
-        <div class="btnrow dbfbtns" id="liveBtns"></div>
-        <p class="dbfhelp">A web page can't ping by itself, so a small helper does it on a Windows PC: put <b>ip-monitor-ping-helper.cmd</b> in the same folder as <b>ip-monitor-db.json</b> and double-click it. Every minute it pings each device's IP and writes <b>ip-monitor-status.json</b>. Link that file here once; the dashboard, device list, map and health check then show who is online.</p>
-        <input type="file" id="liveIn" accept=".json,application/json" hidden>
-      </div>
-    </div>
-    <div class="card">
       <div class="card-h"><h2>Backup</h2><span>JSON · CSV</span></div>
       <div class="card-b">
         <p>Every export is organized as <b>Site → Network → Host</b>, numbered 1, 1.1, 1.1.1 so each row shows exactly where it belongs.</p>
@@ -1344,7 +1265,6 @@ svg .node.live-up .body{stroke:#22C55E;stroke-width:2.6} svg .node.live-down .bo
         <p id="bktypehint">Each button saves only that kind of device, for example IP cameras alone or servers alone.</p>
         <div class="dvexp" id="bktypes"></div>
         <button class="btn btn-line btn-sm" id="impBtn">Import / sync backup</button>
-        <button class="btn btn-line btn-sm" id="bulkBtnB">Bulk import hosts or devices (Excel / CSV)</button>
         <p style="margin-top:8px">To keep the online app and the offline copy the same: export a backup (.json) from one and import it into the other. Newer changes win, and accounts come along when an administrator exports.</p>
         <input type="file" id="impFile" accept=".json,application/json" hidden>
         <input type="file" id="dbfInput" accept=".json,application/json" hidden>
@@ -1402,18 +1322,6 @@ svg .node.live-up .body{stroke:#22C55E;stroke-width:2.6} svg .node.live-down .bo
       </div>
     </div>
     <div id="c-out"></div>
-    <div class="card" id="freeCard">
-      <div class="card-h"><h2>Find free space</h2><span>next free subnet · next free IP</span></div>
-      <div class="card-b">
-        <div class="two">
-          <label class="field"><span>Address block to plan from</span><input id="fs-block" value="10.0.0.0/8" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="10.0.0.0/8"></label>
-          <label class="field"><span>Subnet size you need</span><select id="fs-size"></select></label>
-        </div>
-        <div id="fs-out"></div>
-        <label class="field" style="margin-top:14px"><span>Next free IP in a network</span><select id="fs-net"></select></label>
-        <div id="fs-ip"></div>
-      </div>
-    </div>
   </section>
 </div>
 
@@ -1540,7 +1448,6 @@ svg .node.live-up .body{stroke:#22C55E;stroke-width:2.6} svg .node.live-down .bo
         <label class="field"><span>Interfaces</span><input id="d-ports" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ether1, wlan1"></label>
         <div class="portchips" id="d-portchips"></div>
         <div class="fielderr" id="d-portserr"></div>
-        <button type="button" class="btn btn-line btn-sm" id="d-fromexp">Fill from RouterOS /export…</button>
       </div>
       <div class="group" id="d-bipgroup" hidden>
         <h3>IP from a bridge subnet</h3>
@@ -1593,18 +1500,6 @@ svg .node.live-up .body{stroke:#22C55E;stroke-width:2.6} svg .node.live-down .bo
         </div>
         <label class="field" id="d-pskwrap"><span>Pre-shared key</span><span class="pwrow"><input id="d-psk" type="password" autocomplete="new-password" spellcheck="false"><button type="button" class="eye" data-eye="d-psk" aria-label="Show key">Show</button></span></label>
         <div class="fielderr" id="d-pskerr"></div>
-      </div>
-      <div class="group">
-        <h3>Hardware &amp; maintenance</h3>
-        <div class="two">
-          <label class="field"><span>Serial number</span><input id="d-serial" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
-          <label class="field"><span>Rack / location</span><input id="d-rack" autocomplete="off" placeholder="e.g. Rack A · U12"></label>
-        </div>
-        <div class="two">
-          <label class="field"><span>Purchase date</span><input id="d-buy" type="date"></label>
-          <label class="field"><span>Warranty until</span><input id="d-warranty" type="date"></label>
-        </div>
-        <label class="field"><span>Maintenance notes</span><textarea id="d-maint" placeholder="e.g. 2026-09-14 replaced power supply"></textarea></label>
       </div>
       <div class="group">
         <h3>Status &amp; tags</h3>
@@ -1793,83 +1688,6 @@ svg .node.live-up .body{stroke:#22C55E;stroke-width:2.6} svg .node.live-down .bo
   </form>
 </dialog>
 
-<dialog id="palDlg" class="paldlg" aria-label="Search">
-  <div class="palbox">
-    <input id="palIn" type="text" placeholder="Search IP, subnet, MAC, device, serial, site… or a command" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <div id="palList" class="qlist pallist"></div>
-    <p class="palfoot">↑ ↓ to move · Enter to open · Esc to close · type a subnet to get its next free IP</p>
-  </div>
-</dialog>
-
-<dialog id="pwDlg">
-  <form class="alert" id="pwForm" novalidate>
-    <h2 id="pwTitle"></h2>
-    <p id="pwMsg"></p>
-    <label class="field" style="text-align:left"><span>Master password</span><input id="pwIn" type="password" autocomplete="off"></label>
-    <label class="field" id="pwIn2wrap" style="text-align:left" hidden><span>Type it again</span><input id="pwIn2" type="password" autocomplete="off"></label>
-    <div class="fielderr" id="pwErr"></div>
-    <div class="pwbtns"><button type="submit" class="btn btn-primary" id="pwOk">OK</button><button type="button" class="btn btn-ghost" id="pwCancel">Cancel</button></div>
-  </form>
-</dialog>
-
-<dialog id="rscDlg">
-  <div class="sheet-head"><button type="button" class="btn btn-ghost" id="rscClose">Close</button><h2 id="rscTitle">Config</h2><span></span></div>
-  <div class="sheet-body">
-    <p class="hint2" style="margin-top:0">A RouterOS script made from what is saved for this device: identity, bridges, VLANs, IP addresses and wireless. Check it, then paste it into <b>WinBox → New Terminal</b>.</p>
-    <textarea id="rscOut" class="cfgtext" readonly spellcheck="false"></textarea>
-    <div class="btnrow"><button type="button" class="btn btn-primary btn-sm" id="rscCopy">Copy</button><button type="button" class="btn btn-line btn-sm" id="rscSave">Download (.rsc)</button></div>
-  </div>
-</dialog>
-
-<dialog id="expDlg">
-  <div class="sheet-head"><button type="button" class="btn btn-ghost" id="expCancel">Cancel</button><h2>Fill from /export</h2><button type="button" class="btn btn-ghost" id="expFill"><b>Fill</b></button></div>
-  <div class="sheet-body">
-    <p class="hint2" style="margin-top:0">On the router open <b>New Terminal</b>, type <code>/export</code>, copy everything and paste it here (or load an .rsc file). The form is filled with the identity, model, RouterOS version, interfaces, bridges, IP addresses and wireless settings.</p>
-    <textarea id="expIn" class="cfgtext" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="# by RouterOS 7.16&#10;/interface bridge&#10;add name=bridge1&#10;…"></textarea>
-    <div class="btnrow"><button type="button" class="btn btn-line btn-sm" id="expFile">Load .rsc file</button></div>
-    <input type="file" id="expFileIn" accept=".rsc,.txt" hidden>
-  </div>
-</dialog>
-
-<dialog id="bulkDlg">
-  <div class="sheet-head"><button type="button" class="btn btn-ghost" id="bulkCancel">Cancel</button><h2>Bulk import</h2><span></span></div>
-  <div class="sheet-body">
-    <div class="seg" id="bulkSeg"><button type="button" data-k="hosts">Hosts</button><button type="button" data-k="devices">Devices</button></div>
-    <p class="hint2" id="bulkHint"></p>
-    <textarea id="bulkText" class="cfgtext bulktext" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Copy the rows in Excel (with the header row) and paste them here, or load a file."></textarea>
-    <div class="btnrow"><button type="button" class="btn btn-line btn-sm" id="bulkFile">Load .xlsx / .csv file</button><button type="button" class="btn btn-line btn-sm" id="bulkTpl">Download template (.csv)</button></div>
-    <input type="file" id="bulkFileIn" accept=".xlsx,.csv,.txt,.tsv" hidden>
-    <div id="bulkPrev"></div>
-    <button type="button" class="btn btn-primary" id="bulkGo" disabled>Import</button>
-  </div>
-</dialog>
-
-<dialog id="tplDlg">
-  <div class="sheet-head"><button type="button" class="btn btn-ghost" id="tp-cancel">Cancel</button><h2>New site from template</h2><span></span></div>
-  <div class="sheet-body">
-    <div class="group">
-      <div class="two"><label class="field"><span>Site name <i>*</i></span><input id="tp-name" autocomplete="off"></label>
-        <label class="field"><span>Site number <i>*</i></span><input id="tp-num" autocomplete="off"></label></div>
-      <label class="field"><span>Location</span><input id="tp-loc" autocomplete="off"></label>
-      <label class="field"><span>Address block for this site</span><input id="tp-block" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="10.20.0.0/16"></label>
-      <p class="hint2">The next free /16 is suggested. Each network below gets the next free subnet inside it, and its first address as gateway.</p>
-    </div>
-    <div class="group">
-      <div class="hosthead"><h3>Networks &amp; VLANs</h3><button type="button" class="btn btn-line btn-sm" id="tp-add">+ Row</button></div>
-      <div class="tphead"><span>Name</span><span>VLAN</span><span>Size · hosts</span><span></span></div>
-      <div id="tp-rows"></div>
-      <div class="btnrow"><button type="button" class="btn btn-ghost btn-sm" id="tp-save">Save as my template</button><button type="button" class="btn btn-ghost btn-sm" id="tp-reset">Default template</button></div>
-      <div id="tp-plan"></div>
-    </div>
-    <div class="group">
-      <label class="chk"><input type="checkbox" id="tp-router" checked><span>Add a MikroTik router: bridge1 with VLAN interfaces and every gateway address (status Planned)</span></label>
-      <div id="tp-rwrap" class="two"><label class="field"><span>Router model</span><input id="tp-rmodel" autocomplete="off"></label><label class="field"><span>Router name</span><input id="tp-rname" autocomplete="off" placeholder="site name-R1"></label></div>
-    </div>
-    <div class="fielderr" id="tp-err"></div>
-    <button type="button" class="btn btn-primary" id="tp-go" disabled>Create site</button>
-  </div>
-</dialog>
-
 <dialog id="alertBox">
   <div class="alert">
     <h2 id="alertTitle">Can't save</h2>
@@ -1891,10 +1709,6 @@ const APP_PARTS = (() => {
   } catch { return null; }
 })();
 
-/* ======================= QR CODES ======================= */
-// qrcode-generator 1.4.4 · Copyright (c) 2009 Kazuhiko Arase · MIT license · https://github.com/kazuhikoarase/qrcode-generator
-var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],f={},c=function(t,r){o=function(t){for(var r=new Array(t),e=0;e<t;e+=1){r[e]=new Array(t);for(var n=0;n<t;n+=1)r[e][n]=null}return r}(i=4*e+17),l(0,0),l(i-7,0),l(0,i-7),s(),h(),d(t,r),e>=7&&v(t),null==a&&(a=p(e,n,u)),w(a,r)},l=function(t,r){for(var e=-1;e<=7;e+=1)if(!(t+e<=-1||i<=t+e))for(var n=-1;n<=7;n+=1)r+n<=-1||i<=r+n||(o[t+e][r+n]=0<=e&&e<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==e||6==e)||2<=e&&e<=4&&2<=n&&n<=4)},h=function(){for(var t=8;t<i-8;t+=1)null==o[t][6]&&(o[t][6]=t%2==0);for(var r=8;r<i-8;r+=1)null==o[6][r]&&(o[6][r]=r%2==0)},s=function(){for(var t=B.getPatternPosition(e),r=0;r<t.length;r+=1)for(var n=0;n<t.length;n+=1){var i=t[r],a=t[n];if(null==o[i][a])for(var u=-2;u<=2;u+=1)for(var f=-2;f<=2;f+=1)o[i+u][a+f]=-2==u||2==u||-2==f||2==f||0==u&&0==f}},v=function(t){for(var r=B.getBCHTypeNumber(e),n=0;n<18;n+=1){var a=!t&&1==(r>>n&1);o[Math.floor(n/3)][n%3+i-8-3]=a}for(n=0;n<18;n+=1){a=!t&&1==(r>>n&1);o[n%3+i-8-3][Math.floor(n/3)]=a}},d=function(t,r){for(var e=n<<3|r,a=B.getBCHTypeInfo(e),u=0;u<15;u+=1){var f=!t&&1==(a>>u&1);u<6?o[u][8]=f:u<8?o[u+1][8]=f:o[i-15+u][8]=f}for(u=0;u<15;u+=1){f=!t&&1==(a>>u&1);u<8?o[8][i-u-1]=f:u<9?o[8][15-u-1+1]=f:o[8][15-u-1]=f}o[i-8][8]=!t},w=function(t,r){for(var e=-1,n=i-1,a=7,u=0,f=B.getMaskFunction(r),c=i-1;c>0;c-=2)for(6==c&&(c-=1);;){for(var g=0;g<2;g+=1)if(null==o[n][c-g]){var l=!1;u<t.length&&(l=1==(t[u]>>>a&1)),f(n,c-g)&&(l=!l),o[n][c-g]=l,-1==(a-=1)&&(u+=1,a=7)}if((n+=e)<0||i<=n){n-=e,e=-e;break}}},p=function(t,r,e){for(var n=A.getRSBlocks(t,r),o=b(),i=0;i<e.length;i+=1){var a=e[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var u=0;for(i=0;i<n.length;i+=1)u+=n[i].dataCount;if(o.getLengthInBits()>8*u)throw"code length overflow. ("+o.getLengthInBits()+">"+8*u+")";for(o.getLengthInBits()+4<=8*u&&o.put(0,4);o.getLengthInBits()%8!=0;)o.putBit(!1);for(;!(o.getLengthInBits()>=8*u||(o.put(236,8),o.getLengthInBits()>=8*u));)o.put(17,8);return function(t,r){for(var e=0,n=0,o=0,i=new Array(r.length),a=new Array(r.length),u=0;u<r.length;u+=1){var f=r[u].dataCount,c=r[u].totalCount-f;n=Math.max(n,f),o=Math.max(o,c),i[u]=new Array(f);for(var g=0;g<i[u].length;g+=1)i[u][g]=255&t.getBuffer()[g+e];e+=f;var l=B.getErrorCorrectPolynomial(c),h=k(i[u],l.getLength()-1).mod(l);for(a[u]=new Array(l.getLength()-1),g=0;g<a[u].length;g+=1){var s=g+h.getLength()-a[u].length;a[u][g]=s>=0?h.getAt(s):0}}var v=0;for(g=0;g<r.length;g+=1)v+=r[g].totalCount;var d=new Array(v),w=0;for(g=0;g<n;g+=1)for(u=0;u<r.length;u+=1)g<i[u].length&&(d[w]=i[u][g],w+=1);for(g=0;g<o;g+=1)for(u=0;u<r.length;u+=1)g<a[u].length&&(d[w]=a[u][g],w+=1);return d}(o,n)};f.addData=function(t,r){var e=null;switch(r=r||"Byte"){case"Numeric":e=M(t);break;case"Alphanumeric":e=x(t);break;case"Byte":e=m(t);break;case"Kanji":e=L(t);break;default:throw"mode:"+r}u.push(e),a=null},f.isDark=function(t,r){if(t<0||i<=t||r<0||i<=r)throw t+","+r;return o[t][r]},f.getModuleCount=function(){return i},f.make=function(){if(e<1){for(var t=1;t<40;t++){for(var r=A.getRSBlocks(t,n),o=b(),i=0;i<u.length;i++){var a=u[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var g=0;for(i=0;i<r.length;i++)g+=r[i].dataCount;if(o.getLengthInBits()<=8*g)break}e=t}c(!1,function(){for(var t=0,r=0,e=0;e<8;e+=1){c(!0,e);var n=B.getLostPoint(f);(0==e||t>n)&&(t=n,r=e)}return r}())},f.createTableTag=function(t,r){t=t||2;var e="";e+='<table style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: "+(r=void 0===r?4*t:r)+"px;",e+='">',e+="<tbody>";for(var n=0;n<f.getModuleCount();n+=1){e+="<tr>";for(var o=0;o<f.getModuleCount();o+=1)e+='<td style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: 0px;",e+=" width: "+t+"px;",e+=" height: "+t+"px;",e+=" background-color: ",e+=f.isDark(n,o)?"#000000":"#ffffff",e+=";",e+='"/>';e+="</tr>"}return e+="</tbody>",e+="</table>"},f.createSvgTag=function(t,r,e,n){var o={};"object"==typeof arguments[0]&&(t=(o=arguments[0]).cellSize,r=o.margin,e=o.alt,n=o.title),t=t||2,r=void 0===r?4*t:r,(e="string"==typeof e?{text:e}:e||{}).text=e.text||null,e.id=e.text?e.id||"qrcode-description":null,(n="string"==typeof n?{text:n}:n||{}).text=n.text||null,n.id=n.text?n.id||"qrcode-title":null;var i,a,u,c,g=f.getModuleCount()*t+2*r,l="";for(c="l"+t+",0 0,"+t+" -"+t+",0 0,-"+t+"z ",l+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',l+=o.scalable?"":' width="'+g+'px" height="'+g+'px"',l+=' viewBox="0 0 '+g+" "+g+'" ',l+=' preserveAspectRatio="xMinYMin meet"',l+=n.text||e.text?' role="img" aria-labelledby="'+y([n.id,e.id].join(" ").trim())+'"':"",l+=">",l+=n.text?'<title id="'+y(n.id)+'">'+y(n.text)+"</title>":"",l+=e.text?'<description id="'+y(e.id)+'">'+y(e.text)+"</description>":"",l+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',l+='<path d="',a=0;a<f.getModuleCount();a+=1)for(u=a*t+r,i=0;i<f.getModuleCount();i+=1)f.isDark(a,i)&&(l+="M"+(i*t+r)+","+u+c);return l+='" stroke="transparent" fill="black"/>',l+="</svg>"},f.createDataURL=function(t,r){t=t||2,r=void 0===r?4*t:r;var e=f.getModuleCount()*t+2*r,n=r,o=e-r;return I(e,e,function(r,e){if(n<=r&&r<o&&n<=e&&e<o){var i=Math.floor((r-n)/t),a=Math.floor((e-n)/t);return f.isDark(a,i)?0:1}return 1})},f.createImgTag=function(t,r,e){t=t||2,r=void 0===r?4*t:r;var n=f.getModuleCount()*t+2*r,o="";return o+="<img",o+=' src="',o+=f.createDataURL(t,r),o+='"',o+=' width="',o+=n,o+='"',o+=' height="',o+=n,o+='"',e&&(o+=' alt="',o+=y(e),o+='"'),o+="/>"};var y=function(t){for(var r="",e=0;e<t.length;e+=1){var n=t.charAt(e);switch(n){case"<":r+="&lt;";break;case">":r+="&gt;";break;case"&":r+="&amp;";break;case'"':r+="&quot;";break;default:r+=n}}return r};return f.createASCII=function(t,r){if((t=t||1)<2)return function(t){t=void 0===t?2:t;var r,e,n,o,i,a=1*f.getModuleCount()+2*t,u=t,c=a-t,g={"██":"█","█ ":"▀"," █":"▄","  ":" "},l={"██":"▀","█ ":"▀"," █":" ","  ":" "},h="";for(r=0;r<a;r+=2){for(n=Math.floor((r-u)/1),o=Math.floor((r+1-u)/1),e=0;e<a;e+=1)i="█",u<=e&&e<c&&u<=r&&r<c&&f.isDark(n,Math.floor((e-u)/1))&&(i=" "),u<=e&&e<c&&u<=r+1&&r+1<c&&f.isDark(o,Math.floor((e-u)/1))?i+=" ":i+="█",h+=t<1&&r+1>=c?l[i]:g[i];h+="\n"}return a%2&&t>0?h.substring(0,h.length-a-1)+Array(a+1).join("▀"):h.substring(0,h.length-1)}(r);t-=1,r=void 0===r?2*t:r;var e,n,o,i,a=f.getModuleCount()*t+2*r,u=r,c=a-r,g=Array(t+1).join("██"),l=Array(t+1).join("  "),h="",s="";for(e=0;e<a;e+=1){for(o=Math.floor((e-u)/t),s="",n=0;n<a;n+=1)i=1,u<=n&&n<c&&u<=e&&e<c&&f.isDark(o,Math.floor((n-u)/t))&&(i=0),s+=i?g:l;for(o=0;o<t;o+=1)h+=s+"\n"}return h.substring(0,h.length-1)},f.renderTo2dContext=function(t,r){r=r||2;for(var e=f.getModuleCount(),n=0;n<e;n++)for(var o=0;o<e;o++)t.fillStyle=f.isDark(n,o)?"black":"white",t.fillRect(n*r,o*r,r,r)},f};t.stringToBytes=(t.stringToBytesFuncs={default:function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);r.push(255&n)}return r}}).default,t.createStringToBytes=function(t,r){var e=function(){for(var e=S(t),n=function(){var t=e.read();if(-1==t)throw"eof";return t},o=0,i={};;){var a=e.read();if(-1==a)break;var u=n(),f=n()<<8|n();i[String.fromCharCode(a<<8|u)]=f,o+=1}if(o!=r)throw o+" != "+r;return i}(),n="?".charCodeAt(0);return function(t){for(var r=[],o=0;o<t.length;o+=1){var i=t.charCodeAt(o);if(i<128)r.push(i);else{var a=e[t.charAt(o)];"number"==typeof a?(255&a)==a?r.push(a):(r.push(a>>>8),r.push(255&a)):r.push(n)}}return r}};var r,e,n,o,i,a=1,u=2,f=4,c=8,g={L:1,M:0,Q:3,H:2},l=0,h=1,s=2,v=3,d=4,w=5,p=6,y=7,B=(r=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],e=1335,n=7973,i=function(t){for(var r=0;0!=t;)r+=1,t>>>=1;return r},(o={}).getBCHTypeInfo=function(t){for(var r=t<<10;i(r)-i(e)>=0;)r^=e<<i(r)-i(e);return 21522^(t<<10|r)},o.getBCHTypeNumber=function(t){for(var r=t<<12;i(r)-i(n)>=0;)r^=n<<i(r)-i(n);return t<<12|r},o.getPatternPosition=function(t){return r[t-1]},o.getMaskFunction=function(t){switch(t){case l:return function(t,r){return(t+r)%2==0};case h:return function(t,r){return t%2==0};case s:return function(t,r){return r%3==0};case v:return function(t,r){return(t+r)%3==0};case d:return function(t,r){return(Math.floor(t/2)+Math.floor(r/3))%2==0};case w:return function(t,r){return t*r%2+t*r%3==0};case p:return function(t,r){return(t*r%2+t*r%3)%2==0};case y:return function(t,r){return(t*r%3+(t+r)%2)%2==0};default:throw"bad maskPattern:"+t}},o.getErrorCorrectPolynomial=function(t){for(var r=k([1],0),e=0;e<t;e+=1)r=r.multiply(k([1,C.gexp(e)],0));return r},o.getLengthInBits=function(t,r){if(1<=r&&r<10)switch(t){case a:return 10;case u:return 9;case f:case c:return 8;default:throw"mode:"+t}else if(r<27)switch(t){case a:return 12;case u:return 11;case f:return 16;case c:return 10;default:throw"mode:"+t}else{if(!(r<41))throw"type:"+r;switch(t){case a:return 14;case u:return 13;case f:return 16;case c:return 12;default:throw"mode:"+t}}},o.getLostPoint=function(t){for(var r=t.getModuleCount(),e=0,n=0;n<r;n+=1)for(var o=0;o<r;o+=1){for(var i=0,a=t.isDark(n,o),u=-1;u<=1;u+=1)if(!(n+u<0||r<=n+u))for(var f=-1;f<=1;f+=1)o+f<0||r<=o+f||0==u&&0==f||a==t.isDark(n+u,o+f)&&(i+=1);i>5&&(e+=3+i-5)}for(n=0;n<r-1;n+=1)for(o=0;o<r-1;o+=1){var c=0;t.isDark(n,o)&&(c+=1),t.isDark(n+1,o)&&(c+=1),t.isDark(n,o+1)&&(c+=1),t.isDark(n+1,o+1)&&(c+=1),0!=c&&4!=c||(e+=3)}for(n=0;n<r;n+=1)for(o=0;o<r-6;o+=1)t.isDark(n,o)&&!t.isDark(n,o+1)&&t.isDark(n,o+2)&&t.isDark(n,o+3)&&t.isDark(n,o+4)&&!t.isDark(n,o+5)&&t.isDark(n,o+6)&&(e+=40);for(o=0;o<r;o+=1)for(n=0;n<r-6;n+=1)t.isDark(n,o)&&!t.isDark(n+1,o)&&t.isDark(n+2,o)&&t.isDark(n+3,o)&&t.isDark(n+4,o)&&!t.isDark(n+5,o)&&t.isDark(n+6,o)&&(e+=40);var g=0;for(o=0;o<r;o+=1)for(n=0;n<r;n+=1)t.isDark(n,o)&&(g+=1);return e+=Math.abs(100*g/r/r-50)/5*10},o),C=function(){for(var t=new Array(256),r=new Array(256),e=0;e<8;e+=1)t[e]=1<<e;for(e=8;e<256;e+=1)t[e]=t[e-4]^t[e-5]^t[e-6]^t[e-8];for(e=0;e<255;e+=1)r[t[e]]=e;var n={glog:function(t){if(t<1)throw"glog("+t+")";return r[t]},gexp:function(r){for(;r<0;)r+=255;for(;r>=256;)r-=255;return t[r]}};return n}();function k(t,r){if(void 0===t.length)throw t.length+"/"+r;var e=function(){for(var e=0;e<t.length&&0==t[e];)e+=1;for(var n=new Array(t.length-e+r),o=0;o<t.length-e;o+=1)n[o]=t[o+e];return n}(),n={getAt:function(t){return e[t]},getLength:function(){return e.length},multiply:function(t){for(var r=new Array(n.getLength()+t.getLength()-1),e=0;e<n.getLength();e+=1)for(var o=0;o<t.getLength();o+=1)r[e+o]^=C.gexp(C.glog(n.getAt(e))+C.glog(t.getAt(o)));return k(r,0)},mod:function(t){if(n.getLength()-t.getLength()<0)return n;for(var r=C.glog(n.getAt(0))-C.glog(t.getAt(0)),e=new Array(n.getLength()),o=0;o<n.getLength();o+=1)e[o]=n.getAt(o);for(o=0;o<t.getLength();o+=1)e[o]^=C.gexp(C.glog(t.getAt(o))+r);return k(e,0).mod(t)}};return n}var A=function(){var t=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],r=function(t,r){var e={};return e.totalCount=t,e.dataCount=r,e},e={};return e.getRSBlocks=function(e,n){var o=function(r,e){switch(e){case g.L:return t[4*(r-1)+0];case g.M:return t[4*(r-1)+1];case g.Q:return t[4*(r-1)+2];case g.H:return t[4*(r-1)+3];default:return}}(e,n);if(void 0===o)throw"bad rs block @ typeNumber:"+e+"/errorCorrectionLevel:"+n;for(var i=o.length/3,a=[],u=0;u<i;u+=1)for(var f=o[3*u+0],c=o[3*u+1],l=o[3*u+2],h=0;h<f;h+=1)a.push(r(c,l));return a},e}(),b=function(){var t=[],r=0,e={getBuffer:function(){return t},getAt:function(r){var e=Math.floor(r/8);return 1==(t[e]>>>7-r%8&1)},put:function(t,r){for(var n=0;n<r;n+=1)e.putBit(1==(t>>>r-n-1&1))},getLengthInBits:function(){return r},putBit:function(e){var n=Math.floor(r/8);t.length<=n&&t.push(0),e&&(t[n]|=128>>>r%8),r+=1}};return e},M=function(t){var r=a,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+2<r.length;)t.put(o(r.substring(n,n+3)),10),n+=3;n<r.length&&(r.length-n==1?t.put(o(r.substring(n,n+1)),4):r.length-n==2&&t.put(o(r.substring(n,n+2)),7))}},o=function(t){for(var r=0,e=0;e<t.length;e+=1)r=10*r+i(t.charAt(e));return r},i=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);throw"illegal char :"+t};return n},x=function(t){var r=u,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+1<r.length;)t.put(45*o(r.charAt(n))+o(r.charAt(n+1)),11),n+=2;n<r.length&&t.put(o(r.charAt(n)),6)}},o=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);if("A"<=t&&t<="Z")return t.charCodeAt(0)-"A".charCodeAt(0)+10;switch(t){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+t}};return n},m=function(r){var e=f,n=t.stringToBytes(r),o={getMode:function(){return e},getLength:function(t){return n.length},write:function(t){for(var r=0;r<n.length;r+=1)t.put(n[r],8)}};return o},L=function(r){var e=c,n=t.stringToBytesFuncs.SJIS;if(!n)throw"sjis not supported.";!function(){var t=n("友");if(2!=t.length||38726!=(t[0]<<8|t[1]))throw"sjis not supported."}();var o=n(r),i={getMode:function(){return e},getLength:function(t){return~~(o.length/2)},write:function(t){for(var r=o,e=0;e+1<r.length;){var n=(255&r[e])<<8|255&r[e+1];if(33088<=n&&n<=40956)n-=33088;else{if(!(57408<=n&&n<=60351))throw"illegal char at "+(e+1)+"/"+n;n-=49472}n=192*(n>>>8&255)+(255&n),t.put(n,13),e+=2}if(e<r.length)throw"illegal char at "+(e+1)}};return i},D=function(){var t=[],r={writeByte:function(r){t.push(255&r)},writeShort:function(t){r.writeByte(t),r.writeByte(t>>>8)},writeBytes:function(t,e,n){e=e||0,n=n||t.length;for(var o=0;o<n;o+=1)r.writeByte(t[o+e])},writeString:function(t){for(var e=0;e<t.length;e+=1)r.writeByte(t.charCodeAt(e))},toByteArray:function(){return t},toString:function(){var r="";r+="[";for(var e=0;e<t.length;e+=1)e>0&&(r+=","),r+=t[e];return r+="]"}};return r},S=function(t){var r=t,e=0,n=0,o=0,i={read:function(){for(;o<8;){if(e>=r.length){if(0==o)return-1;throw"unexpected end of file./"+o}var t=r.charAt(e);if(e+=1,"="==t)return o=0,-1;t.match(/^\s$/)||(n=n<<6|a(t.charCodeAt(0)),o+=6)}var i=n>>>o-8&255;return o-=8,i}},a=function(t){if(65<=t&&t<=90)return t-65;if(97<=t&&t<=122)return t-97+26;if(48<=t&&t<=57)return t-48+52;if(43==t)return 62;if(47==t)return 63;throw"c:"+t};return i},I=function(t,r,e){for(var n=function(t,r){var e=t,n=r,o=new Array(t*r),i={setPixel:function(t,r,n){o[r*e+t]=n},write:function(t){t.writeString("GIF87a"),t.writeShort(e),t.writeShort(n),t.writeByte(128),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(255),t.writeByte(255),t.writeByte(255),t.writeString(","),t.writeShort(0),t.writeShort(0),t.writeShort(e),t.writeShort(n),t.writeByte(0);var r=a(2);t.writeByte(2);for(var o=0;r.length-o>255;)t.writeByte(255),t.writeBytes(r,o,255),o+=255;t.writeByte(r.length-o),t.writeBytes(r,o,r.length-o),t.writeByte(0),t.writeString(";")}},a=function(t){for(var r=1<<t,e=1+(1<<t),n=t+1,i=u(),a=0;a<r;a+=1)i.add(String.fromCharCode(a));i.add(String.fromCharCode(r)),i.add(String.fromCharCode(e));var f,c,g,l=D(),h=(f=l,c=0,g=0,{write:function(t,r){if(t>>>r!=0)throw"length over";for(;c+r>=8;)f.writeByte(255&(t<<c|g)),r-=8-c,t>>>=8-c,g=0,c=0;g|=t<<c,c+=r},flush:function(){c>0&&f.writeByte(g)}});h.write(r,n);var s=0,v=String.fromCharCode(o[s]);for(s+=1;s<o.length;){var d=String.fromCharCode(o[s]);s+=1,i.contains(v+d)?v+=d:(h.write(i.indexOf(v),n),i.size()<4095&&(i.size()==1<<n&&(n+=1),i.add(v+d)),v=d)}return h.write(i.indexOf(v),n),h.write(e,n),h.flush(),l.toByteArray()},u=function(){var t={},r=0,e={add:function(n){if(e.contains(n))throw"dup key:"+n;t[n]=r,r+=1},size:function(){return r},indexOf:function(r){return t[r]},contains:function(r){return void 0!==t[r]}};return e};return i}(t,r),o=0;o<r;o+=1)for(var i=0;i<t;i+=1)n.setPixel(i,o,e(i,o));var a=D();n.write(a);for(var u=function(){var t=0,r=0,e=0,n="",o={},i=function(t){n+=String.fromCharCode(a(63&t))},a=function(t){if(t<0);else{if(t<26)return 65+t;if(t<52)return t-26+97;if(t<62)return t-52+48;if(62==t)return 43;if(63==t)return 47}throw"n:"+t};return o.writeByte=function(n){for(t=t<<8|255&n,r+=8,e+=1;r>=6;)i(t>>>r-6),r-=6},o.flush=function(){if(r>0&&(i(t<<6-r),t=0,r=0),e%3!=0)for(var o=3-e%3,a=0;a<o;a+=1)n+="="},o.toString=function(){return n},o}(),f=a.toByteArray(),c=0;c<f.length;c+=1)u.writeByte(f[c]);return u.flush(),"data:image/gif;base64,"+u};return t}();qrcode.stringToBytesFuncs["UTF-8"]=function(t){return function(t){for(var r=[],e=0;e<t.length;e++){var n=t.charCodeAt(e);n<128?r.push(n):n<2048?r.push(192|n>>6,128|63&n):n<55296||n>=57344?r.push(224|n>>12,128|n>>6&63,128|63&n):(e++,n=65536+((1023&n)<<10|1023&t.charCodeAt(e)),r.push(240|n>>18,128|n>>12&63,128|n>>6&63,128|63&n))}return r}(t)},function(t){"function"==typeof define&&define.amd?define([],t):"object"==typeof exports&&(module.exports=t())}(function(){return qrcode});
-
 /* ======================= STATE ======================= */
 const LOCAL_V1 = "ipmonitor.sites.v1";
 const LOCAL_V2 = "ipmonitor.v2";
@@ -1907,7 +1721,6 @@ const PSK_SHA256 = "8b3ce0c3977ee6e8d53efeb1fb5b4f82bfb85e44b706c4eded197bd78875
 let db = null, downloads = null, readOnly = true, dbReadOnly = false, fullAccess = false;
 let sites = [], networks = [], users = [], devices = [], links = [], vlans = [], configs = [], changes = [], me = null, usersLoaded = false;
 /* database file (offline): see DATABASE FILE below */
-const VAULT = { on: false, key: null, salt: "", locked: false };   // master password, see PRODUCTIVITY TOOLS
 const IN_ARTIFACT = !!(window.claude && window.claude.use);
 const FS_API = typeof window.showOpenFilePicker === "function" && typeof window.showSaveFilePicker === "function";
 const DB_FILE = "ip-monitor-db.json";
@@ -2130,8 +1943,7 @@ function seedIsNewer(){ try { const last = localStorage.getItem(SEED_KEY); retur
 let storageWarned = false;
 function saveLocal(){
   dbfQueue();
-  if (me && typeof snapDaily === "function") setTimeout(snapDaily, 0);
-  try { localStorage.setItem(LOCAL_V2, JSON.stringify({ sites, networks, users, devices: VAULT.on ? stripSecrets(devices) : devices, links, vlans, configs, changes })); return true; }
+  try { localStorage.setItem(LOCAL_V2, JSON.stringify({ sites, networks, users, devices, links, vlans, configs, changes })); return true; }
   catch {
     if (DBF.ready) return true;          // the database file holds the data; the browser copy is only a cache
     if (!storageWarned && (IS_OFFLINE || !db)){ storageWarned = true; setTimeout(() => showAlert("Browser storage is full", "The last change may not be kept after closing. Export a backup (.json) now, then delete old config backups or history to free space."), 0); }
@@ -2210,7 +2022,6 @@ function currentRoute(){
   if (h === "#devices") return { page: "devices" };
   if (h === "#ips") return { page: "ips" };
   if (h === "#log") return { page: "log" };
-  if (h === "#audit") return { page: "audit" };
   if (h === "#sites") return { page: "sites" };
   if (h === "#users") return { page: fullAccess ? "users" : "sites" };
   if (h.startsWith("#site/")) return { page: "site", id: decodeURIComponent(h.slice(6)) };
@@ -2227,9 +2038,9 @@ function route(){
 }
 function routeNow(){
   const r = currentRoute();
-  for (const p of ["dash","sites","site","device","devices","ips","map","calc","backup","log","users","audit"]) $("page-" + p).classList.toggle("on", r.page === p);
+  for (const p of ["dash","sites","site","device","devices","ips","map","calc","backup","log","users"]) $("page-" + p).classList.toggle("on", r.page === p);
   const tab = r.page === "site" ? "sites" : r.page === "device" ? "devices" : r.page;
-  for (const t of ["dash","sites","devices","ips","map","calc","backup","log","users","audit"]) $("tab-" + t).setAttribute("aria-selected", tab === t);
+  for (const t of ["dash","sites","devices","ips","map","calc","backup","log","users"]) $("tab-" + t).setAttribute("aria-selected", tab === t);
   const at = $("tab-" + tab); if (at && at.scrollIntoView) at.scrollIntoView({ block: "nearest", inline: "nearest" });
   if (r.page === "map") renderMap();
   if (r.page === "devices") renderDevices();
@@ -2242,8 +2053,6 @@ function routeNow(){
   if (r.page === "backup") renderBackup();
   if (r.page === "log") renderLog();
   if (r.page === "dash") renderDash();
-  if (r.page === "audit") renderAudit();
-  if (r.page === "calc"){ fillFreeSizes(); renderFree(); }
   updateFab(); shellTitle(r); closeMenu();
   window.scrollTo(0, 0);
 }
@@ -2268,8 +2077,6 @@ function renderAll(){
   if (r.page === "ips") renderIPs();
   if (r.page === "log") renderLog();
   if (r.page === "dash") renderDash();
-  if (r.page === "audit") renderAudit();
-  if (r.page === "calc") renderFree();
   if ($("netSheet").open) refreshNet();
   if ($("cfgSheet").open) renderCfg();
   if ($("devSheet").open) devCfgSummary();
@@ -2278,7 +2085,6 @@ function renderAll(){
 
 /* ======================= SITES LIST ======================= */
 function renderSites(){
-  $("sitesActs").hidden = readOnly;
   const q = $("search").value.trim(), ql = q.toLowerCase(), qEntry = q ? parseEntry(q) : null;
 
   let hosts = 0, cap4 = 0n, used4 = 0n;
@@ -2398,7 +2204,7 @@ function renderSitePage(){
         <h2>${esc(site.name)}</h2>
         ${badgesOf(site) ? `<div class="badges">${badgesOf(site)}</div>` : ""}
         ${[site.location, site.contact].filter(Boolean).length ? `<div class="sloc">${[site.location, site.contact ? "Contact: " + site.contact : ""].filter(Boolean).map(esc).join(" · ")}</div>` : ""}
-        <div class="siteacts"><button class="btn btn-line btn-sm" id="editSite">${readOnly ? "Site details" : "Edit site"}</button><button class="btn btn-line btn-sm" id="printSite">Print sheet + QR labels</button></div>
+        <div class="siteacts"><button class="btn btn-line btn-sm" id="editSite">${readOnly ? "Site details" : "Edit site"}</button></div>
       </div></div>`;
 
   $("sitepage").innerHTML = `
@@ -2422,7 +2228,6 @@ function renderSitePage(){
 
   $("backBtn").onclick = () => { location.hash = "#sites"; };
   const es = $("editSite"); if (es) es.onclick = () => openSite(site.id);
-  const ps = $("printSite"); if (ps) ps.onclick = () => printSite(site);
   const a1 = $("addNetTop"); if (a1) a1.onclick = () => openDev(null, site.id);
   const a2 = $("addNetEmpty"); if (a2) a2.onclick = () => openDev(null, site.id);
   document.querySelectorAll("#sitepage .row").forEach(rw => rw.onclick = () => openNet(rw.dataset.id));
@@ -2930,8 +2735,6 @@ function renderBackup(){
   $("expApp").hidden = !fullAccess;
   $("expCreds").hidden = !fullAccess;
   $("bktypes").innerHTML = typeExportButtons(); wireTypeExports($("bktypes"));
-  $("bulkBtnB").hidden = readOnly;
-  renderSnaps(); renderLiveCard();
 }
 const stamp = () => new Date().toISOString().slice(0, 10);
 async function saveFile(filename, data){
@@ -2997,16 +2800,15 @@ function treeRows(){
 }
 
 /* ----- JSON: nested, human-readable ----- */
-$("expJson").onclick = async () => {
+$("expJson").onclick = () => {
   const tree = buildTree().map(S => ({
     ...S.site,
     networks: S.nets.map(N => { const { hostList, ...rest } = N.net; return { ...rest, hosts: N.hc, hostList: N.hosts }; })
   }));
-  const out = await sealVault({ app: "ip-monitor", version: 3, layout: "site > network > host",
+  saveFile(`ip-monitor-backup-${stamp()}.json`, JSON.stringify({ app: "ip-monitor", version: 3, layout: "site > network > host",
     exportedAt: new Date().toISOString(), source: IS_OFFLINE ? "offline copy" : "online",
     totals: { sites: sites.length, networks: networks.length, hosts: networks.reduce((a, n) => a + hostCount(n), 0) },
-    sites: tree, devices: fullAccess ? devices : devices.map(({ pass, psk, ...d }) => d), links, vlans, configs, ...(fullAccess ? { users, changes } : {}) });
-  saveFile(`ip-monitor-backup-${stamp()}.json`, JSON.stringify(out, null, 2));
+    sites: tree, devices: fullAccess ? devices : devices.map(({ pass, psk, ...d }) => d), links, vlans, configs, ...(fullAccess ? { users, changes } : {}) }, null, 2));
 };
 
 /* ----- CSV: one organized table ----- */
@@ -3206,16 +3008,16 @@ ${r - 1 > headRow ? `<autoFilter ref="A${headRow}:${colName(head.length - 1)}${r
 </worksheet>`;
 }
 function devicesTable(){
-  const head = ["Site #","Site","Device","Brand","Type","Model","Role","Function","Status","Management IP (MikroTik)","IP addresses","Bridges","Interfaces","MAC","RouterOS","Connections","Config backups","Tags","Notes","Serial number","Rack / location","Purchase date","Warranty until"], rows = [];
+  const head = ["Site #","Site","Device","Brand","Type","Model","Role","Function","Status","Management IP (MikroTik)","IP addresses","Bridges","Interfaces","MAC","RouterOS","Connections","Config backups","Tags","Notes"], rows = [];
   for (const s of [...sites].sort(byNum)){
     const devs = devices.filter(d => d.siteId === s.id).sort((a, b) => (vendorOf(a) === vendorOf(b) ? 0 : vendorOf(a) === "mikrotik" ? -1 : 1) || a.name.localeCompare(b.name));
     if (!devs.length) continue;
-    rows.push({ site: true, cells: [s.siteNumber, s.name, `${devs.length} device${devs.length === 1 ? "" : "s"}`, ...Array(20).fill("")] });
+    rows.push({ site: true, cells: [s.siteNumber, s.name, `${devs.length} device${devs.length === 1 ? "" : "s"}`, ...Array(16).fill("")] });
     for (const d of devs) rows.push({ cells: [s.siteNumber, "", d.name, vendorOf(d) === "mikrotik" ? "MikroTik" : "Other brand", TYPE_LABEL[d.type] || d.type, d.model, ROLE_LABEL[d.role] || "", FUNC_LABEL[d.func] || "", STATUS_LABEL[statusOf(d)], mgmtIP(d),
       otherIPs(d).join("\n"), (d.bridges || []).map(b => `${b.name}: ${(b.ports || []).join(", ")}`).join("\n"), devicePorts(d).join(", "), d.mac || "", d.ros || "",
-      links.filter(l => l.a === d.id || l.b === d.id).length, cfgsOf(d.id).length, (d.tags || []).join(", "), d.notes || "", d.serial || "", d.rack || "", d.buy || "", d.warranty || ""] });
+      links.filter(l => l.a === d.id || l.b === d.id).length, cfgsOf(d.id).length, (d.tags || []).join(", "), d.notes || ""] });
   }
-  return [head, rows, [7, 18, 20, 12, 15, 18, 13, 13, 10, 18, 30, 26, 24, 19, 10, 12, 12, 18, 30, 18, 16, 12, 12], [9, 10, 11, 12, 13, 19]];
+  return [head, rows, [7, 18, 20, 12, 15, 18, 13, 13, 10, 18, 30, 26, 24, 19, 10, 12, 12, 18, 30], [9, 10, 11, 12, 13]];
 }
 /* one end of a connection for the spreadsheet: interface (with its bridge) and IP */
 function endCells(l, side){
@@ -3323,13 +3125,10 @@ function parseBackup(j){
 $("impFile").onchange = async () => {
   const f = $("impFile").files[0]; if (!f || !fullAccess) return;
   let data;
-  let j;
-  try { j = JSON.parse(stripBOM(await f.text())); } catch { return showAlert("Can't import", "That file isn't an IP Monitor backup (.json)."); }
-  if (!await openVault(j)) return;
-  try { data = parseBackup(j); }
+  try { data = parseBackup(JSON.parse(await f.text())); }
   catch { return showAlert("Can't import", "That file isn't an IP Monitor backup (.json)."); }
   showAlert("Restore backup?", `${data.sites.length} sites, ${data.networks.length} networks${data.devices ? `, ${data.devices.length} devices, ${(data.links || []).length} connections` : ""}${data.vlans ? `, ${data.vlans.length} VLANs` : ""}${data.configs ? `, ${data.configs.length} config backups` : ""}${data.users ? ` and ${data.users.length} accounts` : ""} found.\n\nRestore: everything is put back exactly as it was in the backup, every network in its own site. The current sites, networks, devices and connections are replaced.\n\nMerge: keep what is here and add the backup's items. Newer changes win; anything that would overlap is skipped.`, [
-    { label: "Restore (replace all)", primary: true, run: async () => { await snapPut("restore"); const r = await replaceAll(data, { log: "Restored from backup " + f.name }); showAlert("Backup restored", resultText(r)); } },
+    { label: "Restore (replace all)", primary: true, run: async () => { const r = await replaceAll(data, { log: "Restored from backup " + f.name }); showAlert("Backup restored", resultText(r)); } },
     { label: "Merge", run: async () => showAlert("Import finished", resultText(await importData(data))) },
     { label: "Cancel" }
   ]);
@@ -3448,8 +3247,6 @@ async function importCore(data, opts = {}){
       wproto: ["802.11","nstreme","nv2"].includes(raw.wproto) ? raw.wproto : "", wsec: WSEC_LABEL[raw.wsec] ? raw.wsec : "", psk: String(raw.psk || "").slice(0, 63),
       ip: ip && ip.kind === "ip" ? ip.text : "", mac: normMac(raw.mac) || "", ros: String(raw.ros || ""), notes: String(raw.notes || ""),
       func: FUNC_LABEL[raw.func] ? raw.func : "", ...metaOf(raw),
-      serial: String(raw.serial || "").slice(0, 64), rack: String(raw.rack || "").slice(0, 64), maint: String(raw.maint || "").slice(0, 4000),
-      buy: /^\d{4}-\d{2}-\d{2}$/.test(String(raw.buy || "")) ? raw.buy : "", warranty: /^\d{4}-\d{2}-\d{2}$/.test(String(raw.warranty || "")) ? raw.warranty : "",
       ports: Array.isArray(raw.ports) ? raw.ports.map(String).filter(p => /^[A-Za-z0-9._\-\/]{1,32}$/.test(p)).slice(0, 64) : [],
       bridges: Array.isArray(raw.bridges) ? raw.bridges.filter(b => b && /^[A-Za-z0-9._\-]{1,32}$/.test(String(b.name || ""))).map(b => ({ name: String(b.name), ports: Array.isArray(b.ports) ? b.ports.map(String).slice(0, 64) : [] })).slice(0, 16) : [],
       addrs: Array.isArray(raw.addrs) ? raw.addrs.filter(a => a && parseRaw(a.address)).map(a => ({ id: String(a.id || newId()), iface: String(a.iface || ""), address: String(a.address), comment: String(a.comment || ""), ...(a.link ? { link: String(a.link) } : {}) })).slice(0, 64) : [],
@@ -3502,9 +3299,7 @@ async function importCore(data, opts = {}){
       const rid = cleanId(raw && raw.id);
       if (!rid || !raw.at || changes.some(c => c.id === rid) || !ACT_LABEL[raw.act]) continue;
       const c = { id: rid, at: String(raw.at), by: String(raw.by || "?"), act: raw.act, kind: String(raw.kind || ""), ref: String(raw.ref || ""), label: String(raw.label || "").slice(0, 200),
-        siteId: idMap.get(raw.siteId) || String(raw.siteId || ""), lines: Array.isArray(raw.lines) ? raw.lines.map(String).slice(0, 20) : [], ...(raw.dev ? { dev: devMap.get(raw.dev) || String(raw.dev) } : {}),
-        ...(opts.trusted && raw.undo && UNDO_COLS.includes(raw.undo.col) ? { undo: { col: raw.undo.col, ...(raw.undo.prev && typeof raw.undo.prev === "object" ? { prev: undoSnap(raw.undo.prev) } : {}), ...(raw.undo.gone ? { gone: true } : {}) } } : {}),
-        ...(raw.undoneAt ? { undoneAt: String(raw.undoneAt), undoneBy: String(raw.undoneBy || "") } : {}) };
+        siteId: idMap.get(raw.siteId) || String(raw.siteId || ""), lines: Array.isArray(raw.lines) ? raw.lines.map(String).slice(0, 20) : [], ...(raw.dev ? { dev: devMap.get(raw.dev) || String(raw.dev) } : {}) };
       try { await putDoc(COL_LOG, c); if (db) changes.push(c); } catch {}
     }
   }
@@ -3978,7 +3773,7 @@ function drawMap(shownSites, shownDevs, shownLinks){
   let nodes = "";
   for (const [id, p] of pos){
     const d = p.d, x0 = p.x - NW / 2, y0 = p.y - NH / 2;
-    nodes += `<g class="node ${p.ghost ? "ghost" : esc(d.type)} st-${statusOf(d)}${!p.ghost && liveOf(d) ? " live-" + liveOf(d) : ""}" data-dev="${esc(id)}">
+    nodes += `<g class="node ${p.ghost ? "ghost" : esc(d.type)} st-${statusOf(d)}" data-dev="${esc(id)}">
       <rect class="body" x="${x0}" y="${y0}" width="${NW}" height="${NH}" rx="7"/>
       <rect class="band" x="${x0 + 1.5}" y="${y0 + 1.5}" width="${NW - 3}" height="4" rx="2"/>
       <circle class="sled" cx="${x0 + NW - 10}" cy="${y0 + 14}" r="4"><title>${esc(STATUS_LABEL[statusOf(d)])}</title></circle>
@@ -4145,7 +3940,6 @@ function setDevVendor(v){
   $("d-portlab").textContent = other ? "Access port (web / app)" : "Winbox port";
   $("d-winbox").placeholder = other ? "e.g. 80, 443, 8000" : "8291";
   $("d-bipnext").hidden = readOnly;
-  $("d-fromexp").hidden = other || readOnly;
   // PC, phone, servers, NVR and cameras are only offered for other brands
   $("d-type").querySelectorAll("[data-end]").forEach(b => b.hidden = !other);
   if (!other && END_TYPES.includes(devType)) devType = "wireless";
@@ -4220,7 +4014,6 @@ function openDev(id, siteId){
   formAddrs = d && Array.isArray(d.addrs) ? d.addrs.map(a => ({ ...a })) : [];
   renderBridges(); renderAddrs();
   $("d-ip").value = d?.ip || ""; $("d-mac").value = d?.mac || ""; $("d-ros").value = d?.ros || ""; $("d-notes").value = d?.notes || "";
-  $("d-serial").value = d?.serial || ""; $("d-rack").value = d?.rack || ""; $("d-buy").value = d?.buy || ""; $("d-warranty").value = d?.warranty || ""; $("d-maint").value = d?.maint || "";
   // access details: Read-only accounts never get the secrets in the form
   $("d-user").value = d?.user || ""; $("d-winbox").value = d?.winbox || "";
   $("d-pass").value = readOnly ? (d?.pass ? "hidden" : "") : d?.pass || ""; $("d-psk").value = readOnly ? (d?.psk ? "hidden" : "") : d?.psk || "";
@@ -4468,7 +4261,6 @@ $("devForm").addEventListener("submit", async ev => {
     uplink: br ? { deviceId: br.dev.id, bridge: br.bridge } : null, func: $("d-func").value, ...readMeta("d"), model: $("d-model").value.trim(), name: $("d-name").value.trim(),
     role: hasWifi({ type: devType }) ? $("d-role").value : "", ip, mac: normMac($("d-mac").value) || "", ros: other ? "" : $("d-ros").value.trim(), notes: $("d-notes").value.trim(),
     user: $("d-user").value.trim(), pass: readOnly ? prev?.pass || "" : $("d-pass").value, winbox: $("d-winbox").value.trim(),
-    serial: $("d-serial").value.trim(), rack: $("d-rack").value.trim(), buy: $("d-buy").value, warranty: $("d-warranty").value, maint: $("d-maint").value.trim(),
     ...(() => { const wl = !other && hasWifi({ type: devType }), sec = wl ? $("d-wsec").value : "";
       return { wproto: wl ? $("d-wproto").value : "", wsec: sec, psk: sec && sec !== "none" ? $("d-psk").value : "" }; })(),
     ports: parsePorts($("d-ports").value),
@@ -4819,14 +4611,14 @@ let dvGroup = "all", dvSite = "all";
 function deviceExportTable(list){
   const withPw = fullAccess;
   const head = ["Site #","Site","Device","Brand","Model","Type","Role","Status","IP address","Management IP (MikroTik)","Takes IP from","Access port","Address to open","Username", ...(withPw ? ["Password"] : []),
-    "Wireless protocol","Security", ...(withPw ? ["Pre-shared key"] : []), "MAC","RouterOS","Serial number","Rack / location","Purchase date","Warranty until","Tags","Notes"];
+    "Wireless protocol","Security", ...(withPw ? ["Pre-shared key"] : []), "MAC","RouterOS","Tags","Notes"];
   const rows = [...list].sort((a, b) => siteNumOf(a.id).localeCompare(siteNumOf(b.id), undefined, { numeric: true }) || a.name.localeCompare(b.name)).map(d => {
     const s = sites.find(x => x.id === d.siteId), mt = vendorOf(d) === "mikrotik", up = d.uplink ? devById(d.uplink.deviceId) : null, port = d.winbox || (mt ? "8291" : "");
     const addr = !d.ip ? "" : mt ? `${d.ip}:${port}` : `${port === "443" ? "https" : "http"}://${d.ip}${port && port !== "80" && port !== "443" ? ":" + port : ""}`;
     return { cells: [s ? s.siteNumber : "", s ? s.name : "", d.name, mt ? "MikroTik" : "Other brand", d.model, TYPE_LABEL[d.type] || d.type, ROLE_LABEL[d.role] || "", STATUS_LABEL[statusOf(d)],
       d.ip || "", mgmtIP(d), up ? `${d.uplink.bridge} on ${up.name}` : "", port, addr, d.user || "", ...(withPw ? [d.pass || ""] : []),
       mt && hasWifi(d) ? WPROTO_LABEL[d.wproto] || "" : "", mt && hasWifi(d) ? WSEC_LABEL[d.wsec] || "" : "", ...(withPw ? [mt && hasWifi(d) ? d.psk || "" : ""] : []),
-      d.mac || "", d.ros || "", d.serial || "", d.rack || "", d.buy || "", d.warranty || "", (d.tags || []).join(", "), d.notes || ""] };
+      d.mac || "", d.ros || "", (d.tags || []).join(", "), d.notes || ""] };
   });
   return [head, rows];
 }
@@ -4857,14 +4649,11 @@ function renderDevices(){
   $("dvtypes").querySelectorAll("[data-g]").forEach(b => b.onclick = () => { dvGroup = b.dataset.g; renderDevices(); });
   $("dvsite").innerHTML = `<option value="all">All sites</option>` + [...sites].sort(byNum).map(s => `<option value="${esc(s.id)}" ${s.id === dvSite ? "selected" : ""}>#${esc(s.siteNumber)} · ${esc(s.name)}</option>`).join("");
   const g = groups.find(x => x[0] === dvGroup), q = $("dvsearch").value.trim().toLowerCase();
-  const list = inSite.filter(g[2]).filter(d => !q || [d.name, d.model, d.ip, d.mac, d.user, d.serial, d.rack, TYPE_LABEL[d.type], ...(d.tags || []), ...(d.addrs || []).map(a => a.address)].some(v => String(v || "").toLowerCase().includes(q)))
+  const list = inSite.filter(g[2]).filter(d => !q || [d.name, d.model, d.ip, d.mac, d.user, TYPE_LABEL[d.type], ...(d.tags || []), ...(d.addrs || []).map(a => a.address)].some(v => String(v || "").toLowerCase().includes(q)))
     .sort((a, b) => DEV_TYPES.indexOf(a.type) - DEV_TYPES.indexOf(b.type) || a.name.localeCompare(b.name));
   $("dvexp").innerHTML = `<button type="button" class="btn btn-primary btn-sm" id="dvExpCur" ${list.length ? "" : "disabled"}>Export these ${list.length} (.csv)</button>
-    <button type="button" class="btn btn-line btn-sm" id="dvLabels" ${list.length ? "" : "disabled"}>Print labels (QR)</button>${readOnly ? "" : `<button type="button" class="btn btn-line btn-sm" id="dvBulk">Bulk import</button>`}
     <span class="dvexp-l">or one type alone:</span>${typeExportButtons()}`;
   $("dvExpCur").onclick = () => exportDeviceGroup(dvGroup, list);
-  $("dvLabels").onclick = () => printLabels(list);
-  const bk = $("dvBulk"); if (bk) bk.onclick = () => openBulk("devices");
   wireTypeExports($("dvexp"));
   if (!list.length){ $("dvcards").innerHTML = `<div class="empty"><h2>${devices.length ? "No matches" : "No devices yet"}</h2><p>${devices.length ? "Try another type, site or search." : "Add devices on the Site Map."}</p>${readOnly || devices.length ? "" : `<button class="btn btn-primary" id="dvAdd">+ Add device</button>`}</div>`;
     const a = $("dvAdd"); if (a) a.onclick = () => openDev(null); return; }
@@ -4874,7 +4663,7 @@ function renderDevices(){
       <span class="dvc-main"><b>${esc(d.name)}</b><small>${mt ? "MikroTik" : "Other"} · ${esc(d.model)}</small></span>
       <span class="dvc-type">${esc(TYPE_LABEL[d.type] || "")}</span>
       <span class="dvc-ip">${esc(d.ip || firstAddr(d) || "no IP")}${up ? `<small>via ${esc(d.uplink.bridge)} · ${esc(up.name)}</small>` : ""}</span>
-      <span class="dvc-meta">${s ? `#${esc(s.siteNumber)} ${esc(s.name)}` : ""}${d.user ? ` · 👤 ${esc(d.user)}` : ""}${d.pass ? " · 🔒" : ""}${d.serial ? ` · S/N ${esc(d.serial)}` : ""}${livePill(d)}</span>
+      <span class="dvc-meta">${s ? `#${esc(s.siteNumber)} ${esc(s.name)}` : ""}${d.user ? ` · 👤 ${esc(d.user)}` : ""}${d.pass ? " · 🔒" : ""}</span>
       ${statusPill(d) ? `<span class="dvc-st">${statusPill(d)}</span>` : ""}${!mt && d.ip ? `<a class="dvc-web" href="${esc(webURL(d))}" target="_blank" rel="noopener" data-web="${esc(d.id)}" title="Open the web page${d.pass && !readOnly ? " and copy the password" : ""}">Web ↗</a>` : ""}</button>`; }).join("") + `</div>`;
   $("dvcards").querySelectorAll("[data-d]").forEach(b => b.onclick = e => { if (e.target.closest("[data-web]")) return; showDevice(b.dataset.d); });
   $("dvcards").querySelectorAll("[data-web]").forEach(a => a.addEventListener("click", e => { e.stopPropagation(); webCopyPass(devById(a.dataset.web)); }));
@@ -4980,8 +4769,8 @@ function renderDevicePage(){
     <button class="back" id="dvBack">← Back</button>
     <div class="dvhead"><div class="dvico">${miniIcon(d.type).replace('width="26" height="26"', 'width="40" height="40"')}</div>
       <div><h2>${esc(d.name)}</h2><div class="dvsub">${mt ? "MikroTik" : "Other brand"} · ${esc(d.model)} · ${esc(TYPE_LABEL[d.type] || "")}${d.role ? " · " + esc(ROLE_LABEL[d.role]) : ""}${d.func ? " · " + esc(FUNC_LABEL[d.func] || "") : ""}</div>
-        <div class="badges">${statusPill(d, true)}${livePill(d)}${(d.tags || []).map(tagChip).join("")}</div></div>
-      <div class="dvacts">${readOnly ? "" : `<button class="btn btn-primary btn-sm" id="dvEdit">Edit device</button>`}${mt ? `<button class="btn btn-line btn-sm" id="dvCfg">Config backups${cf.length ? " · " + cf.length : ""}</button>` : ""}${mt && !readOnly ? `<button class="btn btn-line btn-sm" id="dvRsc">Generate config (.rsc)</button>` : ""}<button class="btn btn-line btn-sm" id="dvLabel">Print label</button>${s ? `<button class="btn btn-line btn-sm" id="dvSite">Site page</button>` : ""}</div></div>
+        <div class="badges">${statusPill(d, true)}${(d.tags || []).map(tagChip).join("")}</div></div>
+      <div class="dvacts">${readOnly ? "" : `<button class="btn btn-primary btn-sm" id="dvEdit">Edit device</button>`}${mt ? `<button class="btn btn-line btn-sm" id="dvCfg">Config backups${cf.length ? " · " + cf.length : ""}</button>` : ""}${s ? `<button class="btn btn-line btn-sm" id="dvSite">Site page</button>` : ""}</div></div>
     <div class="dvgrid">
       <div class="card"><div class="card-h"><h2>Access</h2><span>${readOnly ? "passwords hidden" : mt ? "Winbox" : "Login"}</span></div>${kv(mt ? [
         ["Management IP", d.ip ? `<b class="mono">${esc(d.ip)}</b>` : "—", true],
@@ -5022,17 +4811,11 @@ function renderDevicePage(){
         ${kids.map(k => `<li data-dev="${esc(k.id)}" style="cursor:pointer"><span>${esc(k.name)} · ${esc(TYPE_LABEL[k.type] || "")} · ${esc(k.uplink.bridge)}</span><b>${esc(k.ip || "—")}</b></li>`).join("")}</ul></div>` : ""}
       <div class="card"><div class="card-h"><h2>Recent changes</h2><span>${cf.length ? "last backup " + esc(fmtWhen(cf[0].at)) : "no config backup"}</span></div>
         ${hist.length ? `<div class="loglist" style="padding:10px">${hist.map(c => logRowHTML(c, false)).join("")}</div>` : `<p class="hint2" style="margin:10px 14px 14px">No changes recorded yet.</p>`}</div>
-      ${d.serial || d.rack || d.buy || d.warranty || d.maint ? `<div class="card"><div class="card-h"><h2>Hardware &amp; maintenance</h2><span>${d.warranty ? (d.warranty < todayISO() ? `<b class="bad">warranty ended</b>` : "under warranty") : ""}</span></div>${kv([
-        ["Serial number", d.serial ? `<code>${esc(d.serial)}</code>` : "—", true], ["Rack / location", d.rack], ["Purchase date", d.buy],
-        ["Warranty until", d.warranty ? `${esc(d.warranty)}${d.warranty < todayISO() ? ' <span class="livepill down">ended</span>' : ""}` : "—", true]])}
-        ${d.maint ? `<p style="margin:0 14px 14px;white-space:pre-wrap"><b>Maintenance:</b> ${esc(d.maint)}</p>` : ""}</div>` : ""}
       ${d.notes ? `<div class="card"><div class="card-h"><h2>Notes</h2></div><p style="margin:12px 14px;white-space:pre-wrap">${esc(d.notes)}</p></div>` : ""}
     </div>`;
   $("dvBack").onclick = () => { history.length > 1 ? history.back() : (location.hash = "#devices"); };
   const e = $("dvEdit"); if (e) e.onclick = () => openDev(d.id);
   const cb = $("dvCfg"); if (cb) cb.onclick = () => openCfg(d.id);
-  const rb = $("dvRsc"); if (rb) rb.onclick = () => showRsc(d);
-  $("dvLabel").onclick = () => printLabels([d]);
   const wc = $("wbCmd"); if (wc) wc.onclick = () => winboxLauncher(d);
   const wo = $("webOpen"); if (wo) wo.addEventListener("click", () => webCopyPass(d));
   const ws = $("wbSetup"); if (ws) ws.onclick = winboxSetup;
@@ -5277,9 +5060,8 @@ function syncSession(){
 }
 function applyAuth(){
   const perm = me ? (PERMS.includes(me.perm) ? me.perm : "read") : null;
-  const locked = DBF.state === "locked";
-  readOnly = dbReadOnly || locked || !me || perm === "read";
-  fullAccess = !dbReadOnly && !locked && perm === "full";
+  readOnly = dbReadOnly || !me || perm === "read";
+  fullAccess = !dbReadOnly && perm === "full";
   document.body.classList.toggle("locked", !me);
   $("tab-users").hidden = !fullAccess;
   dbfRender();
@@ -5485,8 +5267,7 @@ const FIELD_LABEL = { user: "Username", winbox: "Winbox port", wproto: "Wireless
   gateway: "Gateway", siteId: "Site", type: "Type", model: "Model", role: "Role", func: "Function", mac: "MAC", ros: "RouterOS", status: "Status", tags: "Tags",
   ports: "Interfaces", subnet: "Link subnet", ipA: "IP on From", ipB: "IP on To", portA: "Interface on From", portB: "Interface on To", a: "From device", b: "To device",
   band: "Band", freq: "Frequency", width: "Width", ssid: "SSID", dist: "Distance", signal: "Signal", speed: "Speed", cable: "Cable", vid: "VLAN ID",
-  deviceId: "Device", parent: "Parent", ifname: "Interface", perm: "Permission", username: "Username", note: "Note",
-  serial: "Serial number", rack: "Rack / location", buy: "Purchase date", warranty: "Warranty until", maint: "Maintenance notes" };
+  deviceId: "Device", parent: "Parent", ifname: "Interface", perm: "Permission", username: "Username", note: "Note" };
 function arrOf(col){
   return col === COL_SITES ? sites : col === COL_USERS ? users : col === COL_DEV ? devices : col === COL_LINKS ? links
     : col === COL_VLANS ? vlans : col === COL_CFG ? configs : col === COL_LOG ? changes : networks;
@@ -5554,21 +5335,21 @@ async function writeLog(entry, who){
   const doc = { id: newId(), at: new Date().toISOString(), by: me ? me.username : (who || "?"), ...entry };
   try {
     if (db){ const { id, ...body } = doc; await db.collection(COL_LOG).doc(id).set(body); }
-    else { changes.push(doc); trimUndo(); saveLocal(); if (currentRoute().page === "log") renderLog(); }
+    else { changes.push(doc); saveLocal(); if (currentRoute().page === "log") renderLog(); }
   } catch {}
   pruneLog();
 }
 function logWrite(col, prev, next){
   if (logMuted || col === COL_LOG || !KIND_OF[col]) return;
   const base = { kind: KIND_OF[col], ref: next.id, label: logLabel(col, next), siteId: siteIdOf(col, next) || "", ...(col === COL_CFG ? { dev: next.deviceId } : {}) };
-  if (!prev) return writeLog({ act: "add", ...base, lines: [], ...undoInfo(col, "add") }, next.username);
+  if (!prev) return writeLog({ act: "add", ...base, lines: [] }, next.username);
   const lines = diffLines(col, prev, next);
   if (!lines.length) return;
-  writeLog({ act: "edit", ...base, lines: lines.length > 14 ? [...lines.slice(0, 13), `…and ${lines.length - 13} more`] : lines, ...undoInfo(col, "edit", prev) });
+  writeLog({ act: "edit", ...base, lines: lines.length > 14 ? [...lines.slice(0, 13), `…and ${lines.length - 13} more`] : lines });
 }
 function logDelete(col, prev){
   if (logMuted || col === COL_LOG || !KIND_OF[col]) return;
-  writeLog({ act: "delete", kind: KIND_OF[col], ref: prev.id, label: logLabel(col, prev), siteId: siteIdOf(col, prev) || "", lines: [], ...undoInfo(col, "delete", prev) });
+  writeLog({ act: "delete", kind: KIND_OF[col], ref: prev.id, label: logLabel(col, prev), siteId: siteIdOf(col, prev) || "", lines: [] });
 }
 async function pruneLog(){
   if (pruning || readOnly || changes.length <= LOG_MAX + 50) return;
@@ -5600,13 +5381,11 @@ function logRowHTML(c, showSite = true){
     <div class="lt">${isNaN(d) ? "?" : esc(hmOf(d))}</div>
     <div><div class="lh"><span class="lact ${esc(c.act)}">${esc(ACT_LABEL[c.act] || c.act)}</span><b>${esc(KIND_LABEL[c.kind] || c.kind)}</b> ${esc(c.label)}</div>
       <div class="lm">by <b>${esc(c.by || "?")}</b>${s ? ` · #${esc(s.siteNumber)} ${esc(s.name)}` : ""}</div>
-      ${lines.length ? `<ul class="ll">${lines.map(l => `<li>${esc(l)}</li>`).join("")}</ul>` : ""}
-      ${c.undoneAt ? `<div class="lm undone">↩ undone by <b>${esc(c.undoneBy || "?")}</b> · ${esc(fmtWhen(c.undoneAt))}</div>` : canUndo(c) ? `<button type="button" class="mini undo" data-undo="${esc(c.id)}">↩ Undo</button>` : ""}</div>
+      ${lines.length ? `<ul class="ll">${lines.map(l => `<li>${esc(l)}</li>`).join("")}</ul>` : ""}</div>
   </div>`;
 }
 function wireLogRows(root){
-  root.querySelectorAll(".logrow.go").forEach(r => r.onclick = e => { if (e.target.closest("[data-undo]")) return; const c = changes.find(x => x.id === r.dataset.log); const f = c && logTarget(c); if (f) f(); });
-  root.querySelectorAll("[data-undo]").forEach(b => b.onclick = e => { e.stopPropagation(); undoChange(b.dataset.undo); });
+  root.querySelectorAll(".logrow.go").forEach(r => r.onclick = () => { const c = changes.find(x => x.id === r.dataset.log); const f = c && logTarget(c); if (f) f(); });
 }
 function renderLog(){
   if (logSite && !sites.some(s => s.id === logSite)) logSite = "";
@@ -6037,7 +5816,7 @@ function vlansTable(){
 
 /* ======================= APP SHELL (sidebar + top bar) ======================= */
 const PAGE_TITLE = { device: ["Device", ""], dash: ["Dashboard", "Health of the whole network"], sites: ["Sites", ""], site: ["Site", ""], ips: ["IPs & Networks", "Every address and subnet"],
-  map: ["Site Map", "Devices and connections"], devices: ["Devices", "Every device by type · export each type alone"], calc: ["Subnet calculator", "IPv4 and IPv6"], backup: ["Backup & export", "Database file, restore points, live status"], audit: ["Health check", "Every rule, every problem, one click to fix"], log: ["History", "Who changed what, and when"], users: ["Users", "Accounts and permissions"] };
+  map: ["Site Map", "Devices and connections"], devices: ["Devices", "Every device by type · export each type alone"], calc: ["Subnet calculator", "IPv4 and IPv6"], backup: ["Backup & export", "Excel, JSON, offline app"], log: ["History", "Who changed what, and when"], users: ["Users", "Accounts and permissions"] };
 function shellTitle(r){
   let [t, sub] = PAGE_TITLE[r.page] || ["IP Monitor", ""];
   if (r.page === "sites") sub = `${sites.length} site${sites.length === 1 ? "" : "s"} · ${networks.length} network${networks.length === 1 ? "" : "s"}`;
@@ -6156,7 +5935,6 @@ function healthChecks(){
   add("warn", "Devices still on RouterOS 6", v6.map(d => ({ t: d.name, sid: d.siteId, s: `RouterOS ${d.ros} · ${siteTag(d.siteId)}`, open: () => openDev(d.id) })), "RouterOS 6 no longer gets new features. Plan the upgrade to v7.");
   add("info", "Devices without RouterOS version", devices.filter(d => vendorOf(d) === "mikrotik" && !d.ros).map(d => ({ t: d.name, sid: d.siteId, s: `${d.model} · ${siteTag(d.siteId)}`, open: () => openDev(d.id) })), "");
   add("info", "Sites with no networks", sites.filter(s => !netsOf(s.id).length).map(s => ({ t: `#${s.siteNumber} ${s.name}`, s: "", open: () => { location.hash = "#site/" + encodeURIComponent(s.id); } })), "");
-  extraChecks(add, siteTag);
   return checks.sort((a, b) => sevRank[a.sev] - sevRank[b.sev]);
 }
 function healthScore(checks){
@@ -6195,8 +5973,7 @@ function renderDash(){
       ${kpi(sites.length, "Sites", `${sites.filter(s => statusOf(s) === "active").length} active`, "", "sites")}
       ${kpi(networks.length, "Networks", `${out.filter(o => o.n.kind === "net").length} subnets`, "", "ips")}
       ${kpi(hosts.toLocaleString(), "Hosts", `${new Set(recs.map(r => r.ip)).size} IPs in use`, "", "ips")}
-      ${liveFresh() ? kpi(`${devices.filter(d => liveOf(d) === "up").length}/${devices.filter(d => d.ip).length}`, "Online now", `${devices.filter(d => liveOf(d) === "down").length} not answering ping`, devices.some(d => liveOf(d) === "down") ? "bad" : "", "devices")
-        : kpi(devices.length, "Devices", `${devices.filter(d => statusOf(d) === "offline").length} offline`, devices.some(d => statusOf(d) === "offline") ? "bad" : "", "map")}
+      ${kpi(devices.length, "Devices", `${devices.filter(d => statusOf(d) === "offline").length} offline`, devices.some(d => statusOf(d) === "offline") ? "bad" : "", "map")}
       ${kpi(links.length, "Links", `${wl.length} wireless · ${links.length - wl.length} wired`, "", "map")}
       ${kpi(vlans.length, "VLANs", `${new Set(vlans.map(v => v.vid)).size} distinct IDs`, "", "")}
       ${kpi(cap4 > 0n ? util.toFixed(1) + "%" : "—", "IPv4 used", cap4 > 0n ? `${used4.toLocaleString()} of ${fmtCount(cap4)}` : "no IPv4 subnets", util >= 80 ? "bad" : "", "ips")}
@@ -6204,7 +5981,7 @@ function renderDash(){
     </div>`;
 
   // health checks
-  html += `<div class="panel"><div class="ph"><h3>Health checks</h3><button type="button" class="linkbtn" data-go="audit">${checks.length} rules · full health check →</button></div><div class="checks">` + checks.map((c, i) => {
+  html += `<div class="panel"><div class="ph"><h3>Health checks</h3><span>${checks.length} rules</span></div><div class="checks">` + checks.map((c, i) => {
     const open = dashOpen.has(c.title) && c.items.length;
     return `<div class="chk2 ${c.sev}"><button type="button" class="chh" data-ci="${i}" ${c.items.length ? "" : "disabled"}>
         <span class="sev ${c.sev}">${c.sev === "ok" ? "OK" : c.sev === "crit" ? "CRIT" : c.sev === "warn" ? "WARN" : "INFO"}</span>
@@ -6289,7 +6066,15 @@ function renderDash(){
 function quickFind(){
   const box = $("qres"), q = $("qfind").value.trim();
   if (!q){ box.innerHTML = ""; return; }
-  const uniq = findAll(q);
+  const ql = q.toLowerCase(), qE = parseEntry(q), mac = normMac(q), res = [];
+  const hit = v => String(v || "").toLowerCase().includes(ql);
+  for (const s of sites) if ([s.name, s.siteNumber, s.location, s.contact, ...(s.tags || [])].some(hit)) res.push({ k: "SITE", t: `#${s.siteNumber} ${s.name}`, s: s.location || "", open: () => { location.hash = "#site/" + encodeURIComponent(s.id); } });
+  for (const n of allNets()) if (hit(n.e.text) || hit(n.label) || (qE && overlaps(n.e, qE))) res.push({ k: n.kind === "ptp" ? "PtP" : "NET", t: n.e.text, s: n.label || "", open: n.open });
+  for (const r of collectIPs()){ const x = parseEntry(r.ip); if (hit(r.ip) || hit(r.owner) || (mac && hit(r.sub)) || (qE && qE.kind === "ip" && x && overlaps(x, qE))) res.push({ k: r.kind.toUpperCase(), t: r.ip, s: `${r.owner} · ${r.sub}`, open: r.open }); }
+  for (const d of devices) if ([d.name, d.model, d.mac, d.ros, ...(d.tags || [])].some(hit)) res.push({ k: "DEV", t: d.name, s: `${d.model}${d.mac ? " · " + d.mac : ""}`, open: () => openDev(d.id) });
+  for (const v of vlans) if (hit("vlan " + v.vid) || hit(v.name) || hit(v.ifname) || String(v.vid) === q) { const s = sites.find(x => x.id === v.siteId); res.push({ k: "VLAN", t: `VLAN ${v.vid} ${v.name || ""}`, s: s ? `#${s.siteNumber} ${s.name}` : "", open: () => openVlan(v.id) }); }
+  for (const n of networks) for (const h of n.hostList || []) if (mac && normMac(h.mac) === mac) res.push({ k: "MAC", t: h.mac, s: `${h.ip} ${h.name || ""}`, open: () => openNet(n.id) });
+  const seen = new Set(), uniq = res.filter(r => { const key = r.k + r.t + r.s; if (seen.has(key)) return false; seen.add(key); return true; });
   box.innerHTML = uniq.length ? `<div class="qlist">${uniq.slice(0, 30).map((r, i) => `<button type="button" class="qrow" data-i="${i}"><span class="qk">${esc(r.k)}</span><span class="qt">${esc(r.t)}<small>${esc(r.s)}</small></span></button>`).join("")}${uniq.length > 30 ? `<p class="hint2">…${uniq.length - 30} more. Type more to narrow it down.</p>` : ""}</div>`
     : `<p class="hint2" style="margin:8px 2px">Nothing found for “${esc(q)}”.</p>`;
   box.querySelectorAll(".qrow").forEach(b => b.onclick = () => uniq[+b.dataset.i].open());
@@ -6556,29 +6341,26 @@ $("pdfSiteBtn").onclick = () => { if (mapFilter !== "all") exportMapPDF(mapFilte
 // Offline the data lives in its own file (ip-monitor-db.json) next to the app. The app reads it on start and writes
 // every change back to it (Chrome / Edge: File System Access API). Other browsers open it and save it by download.
 
-function idbOpen(){ return new Promise((res, rej) => { const r = indexedDB.open("ipmonitor", 2);
-  r.onupgradeneeded = () => { const d = r.result; if (!d.objectStoreNames.contains("kv")) d.createObjectStore("kv"); if (!d.objectStoreNames.contains("snaps")) d.createObjectStore("snaps", { keyPath: "id" }); };
-  r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+function idbOpen(){ return new Promise((res, rej) => { const r = indexedDB.open("ipmonitor", 1); r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
 async function kvGet(k){ const d = await idbOpen(); return new Promise((res, rej) => { const q = d.transaction("kv").objectStore("kv").get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); }
 async function kvSet(k, v){ const d = await idbOpen(); return new Promise((res, rej) => { const t = d.transaction("kv", "readwrite"), o = t.objectStore("kv"); v === undefined ? o.delete(k) : o.put(v, k); t.oncomplete = () => res(); t.onerror = () => rej(t.error); }); }
 
-async function dbfText(){
-  return JSON.stringify(await sealVault({ app: "ip-monitor", kind: "database", version: 4, savedAt: new Date().toISOString(), savedBy: me ? me.username : "",
-    sites, networks, devices, links, vlans, configs, changes, users }), null, 1);
+function dbfText(){
+  return JSON.stringify({ app: "ip-monitor", kind: "database", version: 4, savedAt: new Date().toISOString(), savedBy: me ? me.username : "",
+    sites, networks, devices, links, vlans, configs, changes, users }, null, 1);
 }
 const dbfTime = iso => iso ? new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
-function dbfDot(){ return { live: DBF.dirty ? "dirty" : "live", manual: DBF.dirty ? "dirty" : "live", ask: "ask", locked: "ask", conflict: "err", error: "err" }[DBF.state] || "local"; }
+function dbfDot(){ return { live: DBF.dirty ? "dirty" : "live", manual: DBF.dirty ? "dirty" : "live", ask: "ask", conflict: "err", error: "err" }[DBF.state] || "local"; }
 function dbfShort(){
   return { live: DBF.dirty ? "Saving…" : `Database · ${DBF.name}`, manual: DBF.dirty ? "Database · unsaved changes" : `Database · ${DBF.name}`,
-    ask: "Database · press Reconnect", locked: "Database locked · view only", conflict: "Database changed elsewhere", error: "Database file error" }[DBF.state] || "Saved on this device";
+    ask: "Database locked · reconnect", conflict: "Database changed elsewhere", error: "Database file error" }[DBF.state] || "Saved on this device";
 }
 function dbfStatus(){
   const n = `<b>${esc(DBF.name || DB_FILE)}</b>`;
   switch (DBF.state){
-    case "live": return [dbfDot(), `${n}<small>${DBF.dirty ? "Saving changes…" : `Linked · every change is saved to this file${DBF.savedAt ? ` · last saved ${dbfTime(DBF.savedAt)}` : ""}`}${VAULT.on ? " · 🔒 passwords encrypted" : ""}</small>`];
+    case "live": return [dbfDot(), `${n}<small>${DBF.dirty ? "Saving changes…" : `Linked · every change is saved to this file${DBF.savedAt ? ` · last saved ${dbfTime(DBF.savedAt)}` : ""}`}</small>`];
     case "manual": return [dbfDot(), `${n}<small>${DBF.dirty ? "Unsaved changes: press Save database file and replace the old file." : "Opened. This browser can't write to files directly, so press Save database file after changes."}</small>`];
     case "ask": return ["ask", `${n}<small>The browser needs your OK once per session to use this file. Press Reconnect.</small>`];
-    case "locked": return ["ask", `${n}<small>Device passwords in this file are encrypted. Unlock it with the master password to edit and save. Until then the app is view-only.</small>`];
     case "conflict": return ["err", `${n}<small>The file was changed in another window or computer. Choose which version to keep.</small>`];
     case "error": return ["err", `${n}<small>${esc(DBF.err || "The file couldn't be used.")}</small>`];
     default: return ["local", `<b>No database file linked</b><small>Data is kept only in this browser. Open your ${DB_FILE}, or create one from the data here.</small>`];
@@ -6588,14 +6370,12 @@ function dbfButtons(where){
   const b = [], can = !me || fullAccess;        // anyone on the sign-in screen; after sign-in only Full access
   const add = (id, label, primary) => b.push(`<button type="button" class="btn ${primary ? "btn-primary" : "btn-line"} btn-sm" data-dbf="${id}">${label}</button>`);
   if (DBF.state === "ask" || DBF.state === "error") add("reconnect", `Reconnect ${esc(DBF.name || "file")}`, true);
-  if (DBF.state === "locked") add("unlock", "Unlock with master password", true);
   if (DBF.state === "conflict"){ add("reload", "Load the file's version", true); add("overwrite", "Keep mine (overwrite file)"); }
   if (DBF.state === "manual" && (DBF.dirty || where === "page")) add("save", "Save database file", DBF.dirty);
   if (DBF.state === "live" && where === "page") add("save", "Save now");
   if (can && (DBF.state !== "live" || where === "page")) add("open", DBF.handle || DBF.state === "manual" ? "Open another database file" : "Open database file", DBF.state === "none");
   if (can && where === "page") add("create", DBF.handle ? "Save as new database file" : "Create database file from this data");
   if (where === "page" && fullAccess) add("download", "Download a copy (.json)");
-  if (fullAccess && where === "page" && (DBF.state === "live" || DBF.state === "manual")){ if (VAULT.on){ add("vault", "Change master password"); add("unvault", "Remove master password"); } else add("vault", "🔒 Lock passwords with a master password"); }
   if (can && where === "page" && (DBF.handle || DBF.state === "manual")) add("forget", "Unlink");
   return b.join("");
 }
@@ -6607,19 +6387,7 @@ function dbfRender(){
   if (show) $("dbfLogin").innerHTML = st + `<div class="btnrow">${dbfButtons("login")}</div>`;
   $("dbfCard").hidden = !show || !me;
   if (show){ $("dbfState").innerHTML = st; $("dbfBtns").innerHTML = dbfButtons("page"); }
-  if (show) dbfSitesStatus();
   if ($("sfoot") && (DBF.handle || DBF.state === "manual")) $("sfoot").innerHTML = `<span class="dbdot ${dbfDot()}"></span><span>${esc(dbfShort())}</span>`;
-}
-/* the status box on the Sites page tells where the data is really kept */
-function dbfSitesStatus(){
-  const n = DBF.name || DB_FILE;
-  if (DBF.state === "live") setStatus(DBF.dirty ? "local" : "live", `Saved in the database file · ${n}`, DBF.dirty ? "Saving the latest change…" : `Every change is written to ${n} straight away${DBF.savedAt ? ` · last saved ${dbfTime(DBF.savedAt)}` : ""}.`);
-  else if (DBF.state === "manual") setStatus(DBF.dirty ? "local" : "live", `Database file · ${n}`, DBF.dirty ? "Unsaved changes: go to Backup and press Save database file." : "This browser saves the file by download: press Save database file after changes.");
-  else if (DBF.state === "ask") setStatus("local", `Database file not connected · ${n}`, "Changes are kept in this browser only until you press Reconnect (Backup page or sign-in screen).");
-  else if (DBF.state === "locked") setStatus("ro", `Database file locked · ${n}`, "Unlock it with the master password to edit and save.");
-  else if (DBF.state === "conflict" || DBF.state === "error") setStatus("local", `Database file problem · ${n}`, DBF.state === "conflict" ? "The file was changed elsewhere. Open Backup to choose which version to keep." : DBF.err || "Open Backup to reconnect the file.");
-  else if (IS_OFFLINE) setStatus("live", "Offline app · database built in", `Carries data from ${SEED.snapshotLabel || "its last save"}. Changes save in this browser. Link a database file on the Backup page to keep them in a file.`);
-  else setStatus("local", "Saved in this browser only", "No database file is linked. Go to Backup → Database file to open ip-monitor-db.json or create one.");
 }
 function dbfQueue(){
   if (!DBF.ready) return;
@@ -6633,17 +6401,11 @@ async function dbfPerm(h, ask){
   return false;
 }
 /* load a database file's text: it replaces what's in the browser (the file is the source of truth) */
-/* returns false when the file is encrypted and the master password wasn't given (data loaded without the secrets) */
 async function dbfLoadText(text){
-  const j = JSON.parse(stripBOM(text));
-  if (!j || !(Array.isArray(j) || Array.isArray(j.sites))) throw new Error("not a database");
-  const ok = await openVault(j);
-  const data = parseBackup(j);
+  const data = parseBackup(JSON.parse(text));
   const was = DBF.ready; DBF.ready = false;
-  try { await replaceAll(data); } finally { DBF.ready = was; }
-  return ok;
+  try { return await replaceAll(data); } finally { DBF.ready = was; }
 }
-function dbfLock(text){ DBF.lockedText = text; DBF.ready = false; DBF.dirty = false; DBF.state = "locked"; VAULT.locked = true; syncSession(); dbfRender(); }
 async function dbfAttach(h, create){
   try {
     if (!await dbfPerm(h, false)){ DBF.handle = h; DBF.name = h.name; DBF.state = "ask"; return dbfRender(); }
@@ -6652,12 +6414,9 @@ async function dbfAttach(h, create){
     if (create || !text.trim()){ DBF.ready = true; DBF.state = "live"; DBF.mtime = 0; await dbfWrite(); }
     else {
       DBF.ready = false;
-      let ok;
-      try { ok = await dbfLoadText(text); }
+      try { await dbfLoadText(text); }
       catch { DBF.state = "error"; DBF.err = "This file isn't an IP Monitor database. Open the right .json file."; return dbfRender(); }
-      DBF.mtime = f.lastModified; DBF.savedAt = new Date(f.lastModified).toISOString();
-      if (!ok){ try { await kvSet("dbfile", h); } catch {} return dbfLock(text); }
-      DBF.ready = true; DBF.dirty = false; DBF.state = "live"; VAULT.locked = false; syncSession();
+      DBF.mtime = f.lastModified; DBF.ready = true; DBF.dirty = false; DBF.state = "live"; DBF.savedAt = new Date(f.lastModified).toISOString();
     }
     try { await kvSet("dbfile", h); } catch {}
   } catch { DBF.state = "error"; DBF.err = "The file couldn't be read. It may have been moved or renamed: open it again."; DBF.ready = false; }
@@ -6672,8 +6431,7 @@ async function dbfWrite(force){
     const cur = await DBF.handle.getFile();
     if (!force && DBF.mtime && cur.lastModified > DBF.mtime + 1500){ DBF.state = "conflict"; toast("The database file was changed elsewhere. Open Backup to choose which version to keep."); return; }
     const w = await DBF.handle.createWritable();
-    const text = await dbfText();
-    await w.write(text); await w.close();
+    await w.write(dbfText()); await w.close();
     DBF.mtime = (await DBF.handle.getFile()).lastModified; DBF.dirty = false; DBF.savedAt = new Date().toISOString();
   } catch { DBF.state = "error"; DBF.err = "Couldn't save to the file (it may be moved, open in another program, or permission was removed). Press Reconnect; your changes are kept here meanwhile."; }
   finally {
@@ -6686,7 +6444,7 @@ async function dbfCheckExternal(){
   if (DBF.state !== "live" || !DBF.handle || DBF.dirty || DBF.writing) return;
   try {
     const f = await DBF.handle.getFile();
-    if (f.lastModified > DBF.mtime + 1500){ const text = await f.text(); DBF.mtime = f.lastModified; if (!await dbfLoadText(text)) return dbfLock(text); DBF.savedAt = new Date(f.lastModified).toISOString(); dbfRender(); toast("Database reloaded: the file was changed in another window."); }
+    if (f.lastModified > DBF.mtime + 1500){ await dbfLoadText(await f.text()); DBF.mtime = f.lastModified; DBF.savedAt = new Date(f.lastModified).toISOString(); dbfRender(); toast("Database reloaded: the file was changed in another window."); }
   } catch {}
 }
 document.addEventListener("visibilitychange", () => { if (!document.hidden) dbfCheckExternal(); });
@@ -6696,7 +6454,6 @@ window.addEventListener("beforeunload", e => { if (DBF.dirty){ if (DBF.state ===
 function dbfHasLocalData(){ return sites.length || networks.length || devices.length; }
 async function dbfOpen(){
   const go = async () => {
-    await snapPut("open");
     if (FS_API){
       let h; try { [h] = await window.showOpenFilePicker(DB_PICK); } catch { return; }
       if (!await dbfPerm(h, true)) return showAlert("Permission needed", "The app needs permission to edit the file so it can save your changes. Open it again and choose Edit / Allow.");
@@ -6713,7 +6470,7 @@ async function dbfCreate(){
     let h; try { h = await window.showSaveFilePicker({ suggestedName: DB_FILE, ...DB_PICK }); } catch { return; }
     return dbfAttach(h, true);
   }
-  await saveFile(DB_FILE, await dbfText()); DBF.name = DB_FILE; DBF.state = "manual"; DBF.ready = true; DBF.dirty = false; dbfRender();
+  await saveFile(DB_FILE, dbfText()); DBF.name = DB_FILE; DBF.state = "manual"; DBF.ready = true; DBF.dirty = false; dbfRender();
 }
 document.addEventListener("click", async e => {
   const b = e.target.closest("[data-dbf]"); if (!b) return;
@@ -6721,29 +6478,19 @@ document.addEventListener("click", async e => {
   if (a === "open") dbfOpen();
   else if (a === "create") dbfCreate();
   else if (a === "reconnect"){ if (DBF.handle && await dbfPerm(DBF.handle, true)) dbfAttach(DBF.handle, false); else dbfOpen(); }
-  else if (a === "save"){ if (DBF.state === "live") dbfWrite(); else { await saveFile(DBF.name || DB_FILE, await dbfText()); DBF.dirty = false; dbfRender(); } }
-  else if (a === "download") saveFile(`ip-monitor-db-${stamp()}.json`, await dbfText());
-  else if (a === "unlock"){
-    if (DBF.handle){ DBF.state = "live"; DBF.mtime = 0; return dbfAttach(DBF.handle, false); }
-    const t = DBF.lockedText; if (!t) return;
-    if (await dbfLoadText(t)){ Object.assign(DBF, { state: "manual", ready: true, dirty: false, lockedText: null }); VAULT.locked = false; syncSession(); dbfRender(); }
-  }
-  else if (a === "vault") vaultEnable();
-  else if (a === "unvault") vaultDisable();
+  else if (a === "save"){ if (DBF.state === "live") dbfWrite(); else { await saveFile(DBF.name || DB_FILE, dbfText()); DBF.dirty = false; dbfRender(); } }
+  else if (a === "download") saveFile(`ip-monitor-db-${stamp()}.json`, dbfText());
   else if (a === "reload"){ DBF.state = "live"; DBF.dirty = false; DBF.mtime = 0; dbfAttach(DBF.handle, false); }
   else if (a === "overwrite"){ DBF.state = "live"; dbfWrite(true); }
   else if (a === "forget") showAlert("Unlink database file?", "The app stops saving to the file. The file itself is not deleted, and the data stays in this browser.", [
-    { label: "Unlink", primary: true, run: async () => { try { await kvSet("dbfile", undefined); } catch {} Object.assign(DBF, { handle: null, name: "", state: "none", ready: false, dirty: false, lockedText: null }); syncSession(); dbfRender(); renderAll(); } },
+    { label: "Unlink", primary: true, run: async () => { try { await kvSet("dbfile", undefined); } catch {} Object.assign(DBF, { handle: null, name: "", state: "none", ready: false, dirty: false }); dbfRender(); renderAll(); } },
     { label: "Cancel" }]);
 });
 $("dbfInput").onchange = async () => {
   const f = $("dbfInput").files[0]; if (!f) return;
   DBF.ready = false;
-  const text = await f.text(); let ok;
-  try { ok = await dbfLoadText(text); } catch { return showAlert("Can't open", "That file isn't an IP Monitor database (.json)."); }
-  Object.assign(DBF, { handle: null, name: f.name, state: "manual", ready: true, dirty: false, savedAt: "" });
-  if (!ok) return dbfLock(text);
-  VAULT.locked = false; syncSession(); dbfRender();
+  try { await dbfLoadText(await f.text()); } catch { return showAlert("Can't open", "That file isn't an IP Monitor database (.json)."); }
+  Object.assign(DBF, { handle: null, name: f.name, state: "manual", ready: true, dirty: false, savedAt: "" }); dbfRender();
 };
 async function dbfInit(){
   if (IN_ARTIFACT || typeof indexedDB === "undefined") return dbfRender();
@@ -6751,959 +6498,11 @@ async function dbfInit(){
   if (h) await dbfAttach(h, false); else dbfRender();
 }
 
-/* ======================= PRODUCTIVITY TOOLS ======================= */
-const todayISO = () => new Date().toISOString().slice(0, 10);
-const b64 = buf => { let s = ""; const a = new Uint8Array(buf); for (let i = 0; i < a.length; i += 0x8000) s += String.fromCharCode(...a.subarray(i, i + 0x8000)); return btoa(s); };
-const unb64 = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
-const hexBytes = h => new Uint8Array(String(h).match(/../g).map(x => parseInt(x, 16)));
-const stripBOM = t => String(t || "").replace(/^\uFEFF/, "");
-const fileSafe = t => String(t || "").replace(/[^A-Za-z0-9._-]+/g, "_").slice(0, 60) || "file";
-
-/* ---------- 1. Free space: next free subnet in a block, next free IP in a network ---------- */
-/* aligned /size subnets inside block that touch no registered network or link subnet (extra = ranges planned but not saved yet) */
-function freeSubnets(block, size, want = 8, extra = []){
-  const v = block.v, bits = v === 4 ? 32 : 128;
-  if (!block || block.kind !== "subnet" || size < block.prefix || size > bits) return [];
-  const step = 1n << BigInt(bits - size);
-  const used = [...allNets().filter(n => n.e.v === v).map(n => [n.e.start, n.e.end]), ...extra.filter(x => x.v === v).map(x => [x.start, x.end])]
-    .filter(([s, e]) => s <= block.end && e >= block.start);
-  const out = [];
-  let a = block.start;
-  for (let guard = 0; a + step - 1n <= block.end && out.length < want && guard < 200000; guard++){
-    const end = a + step - 1n, hit = used.find(([s, e]) => s <= end && e >= a);
-    if (!hit){ out.push(analyze(v, a, size)); a += step; continue; }
-    let next = hit[1] + 1n; const r = (next - block.start) % step; if (r) next += step - r;
-    a = next;
-  }
-  return out;
-}
-/* the next address nobody uses in a saved network (hosts, devices, link ends and the gateway count as used) */
-function nextFreeIn(n){
-  const e = parseEntry(n.ip); if (!e || e.kind !== "subnet") return "";
-  const used = new Set([...(n.hostList || []).map(h => h.ip), ...deviceIPsIn(e).keys()]);
-  if (n.gateway) used.add(n.gateway);
-  return nextFree(e, used);
-}
-function freeCount(n){
-  const e = parseEntry(n.ip); if (!e || e.kind !== "subnet") return 0n;
-  const used = new Set([...(n.hostList || []).map(h => h.ip), ...deviceIPsIn(e).keys(), ...(n.gateway ? [n.gateway] : [])]);
-  return e.usable - BigInt(used.size);
-}
-function fillFreeSizes(){
-  const b = parseEntry($("fs-block").value), v = b ? b.v : 4, cur = $("fs-size").value;
-  const list = v === 4 ? [16, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30] : [48, 52, 56, 60, 64];
-  $("fs-size").innerHTML = list.filter(p => !b || p >= b.prefix).map(p => `<option value="${p}">/${p} · ${v === 4 ? fmtCount((1n << BigInt(32 - p)) - (p < 31 ? 2n : 0n)) + " hosts" : p === 64 ? "one LAN" : fmtCount(1n << BigInt(64 - p)) + " × /64"}</option>`).join("");
-  if ([...$("fs-size").options].some(o => o.value === cur)) $("fs-size").value = cur; else if ([...$("fs-size").options].some(o => o.value === (v === 4 ? "24" : "64"))) $("fs-size").value = v === 4 ? "24" : "64";
-}
-function renderFree(){
-  if (!$("fs-out")) return;
-  const b = parseEntry($("fs-block").value), size = Number($("fs-size").value);
-  if (!b || b.kind !== "subnet"){ $("fs-out").innerHTML = `<p class="hint2">Type the address block you plan from, e.g. <b>10.0.0.0/8</b> or <b>192.168.0.0/16</b>.</p>`; }
-  else {
-    const free = freeSubnets(b, size, 10);
-    $("fs-out").innerHTML = free.length ? `<p class="hint2">First free /${size} subnets inside ${esc(b.text)} (registered networks and link subnets are skipped):</p><div class="fslist">${free.map(e =>
-      `<div class="fsrow"><code>${esc(e.text)}</code><span>${esc(e.firstU)} – ${esc(e.lastU)}</span>${readOnly ? "" : `<button type="button" class="mini" data-fsnew="${esc(e.text)}">Create network</button>`}<button type="button" class="mini" data-fscopy="${esc(e.text)}">Copy</button></div>`).join("")}</div>`
-      : `<p class="hint2 bad">✕ No free /${size} left inside ${esc(b.text)}.</p>`;
-  }
-  $("fs-out").querySelectorAll("[data-fsnew]").forEach(x => x.onclick = () => openNet(null, x.dataset.fsnew));
-  $("fs-out").querySelectorAll("[data-fscopy]").forEach(x => x.onclick = () => copyText(x.dataset.fscopy, x));
-  // next free IP per network
-  const nets = [...networks].filter(n => parseEntry(n.ip)?.kind === "subnet").sort((a, c) => ipCmpT(a.ip, c.ip));
-  const keep = $("fs-net").value;
-  $("fs-net").innerHTML = nets.length ? nets.map(n => { const s = siteOf(n); return `<option value="${esc(n.id)}">${esc(n.ip)}${n.name ? " · " + esc(n.name) : ""}${s ? " · #" + esc(s.siteNumber) : ""}</option>`; }).join("") : `<option value="">No subnets yet</option>`;
-  if (nets.some(n => n.id === keep)) $("fs-net").value = keep;
-  const n = networks.find(x => x.id === $("fs-net").value);
-  if (!n){ $("fs-ip").innerHTML = ""; return; }
-  const ip = nextFreeIn(n), left = freeCount(n);
-  $("fs-ip").innerHTML = ip ? `<div class="fsbig"><code>${esc(ip)}</code><span>${esc(fmtCount(left > 0n ? left : 0n))} free in ${esc(n.ip)}</span>
-      <button type="button" class="mini" id="fsIpCopy">Copy</button>${readOnly ? "" : `<button type="button" class="mini" id="fsIpHost">Add as host</button>`}</div>`
-    : `<p class="hint2 bad">✕ ${esc(n.ip)} is full.</p>`;
-  const c = $("fsIpCopy"); if (c) c.onclick = () => copyText(ip, c);
-  const h = $("fsIpHost"); if (h) h.onclick = () => { openNet(n.id); setTimeout(() => openHost(null), 60); };
-}
-async function copyText(t, btn){
-  try { await navigator.clipboard.writeText(t); if (btn){ const o = btn.textContent; btn.textContent = "Copied"; setTimeout(() => { btn.textContent = o; }, 1200); } else toast("Copied " + t); }
-  catch { showAlert("Couldn't copy", t); }
-}
-$("fs-block").addEventListener("input", () => { fillFreeSizes(); renderFree(); });
-$("fs-size").addEventListener("change", renderFree);
-$("fs-net").addEventListener("change", renderFree);
-
-/* ---------- 2. Full health check (audit) page ---------- */
-let auditSev = "all";
-function extraChecks(add, siteTag){
-  // overlapping networks (older data, imports)
-  const nl = allNets().filter(n => n.kind === "net"), ov = [];
-  for (let i = 0; i < nl.length; i++) for (let j = i + 1; j < nl.length; j++) if (overlaps(nl[i].e, nl[j].e))
-    ov.push({ t: `${nl[i].e.text} × ${nl[j].e.text}`, s: [nl[i].siteIds[0], nl[j].siteIds[0]].map(siteTag).join(" · "), open: nl[i].open, sid: nl[i].siteIds[0] });
-  add("crit", "Overlapping networks", ov, "Two networks share addresses. Change or delete one of them.");
-  add("warn", "Gateway outside its subnet", networks.filter(n => { const e = parseEntry(n.ip), g = n.gateway && parseEntry(n.gateway); return e && e.kind === "subnet" && g && (g.v !== e.v || !hostRangeOK(e, g.addr)); })
-    .map(n => ({ t: n.ip, s: `gateway ${n.gateway} · ${siteTag(n.siteId)}`, open: () => openNet(n.id), sid: n.siteId })), "Fix the gateway so it's a usable address of the subnet.");
-  // duplicate MACs and names
-  const macs = new Map(), addMac = (m, who, open, sid) => { const k = normMac(m); if (!k) return; if (!macs.has(k)) macs.set(k, []); macs.get(k).push({ who, open, sid }); };
-  for (const d of devices) addMac(d.mac, d.name, () => openDev(d.id), d.siteId);
-  for (const n of networks) for (const h of n.hostList || []) addMac(h.mac, `${h.ip}${h.name ? " " + h.name : ""}`, () => openNet(n.id), n.siteId);
-  add("crit", "Duplicate MAC addresses", [...macs.entries()].filter(([, l]) => l.length > 1).map(([m, l]) => ({ t: m, s: l.map(x => x.who).join(" · "), open: l[0].open, sid: l[0].sid })), "One MAC can only be on one device. Check for a typo.");
-  const names = new Map(); for (const d of devices){ const k = d.siteId + "|" + d.name.trim().toLowerCase(); names.set(k, [...(names.get(k) || []), d]); }
-  add("warn", "Devices with the same name in one site", [...names.values()].filter(l => l.length > 1).map(l => ({ t: l[0].name, s: `${l.length} devices · ${siteTag(l[0].siteId)}`, open: () => openDev(l[0].id), sid: l[0].siteId })), "Give each device its own name so the map and exports are clear.");
-  // access and security
-  add("warn", "MikroTik devices without a saved login", devices.filter(d => vendorOf(d) === "mikrotik" && statusOf(d) !== "retired" && (!d.user || !d.pass))
-    .map(d => ({ t: d.name, sid: d.siteId, s: `${!d.user ? "no username" : ""}${!d.user && !d.pass ? " · " : ""}${!d.pass ? "no password" : ""} · ${siteTag(d.siteId)}`, open: () => openDev(d.id) })), "Save the username and password so WinBox opens with one click.");
-  add("crit", "Wireless devices with no security (open)", devices.filter(d => vendorOf(d) === "mikrotik" && hasWifi(d) && d.wsec === "none")
-    .map(d => ({ t: d.name, sid: d.siteId, s: `${d.model} · ${siteTag(d.siteId)}`, open: () => openDev(d.id) })), "Anyone in range can connect. Use WPA2-PSK or better.");
-  add("info", "Wireless devices without security set", devices.filter(d => vendorOf(d) === "mikrotik" && hasWifi(d) && !d.wsec)
-    .map(d => ({ t: d.name, sid: d.siteId, s: `${d.model} · ${siteTag(d.siteId)}`, open: () => openDev(d.id) })), "Record which security the radio uses.");
-  // hardware
-  const today = todayISO(), soon = new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10);
-  add("warn", "Warranty expired", devices.filter(d => d.warranty && d.warranty < today && statusOf(d) !== "retired")
-    .map(d => ({ t: d.name, sid: d.siteId, s: `ended ${d.warranty} · ${siteTag(d.siteId)}`, open: () => openDev(d.id) })), "");
-  add("info", "Warranty ends in the next 60 days", devices.filter(d => d.warranty && d.warranty >= today && d.warranty <= soon)
-    .map(d => ({ t: d.name, sid: d.siteId, s: `ends ${d.warranty} · ${siteTag(d.siteId)}`, open: () => openDev(d.id) })), "");
-  // live ping
-  if (liveFresh()){
-    add("crit", "Devices not answering ping", devices.filter(d => liveOf(d) === "down" && statusOf(d) !== "retired")
-      .map(d => ({ t: d.name, sid: d.siteId, s: `${d.ip} · ${siteTag(d.siteId)}`, open: () => showDevice(d.id) })), "Checked by the ping helper. Check power, cable or radio link.");
-  }
-}
-function renderAudit(){
-  const checks = healthChecks(), score = healthScore(checks);
-  const sevs = [["all", "All"], ["crit", "Critical"], ["warn", "Warnings"], ["info", "Info"], ["ok", "Passed"]];
-  const count = s => s === "all" ? checks.length : checks.filter(c => c.sev === s).length;
-  const shown = checks.filter(c => auditSev === "all" || c.sev === auditSev);
-  const problems = checks.filter(c => c.sev !== "ok").reduce((a, c) => a + c.items.length, 0);
-  $("audit").innerHTML = `<div class="readouts">
-      <div class="ro ${score < 70 ? "alert" : ""}"><b>${score}</b><span>Health score</span></div>
-      <div class="ro ${checks.some(c => c.sev === "crit") ? "alert" : ""}"><b>${checks.filter(c => c.sev === "crit").reduce((a, c) => a + c.items.length, 0)}</b><span>Critical</span></div>
-      <div class="ro"><b>${checks.filter(c => c.sev === "warn").reduce((a, c) => a + c.items.length, 0)}</b><span>Warnings</span></div>
-      <div class="ro"><b>${checks.filter(c => c.sev === "ok").length}/${checks.length}</b><span>Rules passed</span></div></div>
-    <div class="mapfilter" style="margin-top:12px">${sevs.map(([k, l]) => `<button type="button" class="mchip" data-as="${k}" aria-pressed="${auditSev === k}">${l} <b>${count(k)}</b></button>`).join("")}
-      <button type="button" class="btn btn-line btn-sm" id="auditCsv" ${problems ? "" : "disabled"}>Export problems (.csv)</button></div>
-    ${liveFresh() ? "" : `<p class="hint2">Tip: run the <b>ping helper</b> (Backup page) to also check which devices answer.</p>`}
-    <div class="audit">${shown.map((c, i) => `<div class="acard ${c.sev}"><div class="ah"><span class="sev ${c.sev}">${c.sev === "ok" ? "OK" : c.sev === "crit" ? "CRIT" : c.sev === "warn" ? "WARN" : "INFO"}</span>
-        <b>${esc(c.title)}</b><span class="cn">${c.items.length || "✓"}</span></div>${c.hint && c.items.length ? `<p class="hint2">${esc(c.hint)}</p>` : ""}
-        ${c.items.length ? `<div class="aitems">${c.items.slice(0, 60).map((it, k) => `<div class="aitem"><span><b>${esc(it.t)}</b><small>${esc(it.s || "")}</small></span>${it.open ? `<button type="button" class="mini" data-ai="${checks.indexOf(c)}" data-k="${k}">Go fix →</button>` : ""}</div>`).join("")}
-          ${c.items.length > 60 ? `<p class="hint2">…and ${c.items.length - 60} more</p>` : ""}</div>` : ""}</div>`).join("") || `<div class="empty"><h2>Nothing here</h2><p>No rule in this group.</p></div>`}</div>`;
-  $("audit").querySelectorAll("[data-as]").forEach(b => b.onclick = () => { auditSev = b.dataset.as; renderAudit(); });
-  $("audit").querySelectorAll("[data-ai]").forEach(b => b.onclick = () => { const it = checks[+b.dataset.ai].items[+b.dataset.k]; if (it && it.open) it.open(); });
-  $("auditCsv").onclick = () => {
-    const sevL = { crit: "Critical", warn: "Warning", info: "Info" }, rows = [];
-    for (const c of checks) if (c.sev !== "ok") for (const it of c.items){ const s = it.sid && sites.find(x => x.id === it.sid); rows.push({ cells: [sevL[c.sev], c.title, it.t, it.s || "", s ? s.siteNumber : "", s ? s.name : "", c.hint || ""] }); }
-    saveFile(`ip-monitor-health-check-${stamp()}.csv`, tableCSV(["Severity", "Rule", "Item", "Details", "Site #", "Site", "How to fix"], rows));
-  };
-}
-
-/* ---------- 3. RouterOS: generate a config script, fill a device from /export ---------- */
-const rq = v => { v = String(v ?? ""); return /^[A-Za-z0-9_.\-:\/]+$/.test(v) ? v : '"' + v.replace(/(["\\$])/g, "\\$1").replace(/\n/g, " ") + '"'; };
-function genRsc(d){
-  const s = sites.find(x => x.id === d.siteId), L = [];
-  L.push(`# IP Monitor · generated ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC for ${d.name}`, `# model = ${d.model}`, `# site = ${s ? "#" + s.siteNumber + " " + s.name : "?"}`,
-    "# Check it, then paste it into WinBox > New Terminal. It only adds or sets these items; nothing is removed.", "");
-  L.push("/system identity", `set name=${rq(d.name)}`, "");
-  const brs = (d.bridges || []).filter(b => b.name);
-  if (brs.length){
-    L.push("/interface bridge", ...brs.map(b => `add name=${rq(b.name)} comment="IP Monitor"`), "");
-    const ps = brs.flatMap(b => (b.ports || []).map(p => [b.name, p]));
-    if (ps.length) L.push("/interface bridge port", ...ps.map(([b, p]) => `add bridge=${rq(b)} interface=${rq(p)}`), "");
-  }
-  const vl = vlans.filter(v => v.deviceId === d.id && v.ifname);
-  if (vl.length) L.push("/interface vlan", ...vl.map(v => `add name=${rq(v.ifname)} vlan-id=${v.vid} interface=${rq(v.parent || "bridge1")}${v.name ? " comment=" + rq(v.name) : ""}`), "");
-  if (hasWifi(d)){
-    const wifi = devicePorts(d).filter(isWifiPort);
-    const auth = { "wpa2-psk": ["wpa2-psk", ["wpa2"]], "wpa-wpa2-psk": ["wpa-psk,wpa2-psk", ["wpa", "wpa2"]], "wpa3-psk": ["wpa2-psk", ["wpa2"]] }[d.wsec];
-    L.push("# Wireless (wireless package: RouterOS 6, or 7 with the wireless package). Devices with the newer wifi package use /interface wifi instead.");
-    if (auth) L.push("/interface wireless security-profiles", `add name=ipmonitor mode=dynamic-keys authentication-types=${auth[0]}${auth[1].map(k => ` ${k}-pre-shared-key=${rq(d.psk || "CHANGE-ME")}`).join("")}${d.wsec === "wpa3-psk" ? "  # WPA3 is only in the wifi package; WPA2 used here" : ""}`);
-    const mode = { ap: "ap-bridge", station: "station-bridge", ptp: "bridge" }[d.role] || "";
-    const wl = wifi.map(p => { const l = links.find(x => x.type === "wireless" && ((x.a === d.id && x.portA === p) || (x.b === d.id && x.portB === p)));
-      return `set [ find default-name=${p} ] disabled=no${mode ? " mode=" + mode : ""}${l && l.ssid ? " ssid=" + rq(l.ssid) : ""}${l && l.freq && d.role !== "station" ? " frequency=" + Number(l.freq) : ""}${d.wproto ? " wireless-protocol=" + d.wproto : ""}${auth ? " security-profile=ipmonitor" : d.wsec === "none" ? " security-profile=default" : ""}`; });
-    if (wl.length) L.push("/interface wireless", ...wl);
-    L.push("");
-  }
-  const ad = (d.addrs || []).filter(a => a.iface && parseRaw(a.address));
-  const v4 = ad.filter(a => parseRaw(a.address).v === 4), v6 = ad.filter(a => parseRaw(a.address).v === 6);
-  if (v4.length) L.push("/ip address", ...v4.map(a => `add address=${a.address} interface=${rq(a.iface)}${a.comment ? " comment=" + rq(a.comment) : ""}`), "");
-  if (v6.length) L.push("/ipv6 address", ...v6.map(a => `add address=${a.address} interface=${rq(a.iface)} advertise=no`), "");
-  if (d.winbox && d.winbox !== "8291") L.push("/ip service", `set winbox port=${d.winbox}`, "");
-  return L.join("\n");
-}
-function showRsc(d){
-  const t = genRsc(d);
-  $("rscTitle").textContent = `Config for ${d.name}`;
-  $("rscOut").value = t;
-  $("rscCopy").onclick = () => copyText(t, $("rscCopy"));
-  $("rscSave").onclick = () => saveFile(`${fileSafe(d.name)}-ip-monitor.rsc`, t.replace(/\n/g, "\r\n"));
-  $("rscDlg").showModal();
-}
-$("rscClose").onclick = () => $("rscDlg").close();
-/* read a RouterOS /export: identity, model, version, interfaces, bridges, addresses, wireless */
-function parseExport(t){
-  t = String(t || "").replace(/\r\n/g, "\n").replace(/\\\n\s*/g, "");
-  const out = { identity: "", model: "", ros: "", ports: [], bridges: [], addrs: [], vlanIfs: [], wl: {}, profiles: {}, winbox: "", renamed: {} };
-  const addPort = p => { if (p && !out.ports.includes(p)) out.ports.push(p); };
-  const phys = p => /^(ether|sfp|qsfp|combo|wlan|wifi|lte|wlan60)\d/i.test(p);
-  const kv = s => { const o = {}; s.replace(/([a-z0-9\-]+)=("(?:[^"\\]|\\.)*"|[^\s\]]+)/gi, (m, k, v) => { o[k.toLowerCase()] = v[0] === '"' ? v.slice(1, -1).replace(/\\(.)/g, "$1") : v; return m; }); return o; };
-  let sect = "";
-  for (const raw of t.split("\n")){
-    const line = raw.trim(); if (!line) continue;
-    if (line[0] === "#"){
-      const r = line.match(/by RouterOS\s+([0-9][0-9A-Za-z.\-]*)/); if (r) out.ros = r[1];
-      const m = line.match(/^#\s*model\s*=\s*(.+)$/); if (m) out.model = m[1].trim();
-      continue;
-    }
-    let cmd = line;
-    if (line[0] === "/"){ const m = line.match(/^(\/[^=]*?)(?:\s+(add|set)\b(.*))?$/); if (!m) continue; sect = m[1].trim(); if (!m[2]) continue; cmd = m[2] + m[3]; }
-    const verb = cmd.split(/\s+/)[0], p = kv(cmd);
-    if (verb !== "add" && verb !== "set") continue;
-    if (sect === "/system identity" && p.name) out.identity = p.name;
-    else if (sect === "/interface bridge" && verb === "add" && p.name) out.bridges.push({ name: p.name, ports: [] });
-    else if (sect === "/interface bridge port" && p.bridge && p.interface){ const b = out.bridges.find(x => x.name === p.bridge); if (b) b.ports.push(p.interface); if (phys(p.interface)) addPort(p.interface); }
-    else if (/^\/interface (ethernet|wireless|wifi|lte)$/.test(sect) && (p["default-name"] || p.name)){
-      const n = p.name || p["default-name"]; addPort(n);
-      if (p.name && p["default-name"] && p.name !== p["default-name"]) out.renamed[p["default-name"]] = p.name;
-      if (/wireless|wifi/.test(sect)) out.wl[n] = { mode: p.mode, ssid: p.ssid, proto: p["wireless-protocol"], prof: p["security-profile"] };
-    }
-    else if (sect === "/interface vlan" && p.name) out.vlanIfs.push(p.name);
-    else if (sect === "/interface wireless security-profiles" && p.name) out.profiles[p.name] = { auth: p["authentication-types"] || "", key: p["wpa2-pre-shared-key"] || p["wpa-pre-shared-key"] || "", mode: p.mode };
-    else if (sect === "/ip address" && p.address && p.interface){ out.addrs.push({ address: p.address, iface: p.interface, comment: p.comment || "" }); if (phys(p.interface)) addPort(p.interface); }
-    else if (sect === "/ipv6 address" && p.address && p.interface && !/^fe80/i.test(p.address)) out.addrs.push({ address: p.address, iface: p.interface, comment: p.comment || "" });
-    else if (sect === "/ip service" && /^set\s+winbox\b/.test(cmd) && p.port) out.winbox = p.port;
-  }
-  return out;
-}
-function fillFromExport(text){
-  const x = parseExport(text);
-  if (!x.identity && !x.addrs.length && !x.bridges.length && !x.ports.length) return showAlert("Nothing found", "That doesn't look like a RouterOS /export. On the router open New Terminal, type /export and copy everything it prints.");
-  if (!$("d-model").value.trim() && x.model) $("d-model").value = x.model;
-  if (x.identity) $("d-name").value = x.identity;
-  if (x.ros) $("d-ros").value = x.ros;
-  const ports = [...new Set([...parsePorts($("d-ports").value), ...x.ports].map(p => x.renamed[p] || p))];
-  const brNames = new Set(x.bridges.map(b => b.name));
-  $("d-ports").value = ports.join(", "); portsEdited = true;
-  formBridges = x.bridges.map(b => ({ name: b.name, ports: b.ports.filter(p => ports.includes(p)) }));
-  const skipped = [];
-  const keep = x.addrs.filter(a => { const ok = (ports.includes(a.iface) || brNames.has(a.iface)) && !isWifiPort(a.iface) && !formBridges.some(b => b.ports.includes(a.iface));
-    if (!ok) skipped.push(`${a.address} on ${a.iface}`); return ok; });
-  const existing = new Set(formAddrs.map(a => ipOf(a.address)));
-  for (const a of keep) if (!existing.has(ipOf(a.address))) formAddrs.push({ id: newId(), iface: a.iface, address: a.address, comment: a.comment });
-  if (x.winbox) $("d-winbox").value = x.winbox;
-  const w = Object.values(x.wl)[0];
-  if (w && hasWifi({ type: devType })){
-    if (w.proto && ["802.11", "nstreme", "nv2"].includes(w.proto)) $("d-wproto").value = w.proto;
-    const pr = x.profiles[w.prof];
-    if (pr){ const a = pr.auth; $("d-wsec").value = !a || pr.mode === "none" ? "none" : /wpa-psk/.test(a) && /wpa2-psk/.test(a) ? "wpa-wpa2-psk" : /wpa2-psk/.test(a) ? "wpa2-psk" : $("d-wsec").value;
-      if (pr.key && !/^\*+$/.test(pr.key)) $("d-psk").value = pr.key; }
-    if (["ap-bridge", "wds-slave"].includes(w.mode)) $("d-role").value = "ap"; else if (/station/.test(w.mode || "")) $("d-role").value = "station"; else if (w.mode === "bridge") $("d-role").value = "ptp";
-    $("d-wsec").dispatchEvent(new Event("change"));
-  }
-  renderBridges(); renderAddrs(); validateDev();
-  showAlert("Filled from /export", `Found ${x.identity ? "identity “" + x.identity + "”, " : ""}${x.ports.length} interfaces, ${x.bridges.length} bridges and ${keep.length} IP addresses${x.ros ? ", RouterOS " + x.ros : ""}. Check the form, then press Save.` +
-    (skipped.length ? `\n\nNot copied (VLAN or wireless interfaces are set elsewhere): ${skipped.slice(0, 5).join(", ")}${skipped.length > 5 ? "…" : ""}` : ""));
-}
-$("d-fromexp").onclick = () => { $("expIn").value = ""; $("expDlg").showModal(); setTimeout(() => $("expIn").focus(), 50); };
-$("expCancel").onclick = () => $("expDlg").close();
-$("expFile").onclick = () => { $("expFileIn").value = ""; $("expFileIn").click(); };
-$("expFileIn").onchange = async () => { const f = $("expFileIn").files[0]; if (f) $("expIn").value = await f.text(); };
-$("expFill").onclick = () => { const t = $("expIn").value; $("expDlg").close(); fillFromExport(t); };
-
-/* ---------- 4. Ctrl + K: find anything, jump anywhere ---------- */
-function findAll(q){
-  const ql = q.toLowerCase(), qE = parseEntry(q), mac = normMac(q), res = [];
-  const hit = v => String(v || "").toLowerCase().includes(ql);
-  for (const s of sites) if ([s.name, s.siteNumber, s.location, s.contact, ...(s.tags || [])].some(hit)) res.push({ k: "SITE", t: `#${s.siteNumber} ${s.name}`, s: s.location || "", open: () => { location.hash = "#site/" + encodeURIComponent(s.id); } });
-  for (const d of devices) if ([d.name, d.model, d.mac, d.ros, d.serial, d.rack, d.ip, ...(d.tags || [])].some(hit)) res.push({ k: "DEV", t: d.name, s: `${d.model}${d.ip ? " · " + d.ip : ""}${d.serial ? " · S/N " + d.serial : ""}`, open: () => showDevice(d.id) });
-  for (const n of allNets()) if (hit(n.e.text) || hit(n.label) || (qE && overlaps(n.e, qE))) res.push({ k: n.kind === "ptp" ? "PtP" : "NET", t: n.e.text, s: n.label || "", open: n.open });
-  for (const r of collectIPs()){ const x = parseEntry(r.ip); if (hit(r.ip) || hit(r.owner) || (mac && hit(r.sub)) || (qE && qE.kind === "ip" && x && overlaps(x, qE))) res.push({ k: r.kind.toUpperCase(), t: r.ip, s: `${r.owner} · ${r.sub}`, open: r.open }); }
-  for (const v of vlans) if (hit("vlan " + v.vid) || hit(v.name) || hit(v.ifname) || String(v.vid) === q){ const s = sites.find(x => x.id === v.siteId); res.push({ k: "VLAN", t: `VLAN ${v.vid} ${v.name || ""}`, s: s ? `#${s.siteNumber} ${s.name}` : "", open: () => openVlan(v.id) }); }
-  for (const n of networks) for (const h of n.hostList || []) if (mac && normMac(h.mac) === mac) res.push({ k: "MAC", t: h.mac, s: `${h.ip} ${h.name || ""}`, open: () => openNet(n.id) });
-  const seen = new Set();
-  return res.filter(r => { const key = r.k + r.t + r.s; if (seen.has(key)) return false; seen.add(key); return true; });
-}
-function paletteCommands(){
-  const go = h => () => { location.hash = h; };
-  const c = [["Dashboard", go("#dash")], ["Sites", go("#sites")], ["Devices", go("#devices")], ["IPs & Networks", go("#ips")], ["Site Map", go("#map")],
-    ["Health check", go("#audit")], ["Calculator · find free subnet / next free IP", go("#calc")], ["Backup & restore points", go("#backup")], ["History", go("#log")]].map(([t, open]) => ({ k: "GO", t, s: "", open }));
-  if (!readOnly) c.push({ k: "NEW", t: "New site", s: "", open: () => openSite(null) }, { k: "NEW", t: "New site from template", s: "VLANs, subnets and router in one go", open: openTemplate },
-    { k: "NEW", t: "New device", s: "", open: () => openDev(null) }, { k: "NEW", t: "Bulk import hosts or devices", s: "paste from Excel or load CSV / XLSX", open: () => openBulk() });
-  return c;
-}
-let palList = [], palSel = 0;
-function renderPalette(){
-  const q = $("palIn").value.trim(), ql = q.toLowerCase();
-  const cmds = paletteCommands().filter(c => !q || c.t.toLowerCase().includes(ql));
-  let found = q ? findAll(q) : [];
-  if (q){ const e = parseEntry(q); const n = e && e.kind === "subnet" && networks.find(x => x.ip === e.text);
-    if (n){ const ip = nextFreeIn(n); if (ip) found.unshift({ k: "FREE", t: `Next free IP in ${n.ip}: ${ip}`, s: "press Enter to copy", open: () => copyText(ip) }); } }
-  palList = [...found.slice(0, 40), ...cmds].slice(0, 50);
-  palSel = Math.min(palSel, Math.max(0, palList.length - 1));
-  $("palList").innerHTML = palList.length ? palList.map((r, i) => `<button type="button" class="qrow ${i === palSel ? "sel" : ""}" data-i="${i}"><span class="qk">${esc(r.k)}</span><span class="qt">${esc(r.t)}<small>${esc(r.s)}</small></span></button>`).join("")
-    : `<p class="hint2" style="margin:10px">Nothing found for “${esc(q)}”.</p>`;
-  $("palList").querySelectorAll(".qrow").forEach(b => b.onclick = () => palGo(+b.dataset.i));
-  const s = $("palList").querySelector(".sel"); if (s) s.scrollIntoView({ block: "nearest" });
-}
-function palGo(i){ const r = palList[i]; if (!r) return; $("palDlg").close(); r.open(); }
-function openPalette(){ if (!me) return; $("palIn").value = ""; palSel = 0; renderPalette(); if (!$("palDlg").open) $("palDlg").showModal(); setTimeout(() => $("palIn").focus(), 30); }
-$("palIn").addEventListener("input", () => { palSel = 0; renderPalette(); });
-$("palIn").addEventListener("keydown", e => {
-  if (e.key === "ArrowDown"){ palSel = Math.min(palList.length - 1, palSel + 1); renderPalette(); e.preventDefault(); }
-  else if (e.key === "ArrowUp"){ palSel = Math.max(0, palSel - 1); renderPalette(); e.preventDefault(); }
-  else if (e.key === "Enter"){ palGo(palSel); e.preventDefault(); }
-  else if (e.key === "Escape"){ $("palDlg").close(); e.preventDefault(); }
-});
-$("palDlg").addEventListener("click", e => { if (e.target === $("palDlg")) $("palDlg").close(); });
-$("searchBtn").onclick = openPalette;
-document.addEventListener("keydown", e => {
-  if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "k"){ e.preventDefault(); if ($("palDlg").open) $("palDlg").close(); else if (!document.querySelector("dialog[open]")) openPalette(); }
-});
-
-/* ---------- 5. Master password: device passwords and Wi-Fi keys encrypted in the database file ---------- */
-const VAULT_ITER = 250000, VAULT_SS = "ipmonitor.vault";
-const VK = new Map();                                   // salt -> key, for files locked with another password
-async function vaultKey(pw, salt, iter){
-  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
-  return crypto.subtle.deriveKey({ name: "PBKDF2", salt: hexBytes(salt), iterations: iter || VAULT_ITER, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
-}
-async function rememberVault(){
-  // kept for this browser tab only (cleared when the tab closes), so a reload doesn't ask again
-  try { if (VAULT.on && VAULT.key) sessionStorage.setItem(VAULT_SS, JSON.stringify({ salt: VAULT.salt, k: b64(await crypto.subtle.exportKey("raw", VAULT.key)) })); else sessionStorage.removeItem(VAULT_SS); } catch {}
-}
-async function restoreVault(){
-  try { const s = JSON.parse(sessionStorage.getItem(VAULT_SS) || "null"); if (!s) return;
-    const key = await crypto.subtle.importKey("raw", unb64(s.k), { name: "AES-GCM" }, true, ["encrypt", "decrypt"]); VK.set(s.salt, key); } catch {}
-}
-/* move device passwords and keys into an encrypted "vault" block */
-async function sealVault(obj){
-  if (!VAULT.on || !VAULT.key) return obj;
-  const sec = {};
-  const devs = (obj.devices || []).map(d => { if (d.pass || d.psk) sec[d.id] = { pass: d.pass || "", psk: d.psk || "" }; const { pass, psk, ...r } = d; return r; });
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, VAULT.key, new TextEncoder().encode(JSON.stringify(sec)));
-  return { ...obj, devices: devs, vault: { v: 1, alg: "AES-256-GCM, key from PBKDF2-SHA256", iter: VAULT_ITER, salt: VAULT.salt, iv: b64(iv), data: b64(ct) } };
-}
-/* put the secrets back; asks for the master password when needed. false = the person cancelled */
-async function openVault(j){
-  if (!j || !j.vault) return true;
-  const v = j.vault;
-  let key = VK.get(v.salt) || (VAULT.salt === v.salt ? VAULT.key : null), wrong = false;
-  for (;;){
-    if (!key){
-      const pw = await askPassword("Database is locked", (wrong ? "✕ Wrong master password. " : "") + "Device passwords and Wi-Fi keys in this file are encrypted. Type the master password to open them.", "Unlock");
-      if (pw === null) return false;
-      key = await vaultKey(pw, v.salt, v.iter);
-    }
-    try {
-      const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(v.iv) }, key, unb64(v.data));
-      const sec = JSON.parse(new TextDecoder().decode(pt));
-      for (const d of j.devices || []) if (sec[d.id]){ d.pass = sec[d.id].pass; d.psk = sec[d.id].psk; }
-      VK.set(v.salt, key); Object.assign(VAULT, { on: true, key, salt: v.salt, locked: false }); rememberVault();
-      delete j.vault; return true;
-    } catch { key = null; VK.delete(v.salt); wrong = true; }
-  }
-}
-let pwResolve = null;
-function askPassword(title, msg, okLabel, confirm){
-  $("pwTitle").textContent = title; $("pwMsg").textContent = msg; $("pwOk").textContent = okLabel || "OK";
-  $("pwIn").value = ""; $("pwIn2").value = ""; $("pwErr").textContent = ""; $("pwIn2wrap").hidden = !confirm; $("pwDlg").dataset.confirm = confirm ? "1" : "";
-  if (pwResolve) pwResolve(null);
-  return new Promise(res => { pwResolve = res; $("pwDlg").showModal(); setTimeout(() => $("pwIn").focus(), 30); });
-}
-$("pwForm").addEventListener("submit", e => {
-  e.preventDefault();
-  const a = $("pwIn").value;
-  if ($("pwDlg").dataset.confirm){
-    if (a.length < 8) return $("pwErr").textContent = "✕ Use at least 8 characters.";
-    if (a !== $("pwIn2").value) return $("pwErr").textContent = "✕ The two passwords are different.";
-  } else if (!a) return $("pwErr").textContent = "✕ Type the password.";
-  const r = pwResolve; pwResolve = null; $("pwDlg").close(); if (r) r(a);
-});
-$("pwCancel").onclick = () => { const r = pwResolve; pwResolve = null; $("pwDlg").close(); if (r) r(null); };
-$("pwDlg").addEventListener("cancel", () => { const r = pwResolve; pwResolve = null; if (r) r(null); });
-async function vaultEnable(){
-  const pw = await askPassword(VAULT.on ? "New master password" : "Lock passwords with a master password", "Device passwords and Wi-Fi keys will be stored encrypted in the database file, backups and restore points. Everyone who opens the file needs this password once per session. If it is lost, the saved passwords can't be recovered.", VAULT.on ? "Change" : "Lock", true);
-  if (pw === null) return;
-  const salt = toHex(crypto.getRandomValues(new Uint8Array(16)));
-  const key = await vaultKey(pw, salt);
-  Object.assign(VAULT, { on: true, key, salt, locked: false }); VK.set(salt, key); await rememberVault();
-  saveLocal(); if (DBF.state === "live") await dbfWrite();
-  dbfRender(); toast(DBF.state === "manual" ? "Master password set. Press Save database file." : "Passwords are now encrypted in the database file.");
-}
-function vaultDisable(){
-  showAlert("Remove the master password?", "Device passwords and Wi-Fi keys will be saved in the database file as plain text again.", [
-    { label: "Remove", danger: true, run: async () => { Object.assign(VAULT, { on: false, key: null, salt: "" }); await rememberVault(); saveLocal(); if (DBF.state === "live") await dbfWrite(); dbfRender(); } },
-    { label: "Cancel" }]);
-}
-const stripSecrets = list => list.map(({ pass, psk, ...d }) => d);
-
-/* ---------- 6. Restore points: automatic dated copies in this browser and, optionally, in a backup folder ---------- */
-const SNAP_KEEP = 30, BK = { dir: null, state: "none", name: "" };
-async function snapDB(){
-  const d = await idbOpen();
-  return { all: () => new Promise((res, rej) => { const q = d.transaction("snaps").objectStore("snaps").getAll(); q.onsuccess = () => res(q.result || []); q.onerror = () => rej(q.error); }),
-    put: v => new Promise((res, rej) => { const t = d.transaction("snaps", "readwrite"); t.objectStore("snaps").put(v); t.oncomplete = res; t.onerror = () => rej(t.error); }),
-    del: k => new Promise((res, rej) => { const t = d.transaction("snaps", "readwrite"); t.objectStore("snaps").delete(k); t.oncomplete = res; t.onerror = () => rej(t.error); }) };
-}
-const SNAP_LABEL = { daily: "Daily copy", manual: "Made by hand", restore: "Before a restore", open: "Before opening another file", template: "Before a template", import: "Before a bulk import" };
-async function snapPut(reason){
-  if (typeof indexedDB === "undefined" || !(sites.length || networks.length || devices.length)) return;
-  try {
-    const text = await dbfText(), at = new Date().toISOString();
-    const id = reason === "daily" ? "daily-" + at.slice(0, 10) : at;
-    const s = await snapDB();
-    await s.put({ id, at, reason, by: me ? me.username : "", size: text.length, counts: { sites: sites.length, networks: networks.length, devices: devices.length, links: links.length }, text });
-    const all = (await s.all()).sort((a, b) => String(b.at).localeCompare(String(a.at)));
-    for (const x of all.slice(SNAP_KEEP)) await s.del(x.id);
-    await bkWrite(reason, at, text);
-    try { localStorage.setItem("ipmonitor.snapDay", at.slice(0, 10)); } catch {}
-  } catch {}
-  if (currentRoute().page === "backup") renderSnaps();
-}
-function snapDaily(){
-  let last = ""; try { last = localStorage.getItem("ipmonitor.snapDay") || ""; } catch {}
-  if (last !== todayISO()) snapPut("daily");
-}
-async function bkWrite(reason, at, text){
-  if (!BK.dir || BK.state !== "live") return;
-  try {
-    const name = reason === "daily" ? `ip-monitor-db-${at.slice(0, 10)}.json` : `ip-monitor-db-${at.slice(0, 10)}-${at.slice(11, 16).replace(":", "")}-${reason}.json`;
-    const fh = await BK.dir.getFileHandle(name, { create: true }), w = await fh.createWritable(); await w.write(text); await w.close();
-  } catch { BK.state = "ask"; }
-}
-async function bkInit(){
-  if (IN_ARTIFACT) return;
-  try { const h = await kvGet("bkdir"); if (!h) return; BK.dir = h; BK.name = h.name;
-    BK.state = (await h.queryPermission({ mode: "readwrite" })) === "granted" ? "live" : "ask"; } catch {}
-}
-async function bkChoose(){
-  if (typeof window.showDirectoryPicker !== "function") return showAlert("Not in this browser", "Choosing a backup folder needs Chrome or Edge. Restore points are still kept in this browser, and you can download any of them.");
-  let h; try { h = await window.showDirectoryPicker({ mode: "readwrite", id: "ipm-backups" }); } catch { return; }
-  BK.dir = h; BK.name = h.name; BK.state = "live"; try { await kvSet("bkdir", h); } catch {}
-  await snapPut("manual"); renderSnaps(); toast(`Backups will also be saved in the folder “${h.name}”.`);
-}
-async function bkReconnect(){ if (BK.dir && (await BK.dir.requestPermission({ mode: "readwrite" })) === "granted"){ BK.state = "live"; renderSnaps(); snapDaily(); } }
-async function renderSnaps(){
-  if (!$("snapList")) return;
-  let list = [];
-  try { list = (await (await snapDB()).all()).sort((a, b) => String(b.at).localeCompare(String(a.at))); } catch {}
-  const can = fullAccess;
-  $("bkFolder").innerHTML = IN_ARTIFACT ? "" : BK.dir ? `<span class="dbdot ${BK.state === "live" ? "live" : "ask"}"></span> Backup folder: <b>${esc(BK.name)}</b> ${BK.state === "live" ? "· a dated .json file is written there too" : `· <button type="button" class="linkbtn" id="bkRe">Reconnect</button>`}`
-    : `<span class="dbdot local"></span> Copies are kept in this browser. ${can ? `<button type="button" class="linkbtn" id="bkPick">Also save them in a folder…</button>` : ""}`;
-  const re = $("bkRe"); if (re) re.onclick = bkReconnect;
-  const pk = $("bkPick"); if (pk) pk.onclick = bkChoose;
-  $("snapNow").hidden = !can;
-  $("snapList").innerHTML = list.length ? list.map(s => `<div class="snaprow"><div><b>${esc(fmtWhen(s.at))}</b><small>${esc(SNAP_LABEL[s.reason] || s.reason)}${s.by ? " · " + esc(s.by) : ""} · ${s.counts ? `${s.counts.sites} sites, ${s.counts.networks} networks, ${s.counts.devices} devices` : ""} · ${esc(fmtBytes(s.size))}</small></div>
-      <span class="snapacts"><button type="button" class="mini" data-snapdl="${esc(s.id)}">Download</button>${can ? `<button type="button" class="mini" data-snaprs="${esc(s.id)}">Restore</button>` : ""}</span></div>`).join("")
-    : `<p class="hint2">No restore points yet. The first one is made automatically today.</p>`;
-  const byId = id => list.find(x => x.id === id);
-  $("snapList").querySelectorAll("[data-snapdl]").forEach(b => b.onclick = () => { const s = byId(b.dataset.snapdl); saveFile(`ip-monitor-db-${s.at.slice(0, 16).replace(/[:T]/g, "-")}.json`, s.text); });
-  $("snapList").querySelectorAll("[data-snaprs]").forEach(b => b.onclick = () => { const s = byId(b.dataset.snaprs);
-    showAlert("Go back to this restore point?", `Everything is put back as it was on ${fmtWhen(s.at)}. A restore point of the current data is made first, so you can come back.`, [
-      { label: "Restore", primary: true, run: async () => {
-        let j; try { j = JSON.parse(stripBOM(s.text)); } catch { return showAlert("Can't restore", "This restore point is damaged."); }
-        if (!await openVault(j)) return;
-        await snapPut("restore");
-        const r = await replaceAll(parseBackup(j), { log: "Went back to restore point " + fmtWhen(s.at) }); showAlert("Restored", resultText(r)); } },
-      { label: "Cancel" }]); });
-}
-$("snapNow").onclick = async () => { await snapPut("manual"); toast("Restore point saved."); };
-
-/* ---------- 7. Undo from History ---------- */
-const UNDO_COLS = [COL_SITES, COL_NETS, COL_DEV, COL_LINKS, COL_VLANS], UNDO_KEEP = 200, UNDO_MAX = 40000;
-function undoSnap(o){
-  if (!o) return null;
-  const { pass, psk, hash, salt, ...rest } = o;
-  const t = JSON.stringify(rest);
-  return t.length > UNDO_MAX ? null : JSON.parse(t);
-}
-function undoInfo(col, act, prev){
-  if (!UNDO_COLS.includes(col)) return {};
-  if (act === "add") return { undo: { col } };
-  const p = undoSnap(prev); return p ? { undo: { col, prev: p } } : {};
-}
-function trimUndo(){
-  // keep the "before" copies only for the newest entries so storage stays small
-  const w = changes.filter(c => c.undo && c.undo.prev).sort(byAt);
-  for (const c of w.slice(0, Math.max(0, w.length - UNDO_KEEP))){ c.undo = { col: c.undo.col, gone: true }; }
-}
-const canUndo = c => !readOnly && c && c.undo && !c.undoneAt && !c.undo.gone && (c.act === "add" || c.undo.prev) && ["add", "edit", "delete"].includes(c.act);
-function undoChange(id){
-  const c = changes.find(x => x.id === id); if (!canUndo(c)) return;
-  const col = c.undo.col, arr = arrOf(col), cur = arr.find(x => x.id === c.ref), prev = c.undo.prev;
-  const fail = m => showAlert("Can't undo this", m);
-  let what;
-  if (c.act === "add"){
-    if (!cur) return fail("It was already deleted.");
-    if (col === COL_SITES && (networks.some(n => n.siteId === cur.id) || devices.some(d => d.siteId === cur.id) || vlans.some(v => v.siteId === cur.id))) return fail("This site has networks, devices or VLANs now. Move or delete them first.");
-    if (col === COL_DEV && links.some(l => l.a === cur.id || l.b === cur.id)) return fail("This device has connections now. Delete them first.");
-    if (col === COL_DEV && devices.some(d => d.uplink && d.uplink.deviceId === cur.id)) return fail("Other devices take their IP from this device's bridge. Change them first.");
-    what = `“${c.label}” was added. Undo deletes it again.`;
-  } else {
-    if (c.act === "delete" && cur) return fail("It exists again already.");
-    if (c.act === "edit" && !cur) return fail("It was deleted after this change.");
-    if (prev.siteId && !sites.some(s => s.id === prev.siteId)) return fail("Its site doesn't exist any more.");
-    if (col === COL_LINKS && (!devById(prev.a) || !devById(prev.b))) return fail("One of its devices doesn't exist any more.");
-    if (col === COL_NETS){ const e = parseEntry(prev.ip); if (!e || netConflicts(e, prev.id).length) return fail(`${prev.ip} would overlap another network now.`); }
-    if (col === COL_SITES && sites.some(s => s.id !== prev.id && String(s.siteNumber).trim().toLowerCase() === String(prev.siteNumber).trim().toLowerCase())) return fail(`Site number ${prev.siteNumber} is used by another site now.`);
-    if (col === COL_DEV && prev.ip && devices.some(d => d.id !== prev.id && (d.ip === prev.ip || (d.addrs || []).some(a => ipOf(a.address) === prev.ip)))) return fail(`${prev.ip} is used by another device now.`);
-    what = c.act === "delete" ? `“${c.label}” was deleted. Undo brings it back${col === COL_DEV ? " (its password and Wi-Fi key must be typed again)" : ""}.` : `Undo puts “${c.label}” back as it was before this change.`;
-  }
-  showAlert("Undo this change?", what, [
-    { label: "Undo", primary: true, run: async () => {
-      try {
-        const now = new Date().toISOString();
-        if (c.act === "add") await delDoc(col, cur.id);
-        else await putDoc(col, { ...prev, ...(col === COL_DEV && cur ? { pass: cur.pass || "", psk: cur.psk || "" } : {}), updatedAt: now });
-        await putDoc(COL_LOG, { ...c, undoneAt: now, undoneBy: me ? me.username : "?" });
-        if (!db) renderAll();
-        toast("Change undone.");
-      } catch { showAlert("Couldn't undo", "Something went wrong. Please try again."); }
-    } }, { label: "Cancel" }]);
-}
-
-/* ---------- 8. Live status from the ping helper ---------- */
-const LIVE = { handle: null, name: "", state: "none", data: null, mtime: 0 };
-const STATUS_FILE = "ip-monitor-status.json";
-function liveFresh(){ const d = LIVE.data; if (!d || !d.at) return false; return Date.now() - Date.parse(d.at) < Math.max(60, Number(d.every) || 60) * 3000 + 60e3; }
-function liveOf(d){
-  if (!d || !d.ip || !liveFresh()) return null;
-  const r = LIVE.data.ips && LIVE.data.ips[d.ip];
-  return r ? (r.up ? "up" : "down") : null;
-}
-function livePill(d){
-  const s = liveOf(d); if (!s) return "";
-  const r = LIVE.data.ips[d.ip];
-  return `<span class="livepill ${s}" title="Ping by the helper at ${esc(fmtWhen(LIVE.data.at))}">● ${s === "up" ? `online${r.ms >= 0 ? " · " + r.ms + " ms" : ""}` : "not answering"}</span>`;
-}
-function liveUse(text){
-  try { const j = JSON.parse(stripBOM(text)); if (j && j.ips && j.at){ LIVE.data = j; return true; } } catch {}
-  return false;
-}
-async function livePoll(){
-  if (!LIVE.handle || LIVE.state !== "live") return;
-  try {
-    const f = await LIVE.handle.getFile();
-    if (f.lastModified === LIVE.mtime) return;
-    LIVE.mtime = f.lastModified;
-    if (liveUse(await f.text())) liveRefresh();
-  } catch { LIVE.state = "ask"; renderLiveCard(); }
-}
-function liveRefresh(){
-  const p = currentRoute().page;
-  if (["dash", "devices", "device", "map", "audit"].includes(p) && !document.querySelector("dialog[open]")) renderAll();
-  renderLiveCard();
-}
-async function liveLink(){
-  if (FS_API){
-    let h; try { [h] = await window.showOpenFilePicker({ types: [{ description: "IP Monitor status", accept: { "application/json": [".json"] } }] }); } catch { return; }
-    LIVE.handle = h; LIVE.name = h.name; LIVE.state = "live"; LIVE.mtime = 0; try { await kvSet("stfile", h); } catch {}
-    await livePoll(); if (!LIVE.data) toast("The status file is empty for now. Start the ping helper; it fills it within a minute.");
-    return renderLiveCard();
-  }
-  $("liveIn").value = ""; $("liveIn").click();
-}
-$("liveIn").onchange = async () => { const f = $("liveIn").files[0]; if (!f) return; if (!liveUse(await f.text())) return showAlert("Can't read", "That isn't an ip-monitor-status.json file from the ping helper."); LIVE.name = f.name; LIVE.state = "once"; liveRefresh(); };
-async function liveInit(){
-  if (IN_ARTIFACT) return renderLiveCard();
-  try { const h = await kvGet("stfile"); if (h){ LIVE.handle = h; LIVE.name = h.name; LIVE.state = (await h.queryPermission({ mode: "read" })) === "granted" ? "live" : "ask"; } } catch {}
-  await livePoll(); renderLiveCard();
-  setInterval(livePoll, 15000);
-}
-/* the helper: a .cmd for Windows that pings every device's IP each minute and writes ip-monitor-status.json next to the database */
-function pingHelperPS(){
-  return String.raw`$ErrorActionPreference = 'SilentlyContinue'
-$dir = $env:IPM_DIR; if (-not $dir) { $dir = (Get-Location).Path }
-$db = Join-Path $dir 'ip-monitor-db.json'; $out = Join-Path $dir 'ip-monitor-status.json'; $every = 60
-$host.UI.RawUI.WindowTitle = 'IP Monitor ping helper'
-Write-Host 'IP Monitor ping helper - keep this window open (minimise it). Close it to stop.'
-Write-Host ('Database: ' + $db)
-while ($true) {
-  $ips = @()
-  try {
-    $txt = [IO.File]::ReadAllText($db)
-    try { Add-Type -AssemblyName System.Web.Extensions -ErrorAction Stop; $js = New-Object Web.Script.Serialization.JavaScriptSerializer; $js.MaxJsonLength = [int]::MaxValue
-      $j = $js.DeserializeObject($txt); $ips = @($j['devices'] | ForEach-Object { $_['ip'] }) }
-    catch { $j = $txt | ConvertFrom-Json; $ips = @($j.devices | ForEach-Object { $_.ip }) }
-  } catch { Write-Host ('Cannot read ' + $db + ' - is this file in the same folder as the database?'); Start-Sleep 30; continue }
-  $ips = @($ips | Where-Object { $_ -and $_ -match '^[0-9a-fA-F:.]+$' } | Select-Object -Unique)
-  $tasks = @{}
-  foreach ($ip in $ips) { $tasks[$ip] = (New-Object System.Net.NetworkInformation.Ping).SendPingAsync($ip, 1500) }
-  $res = [ordered]@{}; $up = 0
-  foreach ($ip in $ips) {
-    $ok = $false; $ms = -1
-    try { $r = $tasks[$ip].GetAwaiter().GetResult(); if ($r.Status -eq 'Success') { $ok = $true; $ms = [int]$r.RoundtripTime } } catch {}
-    if ($ok) { $up++ }
-    $res[$ip] = [ordered]@{ up = $ok; ms = $ms }
-  }
-  $o = [ordered]@{ app = 'ip-monitor'; kind = 'status'; at = (Get-Date).ToUniversalTime().ToString('o'); every = $every; ips = $res }
-  try { [IO.File]::WriteAllText($out, ($o | ConvertTo-Json -Depth 5 -Compress)) } catch { Write-Host 'Cannot write the status file' }
-  Write-Host ('{0}  {1} of {2} devices answer' -f (Get-Date -Format 'HH:mm:ss'), $up, $ips.Count)
-  Start-Sleep $every
-}`;
-}
-function pingHelperCmd(){
-  return ["@echo off", "rem IP Monitor ping helper: pings every device in ip-monitor-db.json each minute and writes ip-monitor-status.json.",
-    "rem Put this file in the same folder as ip-monitor-db.json and double-click it. Close the window to stop.",
-    "set \"IPM_DIR=%~dp0\"", `powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand ${utf16b64(pingHelperPS())}`, "pause"].join("\r\n") + "\r\n";
-}
-function renderLiveCard(){
-  if (!$("liveState")) return;
-  const d = LIVE.data, fresh = liveFresh();
-  const n = devices.filter(x => x.ip).length, up = devices.filter(x => liveOf(x) === "up").length, down = devices.filter(x => liveOf(x) === "down").length;
-  $("liveState").innerHTML = `<div class="dbfst"><span class="dbdot ${fresh ? (down ? "err" : "live") : LIVE.state === "ask" ? "ask" : "local"}"></span><div>${
-    LIVE.state === "none" ? `<b>No live status yet</b><small>Download the ping helper, put it next to ip-monitor-db.json and run it. Then link ip-monitor-status.json here.</small>`
-    : LIVE.state === "ask" ? `<b>${esc(LIVE.name)}</b><small>Press Reconnect so the browser lets the app read the status file again.</small>`
-    : !d ? `<b>${esc(LIVE.name)}</b><small>Waiting for the ping helper to write the first result…</small>`
-    : `<b>${up} online · ${down} not answering</b><small>of ${n} devices with an IP · checked ${esc(fmtWhen(d.at))}${fresh ? "" : " · ⚠ old result: is the ping helper still running?"}${LIVE.state === "once" ? " · loaded once (this browser can't follow the file)" : " · refreshes by itself"}</small>`}</div></div>`;
-  $("liveBtns").innerHTML = (IN_ARTIFACT ? "" : `<button type="button" class="btn btn-primary btn-sm" id="liveCmd">Download ping helper (.cmd)</button>
-    ${LIVE.state === "ask" ? `<button type="button" class="btn btn-line btn-sm" id="liveRe">Reconnect ${esc(LIVE.name)}</button>` : ""}
-    <button type="button" class="btn btn-line btn-sm" id="liveLinkB">${LIVE.handle || LIVE.state === "once" ? "Link another status file" : "Link status file"}</button>`);
-  const c = $("liveCmd"); if (c) c.onclick = () => saveFile("ip-monitor-ping-helper.cmd", pingHelperCmd());
-  const l = $("liveLinkB"); if (l) l.onclick = liveLink;
-  const r = $("liveRe"); if (r) r.onclick = async () => { if (LIVE.handle && (await LIVE.handle.requestPermission({ mode: "read" })) === "granted"){ LIVE.state = "live"; LIVE.mtime = 0; await livePoll(); renderLiveCard(); } };
-  $("liveCard").hidden = IN_ARTIFACT;
-}
-
-/* ---------- 9. Bulk import from Excel / CSV ---------- */
-let bulkKind = "hosts", bulkPlan = null;
-function parseCSV(text){
-  text = stripBOM(text).replace(/\r\n?/g, "\n");
-  const first = text.split("\n")[0] || "", sep = first.includes("\t") ? "\t" : (first.split(";").length > first.split(",").length ? ";" : ",");
-  const rows = []; let row = [], cell = "", q = false;
-  for (let i = 0; i < text.length; i++){
-    const ch = text[i];
-    if (q){ if (ch === '"'){ if (text[i + 1] === '"'){ cell += '"'; i++; } else q = false; } else cell += ch; continue; }
-    if (ch === '"' && cell === "") q = true;
-    else if (ch === sep){ row.push(cell); cell = ""; }
-    else if (ch === "\n"){ row.push(cell); rows.push(row); row = []; cell = ""; }
-    else cell += ch;
-  }
-  if (cell !== "" || row.length){ row.push(cell); rows.push(row); }
-  return rows.map(r => r.map(c => c.trim())).filter(r => r.some(Boolean));
-}
-/* first sheet of an .xlsx file (zip + XML), no library needed */
-async function readXlsx(buf){
-  const u8 = new Uint8Array(buf), dv = new DataView(buf), files = {};
-  let eocd = -1; for (let i = u8.length - 22; i >= Math.max(0, u8.length - 70000); i--) if (dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
-  if (eocd < 0) throw new Error("not a zip");
-  let p = dv.getUint32(eocd + 16, true); const count = dv.getUint16(eocd + 10, true);
-  for (let n = 0; n < count && dv.getUint32(p, true) === 0x02014b50; n++){
-    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
-    const name = new TextDecoder().decode(u8.subarray(p + 46, p + 46 + nl));
-    files[name] = { method, csize, off };
-    p += 46 + nl + xl + cl;
-  }
-  const read = async name => {
-    const f = files[name]; if (!f) return null;
-    const start = f.off + 30 + dv.getUint16(f.off + 26, true) + dv.getUint16(f.off + 28, true), data = u8.subarray(start, start + f.csize);
-    if (f.method === 0) return new TextDecoder().decode(data);
-    return new TextDecoder().decode(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer());
-  };
-  const xml = t => new DOMParser().parseFromString(t, "application/xml");
-  const ss = await read("xl/sharedStrings.xml"), strings = ss ? [...xml(ss).getElementsByTagName("si")].map(si => [...si.getElementsByTagName("t")].map(t => t.textContent).join("")) : [];
-  let sheet = "xl/worksheets/sheet1.xml";
-  const wb = await read("xl/workbook.xml"), rels = await read("xl/_rels/workbook.xml.rels");
-  if (wb && rels){ const s1 = xml(wb).getElementsByTagName("sheet")[0], rid = s1 && (s1.getAttribute("r:id") || s1.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships", "id"));
-    const rel = rid && [...xml(rels).getElementsByTagName("Relationship")].find(r => r.getAttribute("Id") === rid);
-    if (rel){ const tg = rel.getAttribute("Target").replace(/^\//, ""); sheet = tg.startsWith("xl/") ? tg : "xl/" + tg; } }
-  const sx = await read(sheet); if (!sx) throw new Error("no sheet");
-  const colNum = ref => { let n = 0; for (const ch of ref.replace(/\d+/g, "")) n = n * 26 + ch.charCodeAt(0) - 64; return n - 1; };
-  const rows = [];
-  for (const r of xml(sx).getElementsByTagName("row")){
-    const row = [];
-    for (const c of r.getElementsByTagName("c")){
-      const t = c.getAttribute("t"), v = c.getElementsByTagName("v")[0];
-      let val = t === "s" ? strings[+(v ? v.textContent : 0)] ?? "" : t === "inlineStr" ? [...c.getElementsByTagName("t")].map(x => x.textContent).join("") : v ? v.textContent : "";
-      row[colNum(c.getAttribute("r") || "A")] = String(val).trim();
-    }
-    rows.push([...row].map(x => x ?? ""));
-  }
-  return rows.filter(r => r.some(Boolean));
-}
-const normH = h => String(h || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-const BULK_COLS = {
-  hosts: { ip: ["ip", "ipaddress", "address", "hostip"], name: ["hostname", "name", "host", "devicename", "device"], mac: ["mac", "macaddress"], notes: ["notes", "note", "comment", "description"] },
-  devices: { site: ["site", "sitenumber", "siteno", "sitename"], name: ["name", "device", "devicename", "identity", "hostname"], model: ["model"], brand: ["brand", "vendor", "make"], type: ["type", "devicetype", "kind"],
-    ip: ["ip", "ipaddress", "deviceip", "managementip", "managementipmikrotik", "address"], mac: ["mac", "macaddress"], user: ["username", "user", "login"], pass: ["password", "pass"], port: ["port", "winboxport", "accessport", "winbox"],
-    serial: ["serial", "serialnumber", "sn"], rack: ["rack", "racklocation", "rackunit"], buy: ["purchasedate", "purchased", "bought", "purchase"], warranty: ["warranty", "warrantyuntil", "warrantyend", "warrantydate"], notes: ["notes", "note", "comment"] }
-};
-const BULK_TEMPLATE = {
-  hosts: [["IP", "Hostname", "MAC", "Notes"], ["192.168.10.20", "Reception PC", "AA:BB:CC:00:11:22", "Ground floor"], ["192.168.10.21", "Printer", "", ""]],
-  devices: [["Site", "Name", "Brand", "Type", "Model", "IP", "MAC", "Username", "Password", "Port", "Serial", "Rack", "Purchase date", "Warranty until", "Notes"],
-    ["1", "HQ-Core", "MikroTik", "Router", "RB4011", "10.1.1.1", "", "admin", "", "8291", "HEX123", "Rack A U12", "2025-03-01", "2027-03-01", ""],
-    ["1", "Gate camera", "Other", "IP camera", "Hikvision DS-2CD", "10.1.1.50", "", "admin", "", "80", "", "Pole 2", "", "", ""]]
-};
-function bulkDate(v){
-  v = String(v || "").trim(); if (!v) return "";
-  if (/^\d{5}$/.test(v)) return new Date(Date.UTC(1899, 11, 30) + Number(v) * 864e5).toISOString().slice(0, 10);   // Excel day number
-  let m = v.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/); if (m) return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
-  m = v.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/); if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
-  return null;
-}
-function typeFrom(v){
-  const t = normH(v); if (!t) return "";
-  const map = { router: "router", wireless: "wireless", ap: "wireless", cpe: "wireless", routerwifi: "both", both: "both", pc: "pc", computer: "pc", laptop: "pc", phone: "phone", ipphone: "phone",
-    server: "server", databaseserver: "dbserver", dbserver: "dbserver", database: "dbserver", nvr: "nvr", camera: "camera", ipcamera: "camera", cctv: "camera" };
-  return map[t] || DEV_TYPES.find(k => normH(TYPE_LABEL[k]) === t) || null;
-}
-function planBulk(rows){
-  const cols = BULK_COLS[bulkKind], head = rows[0] || [], idx = {};
-  head.forEach((h, i) => { const n = normH(h); for (const [k, al] of Object.entries(cols)) if (idx[k] === undefined && al.includes(n)) idx[k] = i; });
-  let body = rows.slice(1);
-  if (idx.ip === undefined && bulkKind === "hosts"){ if (parseEntry(head[0])){ Object.assign(idx, { ip: 0, name: 1, mac: 2, notes: 3 }); body = rows; } }
-  const need = bulkKind === "hosts" ? ["ip"] : ["site", "name", "model"];
-  const missing = need.filter(k => idx[k] === undefined);
-  if (missing.length) return { error: `Missing column${missing.length > 1 ? "s" : ""}: ${missing.join(", ")}. The first row must hold the column names (download the template to see them).` };
-  const get = (r, k) => idx[k] === undefined ? "" : String(r[idx[k]] ?? "").trim();
-  const items = [];
-  if (bulkKind === "hosts"){
-    const add = new Map(), taken = new Set();
-    for (const n of networks) for (const h of n.hostList || []) taken.add(h.ip);
-    for (const r of body){
-      const raw = get(r, "ip"), x = parseEntry(raw), it = { cells: [raw, get(r, "name"), get(r, "mac")] };
-      items.push(it);
-      if (!x || x.kind !== "ip"){ it.err = "not a valid IP"; continue; }
-      const n = networks.find(nn => { const e = parseEntry(nn.ip); return e && e.kind === "subnet" && e.v === x.v && hostRangeOK(e, x.addr); });
-      if (!n){ it.err = "no network holds this IP"; continue; }
-      if (taken.has(x.text)){ it.err = "already registered"; continue; }
-      const dev = deviceIPsIn(parseEntry(n.ip)).get(x.text); if (dev){ it.err = "used by " + dev; continue; }
-      const mac = get(r, "mac"); if (mac && !normMac(mac)){ it.err = "MAC is not valid"; continue; }
-      const list = add.get(n.id) || []; const e = parseEntry(n.ip);
-      if (BigInt((n.hostList || []).length + list.length) >= e.usable){ it.err = `${n.ip} is full`; continue; }
-      taken.add(x.text); list.push({ ip: x.text, name: get(r, "name"), mac: normMac(mac) || "", notes: get(r, "notes") }); add.set(n.id, list);
-      it.ok = `→ ${n.ip}${siteOf(n) ? " · #" + siteOf(n).siteNumber : ""}`;
-    }
-    return { items, apply: add };
-  }
-  const plan = [], usedIP = new Set(devices.flatMap(d => [d.ip, ...(d.addrs || []).map(a => ipOf(a.address))]).filter(Boolean)), names = new Set(devices.map(d => d.siteId + "|" + d.name.toLowerCase()));
-  for (const r of body){
-    const it = { cells: [get(r, "site"), get(r, "name"), get(r, "model"), get(r, "ip")] }; items.push(it);
-    const sv = get(r, "site").replace(/^#/, ""), s = sites.find(x => String(x.siteNumber).toLowerCase() === sv.toLowerCase()) || sites.find(x => x.name.toLowerCase() === sv.toLowerCase());
-    if (!s){ it.err = `site “${sv}” not found`; continue; }
-    const name = get(r, "name"), model = get(r, "model");
-    if (!name || !model){ it.err = "name and model are needed"; continue; }
-    if (names.has(s.id + "|" + name.toLowerCase())){ it.err = "a device with this name exists in the site"; continue; }
-    let type = typeFrom(get(r, "type"));
-    if (type === null){ it.err = `type “${get(r, "type")}” unknown`; continue; }
-    const br = get(r, "brand"); let vendor = br ? (/mikro\s*tik/i.test(br) ? "mikrotik" : "other") : (type && END_TYPES.includes(type) ? "other" : "mikrotik");
-    if (!type) type = vendor === "mikrotik" ? "router" : "";
-    if (!type){ it.err = "type is needed for other brands"; continue; }
-    if (vendor === "mikrotik" && END_TYPES.includes(type)){ it.err = `MikroTik can't be a ${TYPE_LABEL[type]}`; continue; }
-    const ipr = get(r, "ip"), x = ipr ? parseEntry(ipr) : null;
-    if (ipr && (!x || x.kind !== "ip")){ it.err = "IP is not valid"; continue; }
-    if (x && usedIP.has(x.text)){ it.err = `${x.text} is used by another device`; continue; }
-    if (x){ const inNet = networks.find(n => inCidr(n.ip, x.v, x.addr)); if (inNet && inNet.siteId !== s.id){ it.err = `${x.text} belongs to a network of another site`; continue; } }
-    const mac = get(r, "mac"); if (mac && !normMac(mac)){ it.err = "MAC is not valid"; continue; }
-    const port = get(r, "port"); if (port && !/^\d{1,5}$/.test(port)){ it.err = "port must be a number"; continue; }
-    const buy = bulkDate(get(r, "buy")), warranty = bulkDate(get(r, "warranty"));
-    if (buy === null || warranty === null){ it.err = "date not understood (use 2026-01-31)"; continue; }
-    if (x) usedIP.add(x.text); names.add(s.id + "|" + name.toLowerCase());
-    const now = new Date().toISOString();
-    plan.push({ id: newId(), siteId: s.id, type, vendor, uplink: null, model, name, role: "", user: get(r, "user").slice(0, 64), pass: get(r, "pass").slice(0, 128), winbox: port,
-      wproto: "", wsec: "", psk: "", ip: x ? x.text : "", mac: normMac(mac) || "", ros: "", notes: get(r, "notes"), func: "", status: "active", tags: [],
-      serial: get(r, "serial").slice(0, 64), rack: get(r, "rack").slice(0, 64), buy, warranty, maint: "", ports: [], bridges: [], addrs: [], createdAt: now, updatedAt: now });
-    it.ok = `→ #${s.siteNumber} ${s.name} · ${vendor === "mikrotik" ? "MikroTik" : "Other"} ${TYPE_LABEL[type]}`;
-  }
-  return { items, apply: plan };
-}
-async function bulkRead(){
-  const t = $("bulkText").value;
-  bulkPlan = t.trim() ? planBulk(parseCSV(t)) : null;
-  renderBulk();
-}
-function renderBulk(){
-  $("bulkSeg").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.k === bulkKind));
-  $("bulkHint").innerHTML = bulkKind === "hosts" ? "Columns: <b>IP</b>, Hostname, MAC, Notes. Each IP goes into the network that holds it."
-    : "Columns: <b>Site</b> (number or name), <b>Name</b>, <b>Model</b>, Brand, Type, IP, MAC, Username, Password, Port, Serial, Rack, Purchase date, Warranty until, Notes.";
-  const p = bulkPlan, box = $("bulkPrev");
-  if (!p){ box.innerHTML = ""; $("bulkGo").disabled = true; return; }
-  if (p.error){ box.innerHTML = `<p class="hint2 bad">✕ ${esc(p.error)}</p>`; $("bulkGo").disabled = true; return; }
-  const ok = p.items.filter(i => i.ok).length, bad = p.items.length - ok;
-  box.innerHTML = `<p class="hint2"><b>${ok}</b> ready to import${bad ? ` · <b class="bad">${bad}</b> will be skipped` : ""}</p><div class="tscroll"><table class="dt"><tbody>${p.items.slice(0, 200).map(i =>
-    `<tr class="${i.ok ? "" : "skip"}"><td>${i.ok ? "✓" : "✕"}</td>${i.cells.map(c => `<td>${esc(c)}</td>`).join("")}<td class="${i.ok ? "good" : "bad"}">${esc(i.ok || i.err)}</td></tr>`).join("")}</tbody></table></div>${p.items.length > 200 ? `<p class="hint2">…and ${p.items.length - 200} more rows</p>` : ""}`;
-  $("bulkGo").disabled = !ok; $("bulkGo").textContent = ok ? `Import ${ok}` : "Import";
-}
-function openBulk(kind){
-  if (readOnly) return;
-  if (kind) bulkKind = kind;
-  $("bulkText").value = ""; bulkPlan = null; renderBulk(); $("bulkDlg").showModal();
-}
-$("bulkSeg").querySelectorAll("button").forEach(b => b.onclick = () => { bulkKind = b.dataset.k; bulkRead(); });
-$("bulkText").addEventListener("input", () => { clearTimeout(bulkRead.t); bulkRead.t = setTimeout(bulkRead, 250); });
-$("bulkFile").onclick = () => { $("bulkFileIn").value = ""; $("bulkFileIn").click(); };
-$("bulkFileIn").onchange = async () => {
-  const f = $("bulkFileIn").files[0]; if (!f) return;
-  try {
-    if (/\.xlsx$/i.test(f.name)){ const rows = await readXlsx(await f.arrayBuffer()); $("bulkText").value = rows.map(r => r.map(c => /[\t\n"]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c).join("\t")).join("\n"); }
-    else $("bulkText").value = await f.text();
-  } catch { return showAlert("Can't read the file", "Use an .xlsx, .csv or .txt file. Old .xls files: open them in Excel and save as .xlsx."); }
-  bulkRead();
-};
-$("bulkTpl").onclick = () => saveFile(`ip-monitor-${bulkKind}-template.csv`, tableCSV(BULK_TEMPLATE[bulkKind][0], BULK_TEMPLATE[bulkKind].slice(1).map(cells => ({ cells }))));
-$("bulkCancel").onclick = () => $("bulkDlg").close();
-$("bulkGo").onclick = async () => {
-  const p = bulkPlan; if (!p || p.error || readOnly) return;
-  await snapPut("import");
-  let n = 0;
-  logMuted = true; bulk = true;
-  try {
-    if (bulkKind === "hosts"){
-      for (const [nid, list] of p.apply){
-        const net = networks.find(x => x.id === nid); if (!net) continue;
-        let num = (net.hostList || []).reduce((m, h) => Math.max(m, Number(h.num) || 0), 0);
-        const hostList = [...(net.hostList || []), ...list.map(h => ({ id: newId(), num: ++num, ...h }))];
-        await putDoc(COL_NETS, { ...net, hostList, hosts: hostList.length, updatedAt: new Date().toISOString() }); n += list.length;
-        if (db) Object.assign(net, { hostList, hosts: hostList.length });
-      }
-    } else for (const d of p.apply){ await putDoc(COL_DEV, d); if (db) devices.push(d); n++; }
-  } finally { logMuted = false; bulk = false; if (!db) saveLocal(); }
-  writeLog({ act: "import", kind: "import", ref: "", label: `Bulk import: ${n} ${bulkKind === "hosts" ? "hosts" : "devices"} added`, siteId: "", lines: [] });
-  $("bulkDlg").close(); renderAll();
-  showAlert("Import finished", `${n} ${bulkKind === "hosts" ? "hosts" : "devices"} added.${p.items.length - n ? ` ${p.items.length - n} rows skipped.` : ""}`);
-};
-
-/* ---------- 10. Printable site sheet and device labels with QR codes ---------- */
-function qrSVG(text, px){
-  qrcode.stringToBytes = qrcode.stringToBytesFuncs["UTF-8"];   // names with accents, Arabic or "·" stay readable
-  const q = qrcode(0, "M"); q.addData(text, "Byte"); q.make();
-  const n = q.getModuleCount(), m = 2; let d = "";
-  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c + m} ${r + m}h1v1h-1z`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n + 2 * m} ${n + 2 * m}" width="${px}" height="${px}" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
-}
-function qrText(d){
-  const s = sites.find(x => x.id === d.siteId);
-  return ["IP Monitor device", `Name: ${d.name}`, s ? `Site: #${s.siteNumber} ${s.name}` : "", `Model: ${d.model} (${vendorOf(d) === "mikrotik" ? "MikroTik" : "other brand"} ${TYPE_LABEL[d.type] || ""})`,
-    d.ip ? `IP: ${d.ip}` : "", d.mac ? `MAC: ${d.mac}` : "", d.serial ? `S/N: ${d.serial}` : "", d.rack ? `Rack: ${d.rack}` : "", d.warranty ? `Warranty until: ${d.warranty}` : ""].filter(Boolean).join("\n");
-}
-function printSheet(title, siteList, devs){
-  const css = `body{font-family:Inter,Arial,sans-serif;color:#0F172A;margin:24px}h1{font-size:22px;margin:0 0 4px}h2{font-size:17px;margin:22px 0 8px;border-bottom:2px solid #1D4ED8;padding-bottom:4px}
-    .sub{color:#555;font-size:12px;margin-bottom:12px}table{border-collapse:collapse;width:100%;font-size:11.5px;margin-bottom:8px}th,td{border:1px solid #CBD5E1;padding:5px 6px;text-align:left;vertical-align:top}th{background:#EEF2FF}
-    td.m{font-family:"IBM Plex Mono",Consolas,monospace}.labels{display:grid;grid-template-columns:repeat(3,63.5mm);gap:4mm;margin-top:10px}
-    .lab{border:1px dashed #94A3B8;height:38mm;padding:2.5mm;box-sizing:border-box;display:flex;gap:2.5mm;overflow:hidden;break-inside:avoid}.lab svg{flex:none;width:31mm;height:31mm}
-    .lab b{display:block;font-size:12px;line-height:1.2;margin-bottom:1mm}.lab div{font-size:9px;line-height:1.35;min-width:0;overflow-wrap:anywhere}.lab .mono{font-family:Consolas,monospace}
-    .bar{position:sticky;top:0;background:#fff;padding:8px 0 12px;display:flex;gap:10px;align-items:center}.bar button{font-size:15px;padding:8px 18px;border-radius:8px;border:0;background:#1D4ED8;color:#fff;cursor:pointer}
-    .pb{break-before:page}@media print{.bar{display:none}body{margin:10mm}@page{size:A4;margin:8mm}}`;
-  let h = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(title)}</title><style>${css}</style></head><body>
-    <div class="bar"><button onclick="print()">Print</button><span>Labels are 63.5 × 38.1 mm (3 × 7 per A4 sheet). Scan a QR code with a phone to read the device details.</span></div>
-    <h1>${esc(title)}</h1><div class="sub">IP Monitor · ${esc(beirutStamp())}${me ? " · " + esc(me.username) : ""}</div>`;
-  for (const s of siteList){
-    const nets = netsOf(s.id).sort((a, b) => ipCmpT(a.ip, b.ip)), ds = devices.filter(d => d.siteId === s.id).sort((a, b) => a.name.localeCompare(b.name));
-    h += `<h2>Site #${esc(s.siteNumber)} · ${esc(s.name)}</h2><div class="sub">${esc([s.location, s.contact ? "Contact: " + s.contact : ""].filter(Boolean).join(" · "))}</div>
-      <table><thead><tr><th>Network</th><th>Name</th><th>VLAN</th><th>Gateway</th><th>Usable range</th><th>Hosts</th><th>Next free</th></tr></thead><tbody>${nets.map(n => { const e = parseEntry(n.ip);
-        return `<tr><td class="m">${esc(n.ip)}</td><td>${esc(n.name)}</td><td>${esc(n.vlan)}</td><td class="m">${esc(n.gateway)}</td><td class="m">${e && e.kind === "subnet" ? esc(e.firstU + " – " + e.lastU) : ""}</td><td>${hostCount(n)}</td><td class="m">${esc(nextFreeIn(n))}</td></tr>`; }).join("") || `<tr><td colspan="7">No networks</td></tr>`}</tbody></table>
-      <table><thead><tr><th>Device</th><th>Model</th><th>Type</th><th>IP</th><th>MAC</th><th>Serial</th><th>Rack</th><th>Warranty</th></tr></thead><tbody>${ds.map(d =>
-        `<tr><td>${esc(d.name)}</td><td>${esc(d.model)}</td><td>${esc(TYPE_LABEL[d.type] || "")}</td><td class="m">${esc(d.ip || firstAddr(d))}</td><td class="m">${esc(d.mac)}</td><td class="m">${esc(d.serial)}</td><td>${esc(d.rack)}</td><td>${esc(d.warranty)}</td></tr>`).join("") || `<tr><td colspan="8">No devices</td></tr>`}</tbody></table>`;
-  }
-  if (devs.length){
-    h += `<h2 class="${siteList.length ? "pb" : ""}">Device labels (${devs.length})</h2><div class="labels">`;
-    for (const d of devs){ const s = sites.find(x => x.id === d.siteId);
-      h += `<div class="lab">${qrSVG(qrText(d), 117)}<div><b>${esc(d.name)}</b>${esc(d.model)}<br>${s ? `Site #${esc(s.siteNumber)} ${esc(s.name)}<br>` : ""}${d.ip ? `<span class="mono">${esc(d.ip)}</span><br>` : ""}${d.mac ? `<span class="mono">${esc(d.mac)}</span><br>` : ""}${d.serial ? `S/N <span class="mono">${esc(d.serial)}</span><br>` : ""}${d.rack ? esc(d.rack) : ""}</div></div>`; }
-    h += `</div>`;
-  }
-  return h + `</body></html>`;
-}
-function printSite(site){ saveFile(`ip-monitor-site-${fileSafe(site.siteNumber)}-${stamp()}.html`, printSheet(`Site #${site.siteNumber} · ${site.name}`, [site], devices.filter(d => d.siteId === site.id).sort((a, b) => a.name.localeCompare(b.name)))); }
-function printLabels(list){ if (!list.length) return showAlert("No devices", "There are no devices in this list."); saveFile(`ip-monitor-labels-${stamp()}.html`, printSheet(`Device labels`, [], list)); }
-
-/* ---------- 11. New site from a template ---------- */
-const TPL_KEY = "ipmonitor.sitetpl";
-const TPL_DEFAULT = [{ name: "Management", vid: 10, pfx: 27 }, { name: "Users", vid: 20, pfx: 24 }, { name: "Voice", vid: 30, pfx: 26 }, { name: "CCTV", vid: 40, pfx: 26 }, { name: "Servers", vid: 50, pfx: 28 }];
-let tplRows = [];
-function loadTpl(){ try { const t = JSON.parse(localStorage.getItem(TPL_KEY) || "null"); if (Array.isArray(t) && t.length) return t; } catch {} return TPL_DEFAULT.map(x => ({ ...x })); }
-function nextSiteNumber(){ let n = 1; while (siteNumberTaken(String(n))) n++; return String(n); }
-function tplPlan(){
-  const b = parseEntry($("tp-block").value), out = [], extra = [];
-  if (!b || b.kind !== "subnet" || b.v !== 4) return { error: "Type an IPv4 block, e.g. 10.20.0.0/16" };
-  const rows = tplRows.map((r, i) => ({ ...r, i })).filter(r => r.name.trim()).sort((a, c) => a.pfx - c.pfx);
-  for (const r of rows){
-    if (!(r.pfx >= b.prefix && r.pfx <= 30)) { out.push({ r, err: `/${r.pfx} doesn't fit in ${b.text}` }); continue; }
-    const f = freeSubnets(b, r.pfx, 1, extra)[0];
-    if (!f){ out.push({ r, err: "no free space left" }); continue; }
-    extra.push(f); out.push({ r, e: f });
-  }
-  const vids = tplRows.map(r => r.vid).filter(Boolean), dupV = vids.find((v, i) => vids.indexOf(v) !== i);
-  return { b, out: out.sort((a, c) => a.r.i - c.r.i), error: dupV ? `VLAN ${dupV} is listed twice` : out.find(o => o.err) ? "Some subnets don't fit. Use a bigger block or smaller subnets." : "" };
-}
-function renderTpl(){
-  $("tp-rows").innerHTML = tplRows.map((r, i) => `<div class="tprow"><input data-tn="${i}" value="${esc(r.name)}" placeholder="Name" autocomplete="off">
-      <input data-tv="${i}" value="${esc(r.vid || "")}" placeholder="VLAN" inputmode="numeric" autocomplete="off">
-      <select data-tp="${i}">${[22, 23, 24, 25, 26, 27, 28, 29, 30].map(p => `<option value="${p}" ${p === Number(r.pfx) ? "selected" : ""}>/${p} · ${(1 << (32 - p)) - 2}</option>`).join("")}</select>
-      <button type="button" class="xbtn" data-tx="${i}" aria-label="Remove row">✕</button></div>`).join("");
-  $("tp-rows").querySelectorAll("[data-tn]").forEach(x => x.oninput = () => { tplRows[+x.dataset.tn].name = x.value; tplCheck(); });
-  $("tp-rows").querySelectorAll("[data-tv]").forEach(x => x.oninput = () => { const v = x.value.trim(); tplRows[+x.dataset.tv].vid = /^\d+$/.test(v) && +v >= 1 && +v <= 4094 ? +v : v ? NaN : 0; tplCheck(); });
-  $("tp-rows").querySelectorAll("[data-tp]").forEach(x => x.onchange = () => { tplRows[+x.dataset.tp].pfx = +x.value; tplCheck(); });
-  $("tp-rows").querySelectorAll("[data-tx]").forEach(x => x.onclick = () => { tplRows.splice(+x.dataset.tx, 1); renderTpl(); });
-  tplCheck();
-}
-function tplCheck(){
-  const p = tplPlan(), name = $("tp-name").value.trim(), num = $("tp-num").value.trim();
-  const errs = [];
-  if (!name) errs.push("Type the site name");
-  if (!num) errs.push("Type the site number"); else if (siteNumberTaken(num)) errs.push(`Site number ${num} is already used`);
-  if (tplRows.some(r => Number.isNaN(r.vid))) errs.push("VLAN IDs must be 1–4094");
-  if (p.error) errs.push(p.error);
-  const rt = $("tp-router").checked;
-  $("tp-rwrap").hidden = !rt;
-  $("tp-plan").innerHTML = p.out ? `<div class="fslist">${p.out.map(o => `<div class="fsrow"><b>${esc(o.r.name)}</b><span>${o.r.vid ? "VLAN " + esc(o.r.vid) : "no VLAN"}</span>${o.e ? `<code>${esc(o.e.text)}</code><span>gw ${esc(o.e.firstU)}</span>` : `<span class="bad">✕ ${esc(o.err)}</span>`}</div>`).join("")}</div>` : "";
-  $("tp-err").textContent = errs.length ? "✕ " + errs[0] : "";
-  $("tp-go").disabled = !!errs.length || !tplRows.some(r => r.name.trim());
-  return p;
-}
-function openTemplate(){
-  if (readOnly) return;
-  tplRows = loadTpl().map(x => ({ ...x }));
-  $("tp-name").value = ""; $("tp-num").value = nextSiteNumber(); $("tp-loc").value = "";
-  const sug = freeSubnets(parseEntry("10.0.0.0/8"), 16, 1)[0];
-  $("tp-block").value = sug ? sug.text : "";
-  $("tp-router").checked = true; $("tp-rmodel").value = "RB4011iGS+"; $("tp-rname").value = "";
-  renderTpl(); $("tplDlg").showModal(); setTimeout(() => $("tp-name").focus(), 50);
-}
-["tp-name", "tp-num", "tp-block"].forEach(id => $(id).addEventListener("input", tplCheck));
-$("tp-router").addEventListener("change", tplCheck);
-$("tp-add").onclick = () => { const used = new Set(tplRows.map(r => r.vid)); let v = 60; while (used.has(v)) v += 10; tplRows.push({ name: "", vid: v, pfx: 24 }); renderTpl(); };
-$("tp-save").onclick = () => { try { localStorage.setItem(TPL_KEY, JSON.stringify(tplRows.filter(r => r.name.trim()))); toast("Template saved for next time."); } catch {} };
-$("tp-reset").onclick = () => { tplRows = TPL_DEFAULT.map(x => ({ ...x })); renderTpl(); };
-$("tp-cancel").onclick = () => $("tplDlg").close();
-$("tp-go").onclick = async () => {
-  const p = tplCheck(); if ($("tp-go").disabled || readOnly) return;
-  const now = new Date().toISOString(), siteId = newId(), name = $("tp-name").value.trim(), rt = $("tp-router").checked, devId = rt ? newId() : "";
-  const model = $("tp-rmodel").value.trim() || "RB4011iGS+", rname = $("tp-rname").value.trim() || `${name}-R1`;
-  await snapPut("template");
-  bulk = true;
-  try {
-    const site = { id: siteId, name, siteNumber: $("tp-num").value.trim(), location: $("tp-loc").value.trim(), contact: "", notes: "", status: "active", tags: [], createdAt: now, updatedAt: now };
-    await putDoc(COL_SITES, site); if (db) sites.push(site);
-    const addrs = [];
-    for (const o of p.out){
-      const net = { id: newId(), siteId, ip: o.e.text, kind: "subnet", name: o.r.name.trim(), vlan: o.r.vid ? String(o.r.vid) : "", gateway: o.e.firstU, notes: "Created from the site template.", status: "active", tags: [], hostList: [], hosts: 0, createdAt: now, updatedAt: now };
-      await putDoc(COL_NETS, net); if (db) networks.push(net);
-      if (o.r.vid){
-        const ifname = rt ? `vlan${o.r.vid}` : "";
-        const v = { id: newId(), siteId, vid: o.r.vid, name: o.r.name.trim(), deviceId: rt ? devId : "", parent: rt ? "bridge1" : "", ifname, notes: "", status: "active", tags: [], createdAt: now, updatedAt: now };
-        await putDoc(COL_VLANS, v); if (db) vlans.push(v);
-        if (rt) addrs.push({ id: newId(), iface: ifname, address: `${o.e.firstU}/${o.e.prefix}`, comment: o.r.name.trim() });
-      } else if (rt) addrs.push({ id: newId(), iface: "bridge1", address: `${o.e.firstU}/${o.e.prefix}`, comment: o.r.name.trim() });
-    }
-    if (rt){
-      const ports = defaultPorts(model, "router");
-      const dev = { id: devId, siteId, type: "router", vendor: "mikrotik", uplink: null, model, name: rname, role: "", user: "admin", pass: "", winbox: "", wproto: "", wsec: "", psk: "",
-        ip: addrs[0] ? ipOf(addrs[0].address) : "", mac: "", ros: "", notes: "Created from the site template. ether1 is left for the uplink.", func: "core", status: "planned", tags: [],
-        serial: "", rack: "", buy: "", warranty: "", maint: "", ports, bridges: [{ name: "bridge1", ports: ports.filter((x, i) => i > 0 && !isWifiPort(x)) }], addrs, createdAt: now, updatedAt: now };
-      await putDoc(COL_DEV, dev); if (db) devices.push(dev);
-    }
-  } catch { showAlert("Couldn't finish", "Part of the site may have been created. Check the site page."); }
-  finally { bulk = false; if (!db) saveLocal(); }
-  $("tplDlg").close(); renderAll();
-  location.hash = "#site/" + encodeURIComponent(siteId);
-  toast(`Site created with ${p.out.length} networks${rt ? " and a planned router" : ""}.`);
-};
-
-$("tplBtn").onclick = openTemplate;
-$("bulkBtnS").onclick = () => openBulk("devices");
-$("bulkBtnB").onclick = () => openBulk();
-
 /* ======================= START ======================= */
 loadLocal();
 usersLoaded = true;
 syncSession();
-restoreVault().then(() => Promise.all([dbfInit(), bkInit()])).then(() => {
-  liveInit(); snapDaily();
+dbfInit().then(() => {
   // A linked database file wins. Without one, an offline copy carrying newer data merges it in (newer changes win).
   if (DBF.handle || !SEED || !seedIsNewer() || IN_ARTIFACT) return;
   importData(SEED, { trusted: true }).then(r => {
