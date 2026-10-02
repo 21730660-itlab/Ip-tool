@@ -27,3 +27,15 @@ dotnet publish src/IpMonitor.App -c Release -r win-x64 --self-contained true -p:
 ```
 The result is one file, `out/IP-Monitor.exe`, that runs on Windows 10 and 11 without installing .NET.
 Preferences (last database file, theme, WinBox location) are kept in `%APPDATA%\IPMonitor\settings.json`.
+
+## Build the installer (IP-Monitor-Setup.exe)
+Needs NSIS 3 (`makensis`, also available on Linux).
+```
+dotnet publish src/IpMonitor.App -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o out-fdd
+mkdir out-setup && cd installer && makensis IP-Monitor-Setup.nsi
+```
+`out-setup/IP-Monitor-Setup.exe` (about 0.35 MB) installs for the current user without administrator rights
+(`%LOCALAPPDATA%\Programs\IP Monitor`), adds Start menu and desktop shortcuts and an entry in
+Settings > Apps, and downloads and installs the .NET 8 Desktop Runtime when it is missing.
+The uninstaller never deletes the database file. `makensis -DOFFLINE` builds a large setup with .NET built in
+(from the self-contained build in `out`).

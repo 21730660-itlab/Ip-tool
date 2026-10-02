@@ -1,3 +1,6 @@
 bin/
 obj/
 out/
+out-fdd/
+out-sc/
+out-setup/
