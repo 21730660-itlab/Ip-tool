@@ -102,12 +102,19 @@ public class MapPage : PageBase
         // readouts
         var inter = L.ShownLinks.Count(l => S.DevById(l.A) is Device a && S.DevById(l.B) is Device b && a.SiteId != b.SiteId);
         var ro = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 4, 0, 12) };
-        foreach (var (v, t) in new[] { (L.ShownDevs.Count, "Devices"), (L.ShownLinks.Count, "Connections"), (L.ShownLinks.Count(l => l.Type == "wireless"), "Wireless links"), (inter, "Site-to-site") })
+        var readouts = new List<(int, string)> { (L.ShownDevs.Count, "Devices"), (L.ShownLinks.Count, "Connections"), (L.ShownLinks.Count(l => l.Type == "wireless"), "Wireless links"), (inter, "Site-to-site") };
+        if (W.Monitor.States.Count > 0)
+        {
+            readouts.Add((L.ShownDevs.Count(d => W.Monitor.Of(d.Id) == DeviceMonitor.State.Up), "Up (ping)"));
+            readouts.Add((L.ShownDevs.Count(d => W.Monitor.Of(d.Id) == DeviceMonitor.State.Down), "Down (ping)"));
+        }
+        foreach (var (v, t) in readouts)
         {
             var sp = new StackPanel { Orientation = Orientation.Horizontal };
             sp.Children.Add(Ui.Text(v.ToString(), 18, FontWeights.Bold));
             var tt = Ui.Muted(t, 13); tt.Margin = new Thickness(8, 0, 0, 0); tt.VerticalAlignment = VerticalAlignment.Center; sp.Children.Add(tt);
             var c = Ui.Card(sp, 10); c.Margin = new Thickness(0, 0, 10, 0); c.Padding = new Thickness(14, 6, 14, 6);
+            if (t == "Down (ping)" && v > 0) { c.SetResourceReference(Border.BorderBrushProperty, "Sig"); c.SetResourceReference(Border.BackgroundProperty, "SigSoft"); }
             ro.Children.Add(c);
         }
 
@@ -155,6 +162,8 @@ public class MapPage : PageBase
         Leg(LegLine("Ink", 3, null), "Wired");
         Leg(LegLine("Sig", 3, new DoubleCollection { 3, 2 }), "Wireless");
         Leg(LegLine("Muted", 1.6, new DoubleCollection { 1, 2.5 }), "IP from bridge");
+        Leg(Ui.Badge("UP", Theme.B("Ok"), Theme.B("OkSoft")), "answers ping");
+        Leg(Ui.Badge("DOWN", Theme.B("AccInk"), Theme.B("Sig")), "no ping reply");
         foreach (var (t, k) in new[] { ("Router", "router"), ("Wireless", "wireless"), ("Router + Wi-Fi", "both"), ("PC / IP phone", "pc"), ("Servers", "server"), ("Cameras / NVR", "camera") })
             Leg(new Border { Width = 12, Height = 12, CornerRadius = new CornerRadius(2), Background = TypeBrush(k) }, t);
         var hint = Ui.Muted("Drag the background to move around · mouse wheel or +/− to zoom · drag a device, or a site by its title bar, to arrange it (saved automatically) · click a device or a line to open it · to connect two devices click “Add connection”, then the first device, then the second.", 12.5);
@@ -465,25 +474,43 @@ public class MapPage : PageBase
 
     void DrawNode(string id, P p)
     {
-        var d = p.D; var color = p.Ghost ? Theme.B("Muted") : TypeBrush(d.Type);
+        var d = p.D;
+        var live = W.Monitor.Get(id);
+        bool isDown = live?.State == DeviceMonitor.State.Down, isUp = live?.State == DeviceMonitor.State.Up;
+        var color = p.Ghost ? Theme.B("Muted") : TypeBrush(d.Type);
         var g = new Grid { Width = NW, Height = NH };
-        var body = new Border { CornerRadius = new CornerRadius(7), BorderThickness = new Thickness(connectA == id ? 3 : 2), BorderBrush = connectA == id ? Theme.B("Acc") : color, Background = Theme.B("Panel") };
+        var body = new Border { CornerRadius = new CornerRadius(7), BorderThickness = new Thickness(connectA == id || isDown ? 3 : 2),
+            BorderBrush = connectA == id ? Theme.B("Acc") : isDown ? Theme.B("Sig") : color, Background = Theme.B(isDown ? "SigSoft" : "Panel") };
         if (p.Ghost) body.Opacity = 0.75;
         g.Children.Add(body);
-        g.Children.Add(new Border { Height = 4, CornerRadius = new CornerRadius(2), Background = color, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(2, 2, 2, 0) });
+        g.Children.Add(new Border { Height = 4, CornerRadius = new CornerRadius(2), Background = isDown ? Theme.B("Sig") : color, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(2, 2, 2, 0) });
         var c = new Canvas();
         var icon = new Shapes.Path { Data = Icon(d.Type), Stroke = color, StrokeThickness = 2, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round };
         c.Children.Add(At(icon, 8, 8));
-        var led = new Shapes.Ellipse { Width = 8, Height = 8, Fill = Theme.Status(d.Status).fg, ToolTip = Store.StatusLabel[Store.StatusOf(d.Status)] };
-        c.Children.Add(At(led, NW - 14, 10));
-        var nm = T(d.Name, 13.5, "Ink", FontWeights.Bold); nm.Width = NW - 52; c.Children.Add(At(nm, 34, 9));
+        double nameW = NW - 52;
+        if (isUp || isDown)
+        {
+            // live ping result instead of the status light
+            var pill = new Border { CornerRadius = new CornerRadius(8), Padding = new Thickness(6, 1, 6, 1), Background = Theme.B(isDown ? "Sig" : "OkSoft"),
+                Child = new TextBlock { Text = isDown ? "DOWN" : "UP", FontSize = 10.5, FontWeight = FontWeights.Bold, Foreground = Theme.B(isDown ? "AccInk" : "Ok") } };
+            pill.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            c.Children.Add(At(pill, NW - 8 - pill.DesiredSize.Width, 7));
+            nameW = NW - 46 - pill.DesiredSize.Width;
+        }
+        else
+        {
+            var led = new Shapes.Ellipse { Width = 8, Height = 8, Fill = Theme.Status(d.Status).fg };
+            c.Children.Add(At(led, NW - 14, 10));
+        }
+        var nm = T(d.Name, 13.5, "Ink", FontWeights.Bold); nm.Width = Math.Max(30, nameW); c.Children.Add(At(nm, 34, 9));
         var md = T(d.Model, 12, "Muted"); md.Width = NW - 18; c.Children.Add(At(md, 10, 32));
         var ip = DevicesPage.MainIp(d); var third = ip != "" ? ip : Store.RoleLabel.GetValueOrDefault(d.Role ?? "", "");
         if (third == "—") third = "";
-        var ipt = T(third, 12, "Ink2", FontWeights.SemiBold, ip != ""); ipt.Width = NW - 18; c.Children.Add(At(ipt, 10, 51));
+        var ipt = T(third, 12, isDown ? "Sig" : "Ink2", FontWeights.SemiBold, ip != ""); ipt.Width = NW - 18; c.Children.Add(At(ipt, 10, 51));
         g.Children.Add(c);
         var wrap = new Border { Child = g, Tag = "dev:" + id, Cursor = connecting ? Cursors.Hand : p.Ghost || !S.CanWrite ? Cursors.Hand : Cursors.SizeAll, Background = Brushes.Transparent };
-        wrap.ToolTip = $"{d.Name} · {Store.TypeLabel.GetValueOrDefault(d.Type, d.Type)} · {d.Model}" + (ip != "" ? "\n" + ip : "") + (p.Ghost ? $"\n{S.SiteById(d.SiteId)}" : "");
+        var liveText = isDown ? $"\nDOWN — no ping reply since {live.Since:HH:mm:ss}" : isUp ? $"\nUP — ping {live.Ms} ms ({live.LastCheck:HH:mm:ss})" : "";
+        wrap.ToolTip = $"{d.Name} · {Store.TypeLabel.GetValueOrDefault(d.Type, d.Type)} · {d.Model}" + (ip != "" ? "\n" + ip : "") + liveText + $"\nStatus: {Store.StatusLabel[Store.StatusOf(d.Status)]}" + (p.Ghost ? $"\n{S.SiteById(d.SiteId)}" : "");
         Add(At(wrap, p.X - NW / 2, p.Y - NH / 2));
     }
 

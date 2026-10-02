@@ -127,6 +127,29 @@ Ok(xlsxBytes[0] == 'P' && xlsxBytes[1] == 'K', $"xlsx created ({xlsxBytes.Length
 var outDir = Environment.GetEnvironmentVariable("IPM_OUT");
 if (outDir != null) { File.WriteAllBytes(Path.Combine(outDir, "report.pdf"), pdfBytes); File.WriteAllBytes(Path.Combine(outDir, "report.xlsx"), xlsxBytes); }
 
+// dashboard health checks (same rules as the web dashboard)
+var h0 = new Health(st);
+Ok(h0.Checks.Count >= 19 && h0.Checks.All(c => c.Items.Count == 0 || c.Sev != "ok"), $"health checks run ({h0.Checks.Count} rules, score {h0.Score})");
+var wlk = st.Db.Links.First(l => l.Type == "wireless"); wlk.Extra ??= new(); wlk.Extra["signal"] = JsonSerializer.SerializeToElement(-81);
+var h1 = new Health(st);
+Ok(h1.Checks.First(c => c.Title.StartsWith("Wireless links with poor")).Items.Count == 1 && h1.Score < h0.Score, $"poor signal is critical (score {h0.Score} → {h1.Score})");
+Ok(h1.Weakest().FirstOrDefault()?.Id == wlk.Id && h1.Find("10.20.0").Count > 0 && h1.Find("R1").Any(x => x.K == "DEV"), "weakest links and quick find");
+Ok(h1.Busiest().Count > 0 && h1.AddressSpace().Any(a => a.space.Contains("Private")), "busiest subnets and address space");
+
+// live monitoring: AP2 stops answering, then comes back
+bool ap2Up = true; int calls = 0;
+var mon = new DeviceMonitor(st, ips => { calls++; return Task.FromResult(ips.Select(ip => new Pinger.Result(ip, ip != ap2.Ip || ap2Up, 3, "")).ToList()); });
+var ev = new List<DeviceMonitor.Event>(); mon.Changed += ev.Add;
+mon.CheckAsync().Wait();
+Ok(ev.Count == 0 && mon.Of(ap2.Id) == DeviceMonitor.State.Up, "first check: everything up, no alert");
+ap2Up = false; calls = 0; mon.CheckAsync().Wait();
+Ok(ev.Count == 1 && ev[0].Down && ev[0].Device.Id == ap2.Id && calls == 2, "device down: one alert after a retry");
+mon.CheckAsync().Wait();
+Ok(ev.Count == 1, "still down: no repeated alert");
+Ok(new Health(st, mon.DownIds).Checks.First(c => c.Title == "Devices not answering ping").Items.Count == 1, "down device listed as a critical health check");
+ap2Up = true; mon.CheckAsync().Wait();
+Ok(ev.Count == 2 && !ev[1].Down && mon.Of(ap2.Id) == DeviceMonitor.State.Up, "device back up: one more message");
+
 // --demo <file>: keep a copy of this database to look at in the app (admin / password1)
 if (args.Length > 1 && args[0] == "--demo") File.Copy(file, args[1], true);
 

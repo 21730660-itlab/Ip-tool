@@ -9,6 +9,10 @@ public class Settings
     public string LastUser { get; set; }
     public string Theme { get; set; } = "light";
     public string WinboxPath { get; set; }
+    /// <summary>Live monitoring (ping every device) and how often, in seconds.</summary>
+    public bool MonitorOn { get; set; } = true;
+    public int MonitorSeconds { get; set; } = 60;
+    public bool MonitorSound { get; set; } = true;
 
     static string Dir => IOPath.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "IPMonitor");
     static string FilePath => IOPath.Combine(Dir, "settings.json");

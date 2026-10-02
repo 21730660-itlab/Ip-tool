@@ -6,6 +6,10 @@ public class MainWindow : Window
 {
     public static MainWindow Instance { get; private set; }
     public readonly Store Store = new();
+    /// <summary>Live monitoring: pings the devices every few seconds and raises alerts.</summary>
+    public readonly DeviceMonitor Monitor;
+    readonly System.Windows.Threading.DispatcherTimer monTimer = new();
+    TextBlock monStatus; Border monPill;
     public readonly Settings Settings;
     /// <summary>The site chosen in the filter of the pages ("" = all sites).</summary>
     public string SiteFilter = "";
@@ -31,6 +35,9 @@ public class MainWindow : Window
         Content = root;
         pages = new List<PageBase> { new DashboardPage(), new MapPage(), new SitesPage(), new NetworksPage(), new DevicesPage(), new LinksPage(), new VlansPage(), new CalcPage(), new ReportsPage(), new HistoryPage(), new UsersPage(), new BackupPage() };
         Store.Changed += OnChanged;
+        Monitor = new DeviceMonitor(Store);
+        Monitor.Changed += OnDeviceChanged;
+        monTimer.Tick += async (_, _) => await RunMonitor();
         Activated += (_, _) => CheckOutside();
         Closing += (_, e) =>
         {
@@ -187,12 +194,64 @@ public class MainWindow : Window
     {
         Store.Me = u; Settings.LastUser = u.Username; Settings.Save();
         ShowShell();
+        StartMonitor();
+    }
+
+    // ------------------------------------------------------------------ live monitoring
+    public void StartMonitor()
+    {
+        monTimer.Stop();
+        if (!Settings.MonitorOn || Store.Me == null) { UpdateMonitorStatus(); return; }
+        monTimer.Interval = TimeSpan.FromSeconds(Math.Max(15, Settings.MonitorSeconds));
+        monTimer.Start();
+        _ = RunMonitor();
+    }
+    public void StopMonitor() { monTimer.Stop(); UpdateMonitorStatus(); }
+
+    /// <summary>Pings all devices now; refreshes the dashboard, map and devices list when something changed.</summary>
+    public async Task RunMonitor()
+    {
+        if (Store.Me == null || Monitor.Running) return;
+        var before = Monitor.States.ToDictionary(k => k.Key, k => k.Value.State);
+        UpdateMonitorStatus(true);
+        try { await Monitor.CheckAsync(); }
+        catch (Exception e) { Toast("Monitoring: " + e.Message); }
+        foreach (var st in Monitor.States.Values)   // the Ping column of the lists shows the same result
+            NetworksPage.Pings[st.Ip] = new Pinger.Result(st.Ip, st.State == DeviceMonitor.State.Up, st.Ms, st.Note);
+        UpdateMonitorStatus();
+        var changed = Monitor.States.Count != before.Count || Monitor.States.Any(k => !before.TryGetValue(k.Key, out var b) || b != k.Value.State);
+        if (changed && inShell && !rebuilding && Mouse.LeftButton != MouseButtonState.Pressed && current is DashboardPage or MapPage or DevicesPage) Rebuild();
+        else if (inShell && current is DashboardPage dp) dp.RefreshMonitorPanel();
+    }
+
+    void OnDeviceChanged(DeviceMonitor.Event e)
+    {
+        var site = Store.SiteById(e.Device.SiteId);
+        var where = site == null ? "" : $"#{site.SiteNumber} {site.Name} · ";
+        void Show()
+        {
+            if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+            Activate();
+            SiteFilter = e.Device.SiteId; Navigate<MapPage>();
+        }
+        if (e.Down) Notifier.Show("Device down", $"{e.Device.Name} is not answering ping", $"{where}{e.Ip} · {DateTime.Now:HH:mm:ss}{(string.IsNullOrEmpty(e.Note) || e.Note == "TimedOut" ? "" : " · " + e.Note)}", true, Show, Settings.MonitorSound);
+        else Notifier.Show("Device back up", $"{e.Device.Name} answers ping again", $"{where}{e.Ip} · {DateTime.Now:HH:mm:ss}", false, Show, Settings.MonitorSound);
+    }
+
+    void UpdateMonitorStatus(bool checking = false)
+    {
+        if (monStatus == null) return;
+        int up = Monitor.States.Values.Count(s => s.State == DeviceMonitor.State.Up), dn = Monitor.States.Values.Count(s => s.State == DeviceMonitor.State.Down);
+        if (!Settings.MonitorOn) { monStatus.Text = "Monitoring paused"; monPill.SetResourceReference(Border.BackgroundProperty, "Nav2"); return; }
+        monStatus.Text = checking && Monitor.LastRun == default ? "Monitoring: checking…" : $"{up} up · {dn} down";
+        monPill.SetResourceReference(Border.BackgroundProperty, dn > 0 ? "Sig" : "Nav2");
+        monPill.ToolTip = $"Live monitoring: every {Settings.MonitorSeconds} s{(Monitor.LastRun == default ? "" : $" · last check {Monitor.LastRun:HH:mm:ss}")}";
     }
 
     public void LogOut()
     {
         if (Store.SaveError != null && !Ui.Ask("Your last change is NOT saved in the database file:\n\n" + Store.SaveError + "\n\nLog out anyway?", "Not saved", "Log out", true)) return;
-        Store.Me = null;
+        Store.Me = null; StopMonitor();
         ShowLogin("You have logged out. Everything was saved to the database file.");
     }
 
@@ -212,6 +271,12 @@ public class MainWindow : Window
         DockPanel.SetDock(brand, Dock.Left); bar.Children.Add(brand);
 
         var right = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        monStatus = new TextBlock { FontWeight = FontWeights.SemiBold, FontSize = 13, VerticalAlignment = VerticalAlignment.Center };
+        monStatus.SetResourceReference(TextBlock.ForegroundProperty, "NavInk");
+        monPill = new Border { Child = monStatus, CornerRadius = new CornerRadius(14), Padding = new Thickness(12, 5, 12, 5), Margin = new Thickness(0, 0, 16, 0), Cursor = Cursors.Hand, VerticalAlignment = VerticalAlignment.Center };
+        monPill.MouseLeftButtonUp += (_, _) => Navigate<DashboardPage>();
+        right.Children.Add(monPill);
+        UpdateMonitorStatus();
         var me = Store.Me;
         var who = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 14, 0) };
         who.Children.Add(Ui.Text(me.Username, 14, FontWeights.SemiBold, "NavInk", false));

@@ -7,6 +7,11 @@ A native Windows version of IP Monitor (C#, .NET 8, WPF). It uses the **same dat
 - Sign in / create account (same pre-shared key and passwords as the web version)
 - Open or create the database file; every change is saved to it automatically
 - If another program (or the web version) changes the file, the app warns you instead of overwriting it
+- Dashboard like the web version: health score, 20 health checks (critical / warning / info) with the items
+  behind each one, quick find, key figures, busiest subnets, weakest wireless links, inventory, address space,
+  sites and recent activity
+- Live monitoring: every device with an IP is pinged (every 30 s to 10 min); a pop-up (with sound) appears in the
+  corner of the screen when a device stops answering and when it is back; UP / DOWN badges on the site map
 - Site map: every site with its devices, cables and wireless links; drag to arrange (positions shared with the web
   version), zoom and pan, and “Add connection” → click the first device → click the second
 - Dashboard, Sites, IPs & networks (with hosts, next free IP), Devices (MikroTik ports, bridges, IP addresses,
