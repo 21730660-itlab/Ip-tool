@@ -737,6 +737,7 @@ body.locked .shell{display:none!important}
 .side .tab::before,.side .tab::after{content:none}
 .side .tab:hover{color:#fff;background:rgba(255,255,255,.06)}
 .side .tab[hidden]{display:none!important}
+[hidden]{display:none!important}   /* anything marked hidden stays hidden, whatever display its class sets */
 svg .cnhint line{stroke:var(--muted);stroke-width:2.5;stroke-dasharray:7 5;pointer-events:none}
 svg .cnhint.hot line{stroke:var(--acc);stroke-width:3}
 svg .cnhint text{fill:var(--acc);font-family:var(--sans);font-weight:700;font-size:13px;paint-order:stroke;stroke:var(--panel);stroke-width:4px;pointer-events:none}
@@ -3922,7 +3923,7 @@ function startConnect(){
 }
 function exitConnect(){
   connectMode = null; const w = $("canvaswrap"); if (w) w.classList.remove("connecting");
-  const b = $("cnbar"); if (b) b.hidden = true; paintConnect();
+  const b = $("cnbar"); if (b){ b.hidden = true; $("cnmsg").textContent = ""; } paintConnect();
 }
 function connectBar(){
   const bar = $("cnbar"); if (!bar) return;
