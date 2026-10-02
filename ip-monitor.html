@@ -737,6 +737,7 @@ body.locked .shell{display:none!important}
 .side .tab::before,.side .tab::after{content:none}
 .side .tab:hover{color:#fff;background:rgba(255,255,255,.06)}
 .side .tab[hidden]{display:none!important}
+.hdev{display:inline-block;font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--acc);background:var(--acc-soft);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:2px}
 .nico{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .sfoot{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--nav-mute);white-space:nowrap}
 .dbdot{width:8px;height:8px;border-radius:50%;background:var(--nav-mute);flex:none}
@@ -1913,6 +1914,7 @@ async function putDoc(col, obj){
     if (!bulk){ saveLocal(); renderAll(); }
   }
   logWrite(col, before, obj);
+  if (col === COL_DEV || col === COL_NETS || col === COL_LINKS) scheduleHostSync();
 }
 async function delDoc(col, id){
   const old = arrOf(col).find(x => x.id === id) || null;
@@ -1930,6 +1932,61 @@ async function delDoc(col, id){
     saveLocal(); renderAll();
   }
   if (old) logDelete(col, old);
+  if (col === COL_DEV || col === COL_NETS) scheduleHostSync();
+}
+
+/* ======================= DEVICE IPs ARE HOSTS ======================= */
+// Every address configured on a device (bridge, ethernet, VLAN or any interface, the MikroTik management IP,
+// an other-brand device's IP) is listed as a host of the network that holds it. These hosts carry `dev` and
+// follow the device: renamed, moved or removed with it. Hosts typed by hand are never touched.
+let hostSyncing = false, hostSyncTimer = 0;
+function scheduleHostSync(){ if (hostSyncing) return; clearTimeout(hostSyncTimer); hostSyncTimer = setTimeout(syncDeviceHosts, 40); }
+function deviceHostWants(){
+  const w = new Map();
+  const add = (d, ipText, iface) => { const x = ipText && parseEntry(ipText); if (x && x.kind === "ip" && !w.has(x.text)) w.set(x.text, { d, iface, x }); };
+  for (const d of devices){
+    for (const a of d.addrs || []) add(d, ipOf(a.address), a.iface);
+    if (d.ip) add(d, d.ip, vendorOf(d) === "mikrotik" ? "management" : "");
+  }
+  return w;
+}
+const autoHostName = w => w.d.name + (w.iface ? " · " + w.iface : "");
+async function syncDeviceHosts(){
+  if (hostSyncing || readOnly || !me) return;
+  if (bulk){ scheduleHostSync(); return; }                 // an import is still running
+  hostSyncing = true; const muted = logMuted; logMuted = true;
+  try {
+    const want = deviceHostWants();
+    for (const n of [...networks]){
+      const e = parseEntry(n.ip); if (!e || e.kind !== "subnet") continue;
+      const list = Array.isArray(n.hostList) ? n.hostList : [];
+      const inNet = w => w.x.v === e.v && hostRangeOK(e, w.x.addr) && (!w.d.siteId || w.d.siteId === n.siteId);
+      let changed = false, num = list.reduce((m, h) => Math.max(m, Number(h.num) || 0), 0);
+      const next = [];
+      for (const h of list){
+        if (!h.dev){ next.push(h); continue; }
+        const w = want.get(h.ip);
+        if (!w || w.d.id !== h.dev || !inNet(w)){ changed = true; continue; }       // device gone, or its IP changed
+        const name = autoHostName(w), keepName = h.name && h.name !== h.aname;      // keep a name the person typed
+        const upd = { ...h, iface: w.iface, aname: name, name: keepName ? h.name : name, mac: h.mac || (w.d.mac || "") };
+        if (upd.name !== h.name || upd.iface !== h.iface || upd.aname !== h.aname || upd.mac !== h.mac) changed = true;
+        next.push(upd);
+      }
+      const have = new Set(next.map(h => h.ip));
+      for (const [ip, w] of want){
+        if (have.has(ip) || !inNet(w)) continue;                                    // already a host (by hand or from the device)
+        if (BigInt(next.length) >= e.usable) break;
+        const name = autoHostName(w);
+        next.push({ id: newId(), num: ++num, ip, name, aname: name, mac: w.d.mac || "", notes: "", dev: w.d.id, iface: w.iface });
+        have.add(ip); changed = true;
+      }
+      if (changed){
+        next.sort((a, b) => a.num - b.num);
+        try { await putDoc(COL_NETS, { ...n, hostList: next, hosts: next.length, updatedAt: new Date().toISOString() }); } catch {}
+      }
+    }
+  } finally { logMuted = muted; hostSyncing = false; }
+  if ($("netSheet").open && editingNetId){ const n = networks.find(x => x.id === editingNetId); if (n){ formHosts = (n.hostList || []).map(h => ({ ...h })); refreshNet(); } }
 }
 
 /* ======================= ROUTING ======================= */
@@ -2356,7 +2413,7 @@ function renderHosts(e){
   const sorted = [...formHosts].sort((a,b) => a.num - b.num);
   list.innerHTML = sorted.map(h => `<button type="button" class="hrow" data-h="${esc(h.id)}">
       <span class="hn">#${esc(h.num)}</span>
-      <span><span class="hip">${esc(h.ip)}</span>${h.name ? `<br><span class="hname">${esc(h.name)}</span>` : ""}</span>
+      <span><span class="hip">${esc(h.ip)}</span>${h.dev ? ` <span class="hdev">device</span>` : ""}${h.name ? `<br><span class="hname">${esc(h.name)}</span>` : ""}</span>
       <span class="hmac">${esc(h.mac || "")}</span></button>`).join("");
   list.querySelectorAll(".hrow").forEach(r => r.onclick = () => openHost(r.dataset.h));
   if (!e || e.kind !== "subnet"){
@@ -2469,9 +2526,10 @@ function openHost(id){
   $("h-num").value = h ? h.num : String(formHosts.reduce((m, x) => Math.max(m, Number(x.num) || 0), 0) + 1);
   $("h-ip").value = h ? h.ip : nextFreeIP(e);
   $("h-name").value = h?.name || ""; $("h-mac").value = h?.mac || ""; $("h-notes").value = h?.notes || "";
-  $("hDelete").hidden = !h || readOnly; $("hSave").hidden = readOnly;
+  $("hDelete").hidden = !h || readOnly || !!h.dev; $("hSave").hidden = readOnly;
   document.querySelectorAll("#hostForm input, #hostForm textarea").forEach(el => el.readOnly = readOnly);
-  $("h-range").textContent = `Allowed: ${e.firstU} – ${e.lastU}`;
+  $("h-range").textContent = h && h.dev ? `Added from device ${(devById(h.dev) || { name: "?" }).name}${h.iface ? " · " + h.iface : ""}. Change or remove the IP on the device; you can edit the name, MAC and notes here.` : `Allowed: ${e.firstU} – ${e.lastU}`;
+  if (h && h.dev) $("h-ip").readOnly = true;
   validateHost();
   $("hostSheet").showModal();
 }
@@ -2495,7 +2553,8 @@ function validateHost(){
   } else {
     const dup = formHosts.find(h => h.id !== editingHostId && h.ip === x.text);
     if (dup) ipMsg = `✕ ${x.text} is already host #${dup.num}${dup.name ? " (" + dup.name + ")" : ""}`;
-    else { const onDev = deviceIPsIn(e).get(x.text); ipMsg = onDev ? `✓ ${x.text} · this is the address of ${onDev}` : `✓ ${x.text} is free`; good = true; }
+    else { const cur = formHosts.find(h => h.id === editingHostId), onDev = deviceIPsIn(e).get(x.text);
+      ipMsg = cur && cur.dev ? `✓ ${x.text} · from the device` : onDev ? `✓ ${x.text} · this is the address of ${onDev}` : `✓ ${x.text} is free`; good = true; }
   }
   st.className = good ? "fieldok" : "fielderr"; st.textContent = ipMsg;
   $("h-ip").style.borderColor = ipT && !good ? "var(--sig)" : "";
@@ -2517,7 +2576,7 @@ $("hostForm").addEventListener("submit", ev => {
   const data = { id: editingHostId || newId(), num: Number($("h-num").value.trim()), ip: parseEntry($("h-ip").value).text,
     name: $("h-name").value.trim(), mac: normMac($("h-mac").value) || "", notes: $("h-notes").value.trim() };
   const i = formHosts.findIndex(h => h.id === data.id);
-  if (i >= 0) formHosts[i] = data; else formHosts.push(data);
+  if (i >= 0) formHosts[i] = { ...formHosts[i], ...data }; else formHosts.push(data);   // keep the device link of a device host
   $("hostSheet").close();
   refreshNet();
 });
@@ -4792,7 +4851,7 @@ function collectIPs(){
   for (const n of networks){
     const e = parseEntry(n.ip);
     if (e && e.kind === "ip") recs.push({ ip: e.text, kind: "Host", owner: n.name || "Single IP", sub: "single-IP network", siteId: n.siteId, open: () => openNet(n.id) });
-    for (const h of n.hostList || []) recs.push({ ip: h.ip, kind: "Host", owner: h.name || `Host #${h.num}`, sub: `host #${h.num}${h.mac ? " · " + h.mac : ""}`, siteId: n.siteId, open: () => openNet(n.id) });
+    for (const h of n.hostList || []) if (!h.dev) recs.push({ ip: h.ip, kind: "Host", owner: h.name || `Host #${h.num}`, sub: `host #${h.num}${h.mac ? " · " + h.mac : ""}`, siteId: n.siteId, open: () => openNet(n.id) });
     if (n.gateway) recs.push({ ip: n.gateway, kind: "Gateway", owner: (n.name ? n.name + " " : "") + "gateway", sub: n.ip, siteId: n.siteId, open: () => openNet(n.id) });
   }
   for (const d of devices){
@@ -5026,6 +5085,7 @@ function applyAuth(){
     $("who").innerHTML = `<div class="uchip"><span class="avatar">${esc(String(me.username).slice(0, 2).toUpperCase())}</span><span class="uinfo"><b>${esc(me.username)}</b><small>${me.role === "admin" ? "Administrator" : "Guest"} · <span class="perm ${perm}">${PERM_LABEL[perm]}</span></small></span></div><button type="button" id="logoutBtn" class="logout" aria-label="Log out"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"/></svg><span>Log out</span></button>`;
     $("logoutBtn").onclick = logout;
     afterFirst();
+    if (!readOnly) scheduleHostSync();   // devices saved before this update become hosts too
   } else {
     $("who").innerHTML = "";
     $("authnote").textContent = !usersLoaded ? "Loading accounts…"
