@@ -25,6 +25,8 @@ public class DeviceDialog
         if (S.Db.Sites.Count == 0) { Ui.Info("Add a site first.", "No sites"); return; }
         var x = new DeviceDialog(original);
         x.Render();
+        if (original != null && original.IsMikroTik)
+            x.dlg.Extra($"Config backups ({S.ConfigCount(original.Id)})", () => ConfigDialog.Open(original));
         if (x.ro) x.dlg.Cancel("Close");
         else
         {

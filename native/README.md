@@ -16,7 +16,11 @@ A native Windows version of IP Monitor (C#, .NET 8, WPF). It uses the **same dat
 - Backup copy, restore, CSV export for Excel (networks & hosts, devices, connections, devices with passwords)
 - Light and dark mode
 
-Later phases: PDF / Excel reports, configuration backups, subnet calculator.
+- Config backups: add a device's RouterOS export (.rsc file, dropped file or pasted /export), passwords hidden,
+  view each version, see what changed between versions, save as .rsc again (same storage as the web version)
+- Subnet calculator: IPv4/IPv6 analysis, bit map, check against all sites, size for hosts, subnet splitter
+- Reports: PDF report (summary, and per site its map picture, networks, hosts, devices, connections, VLANs,
+  config backups) and an Excel workbook (.xlsx) with one sheet per list — both written without extra libraries
 
 ## Layout
 - `src/IpMonitor.Core` — data model, IP maths, accounts, all rules (no Windows code, testable anywhere)

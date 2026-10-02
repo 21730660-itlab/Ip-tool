@@ -181,8 +181,8 @@ public class DbFile
     [JsonPropertyName("devices")] public List<Device> Devices { get; set; } = new();
     [JsonPropertyName("links")] public List<Link> Links { get; set; } = new();
     [JsonPropertyName("vlans")] public List<Vlan> Vlans { get; set; } = new();
-    /// <summary>RouterOS config backups: not edited by this app, kept exactly as they are.</summary>
-    [JsonPropertyName("configs")] public List<JsonElement> Configs { get; set; } = new();
+    /// <summary>RouterOS config backups (.rsc exports) of the devices.</summary>
+    [JsonPropertyName("configs")] public List<ConfigBackup> Configs { get; set; } = new();
     [JsonPropertyName("changes")] public List<Change> Changes { get; set; } = new();
     [JsonPropertyName("users")] public List<User> Users { get; set; } = new();
     [JsonExtensionData] public Dictionary<string, JsonElement> Extra { get; set; }

@@ -38,7 +38,7 @@ public class BackupPage : PageBase
         // spreadsheets
         var x = new StackPanel();
         x.Children.Add(Ui.Text("Export to Excel (CSV)", 17, FontWeights.Bold));
-        x.Children.Add(Ui.Muted("CSV files open directly in Excel.", 13.5));
+        x.Children.Add(Ui.Muted("CSV files open directly in Excel. For a formatted Excel workbook or a PDF report, use the Reports page.", 13.5));
         var xb = Ui.Row(10,
             Ui.IconBtn("", "Networks & hosts", () => Export("ip-monitor-networks.csv", S.NetworksCsv())),
             Ui.IconBtn("", "Devices", () => Export("ip-monitor-devices.csv", S.DevicesCsv(false))),

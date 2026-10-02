@@ -99,6 +99,34 @@ Ok(st.SaveNow(true) && !st.Conflict && File.ReadAllText(file).Contains("Conflict
 st.DeleteSite(st.Db.Sites.First(x => x.SiteNumber == "77").Id);
 Ok(st.SaveError == null, "saves normally afterwards");
 
+// config backups (.rsc)
+const string rsc1 = "# 2026-01-01 10:00:00 by RouterOS 7.16.1\n# model = RB750Gr3\n/interface bridge\nadd name=bridge1\n/ip address\nadd address=192.168.10.2/24 interface=bridge1\n/user\nset admin password=Secret123\n/system identity\nset name=R1\n";
+var chk = st.CheckConfig(r1.Id, rsc1, true);
+Ok(chk.info.Ros == "7.16.1" && chk.info.Model == "RB750Gr3" && chk.info.Identity == "R1" && !chk.text.Contains("Secret123") && chk.message.Contains("1 password"), "rsc parsed and password hidden: " + chk.message);
+Throws(() => st.CheckConfig(r1.Id, "hello world", true), "doesn't look like", "not an export refused");
+var c1 = st.SaveConfig(r1.Id, rsc1, "first", true, true);
+Ok(r1.Ros == "7.16.1" && st.ConfigsOf(r1.Id).Count == 1 && st.Db.Changes[^1].Kind == "config", "config saved, RouterOS updated, history entry");
+Throws(() => st.SaveConfig(r1.Id, rsc1.Replace("10:00:00", "11:00:00"), "", true, false), "Same as the latest", "identical export refused");
+var c2 = st.SaveConfig(r1.Id, rsc1.Replace("192.168.10.2/24", "192.168.10.3/24"), "changed ip", true, false);
+var diff = Rsc.Diff(c1.Text, c2.Text);
+Ok(diff.Count(d => d.op == '-') == 1 && diff.Count(d => d.op == '+') == 1 && diff.Any(d => d.op == '+' && d.line.Contains("192.168.10.3")), "diff finds the changed line");
+Ok(Rsc.DiffContext(diff).Any(d => d.line == "/ip address"), "diff keeps the section header");
+var guestUser = st.Me; st.Me = guest; Throws(() => st.DeleteConfig(c1.Id), "Full access", "only full access deletes configs"); st.Me = guestUser;
+
+// subnet calculator
+var ce = IpMath.Parse("192.168.1.10/26");
+Ok(IpMath.Wildcard(ce) == "0.0.0.63" && ce.Mask == "255.255.255.192" && IpMath.V4Class(ce.Addr) == "C" && IpMath.Scope(ce).StartsWith("Private"), "calculator basics");
+Ok(IpMath.PrefixForHosts(4, 50) == 26 && IpMath.PrefixForHosts(4, 2) == 31 && IpMath.PrefixForHosts(4, 3) == 29 && IpMath.PrefixForHosts(6, 1000) == 118, "prefix for hosts");
+Ok(IpMath.Expanded6(IpMath.Parse("2001:db8::1").Addr) == "2001:0db8:0000:0000:0000:0000:0000:0001", "ipv6 expanded");
+
+// reports
+var rep = new Report(st, new Report.Options());
+var pdfBytes = rep.Pdf("admin"); var xlsxBytes = rep.Excel("admin");
+Ok(System.Text.Encoding.ASCII.GetString(pdfBytes, 0, 8).StartsWith("%PDF-1.4") && pdfBytes.Length > 1500, $"pdf created ({pdfBytes.Length} bytes)");
+Ok(xlsxBytes[0] == 'P' && xlsxBytes[1] == 'K', $"xlsx created ({xlsxBytes.Length} bytes)");
+var outDir = Environment.GetEnvironmentVariable("IPM_OUT");
+if (outDir != null) { File.WriteAllBytes(Path.Combine(outDir, "report.pdf"), pdfBytes); File.WriteAllBytes(Path.Combine(outDir, "report.xlsx"), xlsxBytes); }
+
 // --demo <file>: keep a copy of this database to look at in the app (admin / password1)
 if (args.Length > 1 && args[0] == "--demo") File.Copy(file, args[1], true);
 

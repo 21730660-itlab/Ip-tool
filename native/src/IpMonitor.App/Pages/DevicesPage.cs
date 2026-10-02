@@ -27,6 +27,7 @@ public class DevicesPage : PageBase
         public string Ping { get; set; }
         public Brush PingFg { get; set; }
         public Brush PingBg { get; set; }
+        public string Configs { get; set; }
     }
 
     /// <summary>The address used to reach a device: its IP / management IP, else its first address.</summary>
@@ -44,6 +45,7 @@ public class DevicesPage : PageBase
         g.Columns.Add(Ui.Col("Addresses", nameof(DevRow.Addrs), -2, true));
         g.Columns.Add(Ui.Col("MAC", nameof(DevRow.Mac), 0, true));
         g.Columns.Add(Ui.BadgeCol("Status", nameof(DevRow.Status), nameof(DevRow.Fg), nameof(DevRow.Bg)));
+        g.Columns.Add(Ui.Col("Configs", nameof(DevRow.Configs)));
         g.Columns.Add(Ui.BadgeCol("Ping", nameof(DevRow.Ping), nameof(DevRow.PingFg), nameof(DevRow.PingBg)));
         var empty = Ui.Muted("", 15);
         List<Device> shown = new();
@@ -59,7 +61,8 @@ public class DevicesPage : PageBase
                     Id = d.Id, Site = S.SiteById(d.SiteId)?.ToString() ?? "—", Name = d.Name, Brand = d.IsMikroTik ? "MikroTik" : "Other", Type = Store.TypeLabel.GetValueOrDefault(d.Type, d.Type),
                     Model = d.Model, Ip = d.Ip, IpKey = Ui.IpKey(ip), Addrs = string.Join(", ", d.Addrs.Select(a => $"{a.Iface} {a.Address}")), Mac = d.Mac,
                     Status = Store.StatusLabel[Store.StatusOf(d.Status)], Fg = fg, Bg = bg,
-                    Ping = NetworksPage.PingText(ip, out var pf, out var pb), PingFg = pf, PingBg = pb
+                    Ping = NetworksPage.PingText(ip, out var pf, out var pb), PingFg = pf, PingBg = pb,
+                    Configs = S.ConfigCount(d.Id) is var cc && cc > 0 ? cc.ToString() : ""
                 };
             }).ToList();
             g.ItemsSource = rows;
@@ -71,6 +74,7 @@ public class DevicesPage : PageBase
 
         var edit = Ui.IconBtn("", "Edit", () => { if (Sel() is Device d) DeviceDialog.Edit(d, id => selId = id); });
         var winbox = Ui.IconBtn("", "WinBox", () => { if (Sel() is Device d) Winbox(d); }, null, "Open this MikroTik in WinBox");
+        var cfg = Ui.IconBtn("\uE8A5", "Config backups", () => { if (Sel() is Device d) ConfigDialog.Open(d); }, null, "RouterOS config backups (.rsc) of this device");
         var web = Ui.IconBtn("", "Web", () => { if (Sel() is Device d) OpenWeb(d); }, null, "Open the device's web page in the browser");
         var del = Ui.IconBtn("", "Delete", () =>
         {
@@ -94,11 +98,12 @@ public class DevicesPage : PageBase
             var d = Sel();
             edit.IsEnabled = d != null; del.IsEnabled = d != null && S.FullAccess;
             winbox.IsEnabled = d != null && d.IsMikroTik && MainIp(d) != ""; web.IsEnabled = d != null && MainIp(d) != "";
+            cfg.IsEnabled = d != null && d.IsMikroTik;
         }
         g.SelectionChanged += (_, _) => { if (g.SelectedItem is DevRow r) selId = r.Id; Buttons(); };
         Ui.OnRowDoubleClick(g, r => DeviceDialog.Edit(S.DevById(((DevRow)r).Id), id => selId = id));
         Refresh(); Buttons();
-        var bar = FilterBar(() => search, v => search = v, Refresh, true, Ui.Row(8, edit, winbox, web, pingAll, del));
+        var bar = FilterBar(() => search, v => search = v, Refresh, true, Ui.Row(8, edit, cfg, winbox, web, pingAll, del));
         return Layout(Header("Devices", "MikroTik routers and wireless, and devices of other brands (PCs, servers, cameras…).", AddBtn("Add device", () => DeviceDialog.Edit(null, id => selId = id))), bar, TableWithEmpty(g, empty));
     }
 

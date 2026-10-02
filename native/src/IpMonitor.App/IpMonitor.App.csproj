@@ -9,7 +9,7 @@
     <AssemblyName>IP-Monitor</AssemblyName>
     <ApplicationIcon>app.ico</ApplicationIcon>
     <Product>IP Monitor</Product>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Company>IP Monitor</Company>
     <Description>IP Monitor for Windows</Description>
   </PropertyGroup>

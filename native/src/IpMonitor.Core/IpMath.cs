@@ -158,5 +158,57 @@ public static class IpMath
         return string.Join(":", Enumerable.Range(0, 6).Select(i => hex.Substring(i * 2, 2)));
     }
 
+    // ------------------------------------------------------------------ subnet calculator
+    public static string Wildcard(IpEntry e) => e.V == 4 ? Format(4, ((BigInteger.One << (32 - e.Prefix)) - 1)) : "";
+    public static string V4Class(BigInteger a)
+    {
+        var o = (int)(a >> 24);
+        return o < 128 ? "A" : o < 192 ? "B" : o < 224 ? "C" : o < 240 ? "D (multicast)" : "E (reserved)";
+    }
+    /// <summary>Private, public, loopback, link-local… of the address range.</summary>
+    public static string Scope(IpEntry e)
+    {
+        bool In(string net) { var n = Parse(net); return n.V == e.V && e.Start >= n.Start && e.End <= n.End; }
+        if (e.V == 4)
+        {
+            if (In("10.0.0.0/8") || In("172.16.0.0/12") || In("192.168.0.0/16")) return "Private (RFC 1918)";
+            if (In("100.64.0.0/10")) return "Carrier-grade NAT (RFC 6598)";
+            if (In("127.0.0.0/8")) return "Loopback";
+            if (In("169.254.0.0/16")) return "Link-local (APIPA)";
+            if (In("224.0.0.0/4")) return "Multicast";
+            if (In("240.0.0.0/4")) return "Reserved";
+            if (In("0.0.0.0/8")) return "This network";
+            if (In("192.0.2.0/24") || In("198.51.100.0/24") || In("203.0.113.0/24")) return "Documentation";
+            return e.Prefix == 0 ? "Everything" : "Public";
+        }
+        if (In("fc00::/7")) return "Unique local (private)";
+        if (In("fe80::/10")) return "Link-local";
+        if (In("ff00::/8")) return "Multicast";
+        if (In("2001:db8::/32")) return "Documentation";
+        if (In("::1/128")) return "Loopback";
+        if (In("2000::/3")) return "Global unicast (public)";
+        return "Other";
+    }
+    /// <summary>The smallest subnet (largest prefix) with at least this many usable addresses; null if impossible.</summary>
+    public static int? PrefixForHosts(int v, BigInteger hosts)
+    {
+        int bits = v == 4 ? 32 : 128;
+        for (int p = bits; p >= 0; p--)
+        {
+            var size = BigInteger.One << (bits - p);
+            var usable = v == 4 && p < 31 ? size - 2 : size;
+            if (usable >= hosts) return p;
+        }
+        return null;
+    }
+    public static string Expanded6(BigInteger a) => string.Join(":", Enumerable.Range(0, 8).Select(i => ((a >> (112 - i * 16)) & 0xFFFF).ToString("x4")));
+    public static string Binary(int v, BigInteger a)
+    {
+        int bits = v == 4 ? 32 : 128, g = v == 4 ? 8 : 16;
+        var s = new System.Text.StringBuilder();
+        for (int i = bits - 1; i >= 0; i--) { s.Append(((a >> i) & 1) == 1 ? '1' : '0'); if (i % g == 0 && i > 0) s.Append(v == 4 ? '.' : ':'); }
+        return s.ToString();
+    }
+
     public static string CountText(BigInteger n) => n < BigInteger.Pow(10, 15) ? n.ToString("N0") : "2^" + (int)Math.Round(BigInteger.Log(n, 2));
 }

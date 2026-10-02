@@ -83,6 +83,7 @@ public static class Ui
     {
         var sp = new StackPanel { Margin = new Thickness(0, 0, 0, 14) };
         if (!string.IsNullOrEmpty(label)) { var l = Text(label, 13.5, FontWeights.SemiBold, "Ink2"); l.Margin = new Thickness(0, 0, 0, 5); sp.Children.Add(l); }
+        if (field is FrameworkElement fe && !double.IsNaN(fe.Width) && fe.HorizontalAlignment == HorizontalAlignment.Stretch) fe.HorizontalAlignment = HorizontalAlignment.Left;   // fixed-width fields sit on the left
         sp.Children.Add(field);
         if (!string.IsNullOrEmpty(hint)) { var h = Muted(hint, 12.5); h.Margin = new Thickness(1, 4, 0, 0); sp.Children.Add(h); }
         return sp;

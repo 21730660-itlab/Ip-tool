@@ -173,9 +173,9 @@ public class NetworksPage : PageBase
     }
 
     /// <summary>Add (net = null) or edit a network.</summary>
-    public void Edit(Network net)
+    public void Edit(Network net, string prefillIp = null)
     {
-        var n = net == null ? new Network { SiteId = W.SiteFilter != "" ? W.SiteFilter : S.Db.Sites.FirstOrDefault()?.Id ?? "", Status = "active" } : DbIo.Clone(net);
+        var n = net == null ? new Network { SiteId = W.SiteFilter != "" ? W.SiteFilter : S.Db.Sites.FirstOrDefault()?.Id ?? "", Status = "active", Ip = prefillIp ?? "" } : DbIo.Clone(net);
         if (S.Db.Sites.Count == 0) { Ui.Info("Add a site first.", "No sites"); return; }
         var d = new Dlg(net == null ? "Add network" : $"Edit network {net.Ip}", 640);
         var site = Ui.Choice(S.Db.Sites.OrderBy(s => s.SiteNumber?.PadLeft(10, '0')).Select(s => (s.Id, s.ToString())), n.SiteId);

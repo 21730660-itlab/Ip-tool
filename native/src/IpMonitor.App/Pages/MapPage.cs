@@ -22,7 +22,7 @@ public class MapPage : PageBase
     string lastFilter;
 
     // what is on the canvas now
-    Layout L;
+    MapLayout L;
     Canvas canvas;
     Border host;
     readonly ScaleTransform scale = new();
@@ -39,7 +39,31 @@ public class MapPage : PageBase
     Border cnBar; TextBlock cnMsg;
 
     record P(double X, double Y, Device D, bool Ghost);
-    class Layout
+
+    // drawing a site for a report (no window): which site, and no grid
+    string renderFilter; bool print;
+    string Filter => renderFilter ?? W.SiteFilter;
+
+    /// <summary>A picture of one site's map (JPEG, twice the screen size), or null when the site has no devices.</summary>
+    public static (byte[] jpeg, int w, int h)? RenderSite(string siteId)
+    {
+        var mp = new MapPage { renderFilter = siteId, print = true, canvas = new Canvas() };
+        mp.L = mp.Compute();
+        if (mp.L.ShownDevs.Count == 0) return null;
+        mp.Draw();
+        double w = mp.L.W, h = mp.L.H;
+        var root = new Border { Width = w, Height = h, Background = Brushes.White, ClipToBounds = true, Child = mp.canvas };
+        root.Measure(new Size(w, h)); root.Arrange(new Rect(0, 0, w, h)); root.UpdateLayout();
+        double scale = Math.Min(2, 4000 / Math.Max(w, h));
+        int pw = (int)Math.Ceiling(w * scale), ph = (int)Math.Ceiling(h * scale);
+        var rtb = new System.Windows.Media.Imaging.RenderTargetBitmap(pw, ph, 96 * scale, 96 * scale, PixelFormats.Pbgra32);
+        rtb.Render(root);
+        var enc = new System.Windows.Media.Imaging.JpegBitmapEncoder { QualityLevel = 92 };
+        enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(new System.Windows.Media.Imaging.FormatConvertedBitmap(rtb, PixelFormats.Bgr24, null, 0)));
+        using var ms = new MemoryStream(); enc.Save(ms);
+        return (ms.ToArray(), pw, ph);
+    }
+    class MapLayout
     {
         public double W, H;
         public readonly Dictionary<string, Rect> Sites = new();
@@ -160,12 +184,12 @@ public class MapPage : PageBase
     }
 
     // ------------------------------------------------------------------ layout (same rules as the web version)
-    Layout Compute()
+    MapLayout Compute()
     {
-        var l = new Layout();
-        var single = W.SiteFilter != "";
+        var l = new MapLayout();
+        var single = Filter != "";
         var sorted = S.Db.Sites.OrderBy(s => s.SiteNumber?.PadLeft(10, '0'), StringComparer.OrdinalIgnoreCase).ToList();
-        l.ShownSites = single ? sorted.Where(s => s.Id == W.SiteFilter).ToList() : sorted;
+        l.ShownSites = single ? sorted.Where(s => s.Id == Filter).ToList() : sorted;
         var siteIds = l.ShownSites.Select(s => s.Id).ToHashSet();
         l.ShownDevs = S.Db.Devices.Where(d => siteIds.Contains(d.SiteId)).ToList();
         var devIds = l.ShownDevs.Select(d => d.Id).ToHashSet();
@@ -271,27 +295,31 @@ public class MapPage : PageBase
         canvas.Children.Clear();
         if (L.ShownSites.Count == 0 || (L.ShownDevs.Count == 0 && L.ShownLinks.Count == 0))
         {
-            var msg = L.ShownSites.Count == 0 ? "No sites yet. Create a site on the Sites page first." : $"No devices {(W.SiteFilter == "" ? "yet" : "in this site")}. Click “Add device”.";
+            var msg = L.ShownSites.Count == 0 ? "No sites yet. Create a site on the Sites page first." : $"No devices {(Filter == "" ? "yet" : "in this site")}. Click “Add device”.";
             Add(At(T(msg, 16, "Muted", FontWeights.SemiBold), 30, 30));
             if (L.ShownSites.Count == 0) return;
         }
         // grid
+        if (!print) AddGrid();
+        void AddGrid()
+        {
         var grid = new DrawingBrush
         {
             TileMode = TileMode.Tile, Viewport = new Rect(0, 0, 24, 24), ViewportUnits = BrushMappingMode.Absolute,
             Drawing = new GeometryDrawing(null, new Pen(Theme.B("Grid"), 1), Geometry.Parse("M24,0 H0 V24"))
         };
         Add(At(new Shapes.Rectangle { Width = L.W * 3 + 2000, Height = L.H * 3 + 2000, Fill = grid, IsHitTestVisible = false }, -L.W - 1000, -L.H - 1000));
+        }
 
         // site boxes
         foreach (var s in L.ShownSites)
         {
             var r = L.Sites[s.Id];
             Add(At(new Shapes.Rectangle { Width = r.Width, Height = r.Height, RadiusX = 4, RadiusY = 4, StrokeThickness = 1.5, Fill = Theme.B("Panel2"), Stroke = Theme.B("Frame") }, r.X, r.Y));
-            var hdr = new Border { Width = r.Width, Height = HDR, CornerRadius = new CornerRadius(4, 4, 0, 0), Tag = "site:" + s.Id, Cursor = W.SiteFilter == "" && S.CanWrite ? Cursors.SizeAll : Cursors.Hand };
+            var hdr = new Border { Width = r.Width, Height = HDR, CornerRadius = new CornerRadius(4, 4, 0, 0), Tag = "site:" + s.Id, Cursor = Filter == "" && S.CanWrite ? Cursors.SizeAll : Cursors.Hand };
             hdr.SetResourceReference(Border.BackgroundProperty, "Nav");
             var hp = new DockPanel { Margin = new Thickness(12, 0, 12, 0) };
-            if (W.SiteFilter == "" && S.CanWrite) { var g = T("≡", 16, "NavMute"); g.VerticalAlignment = VerticalAlignment.Center; DockPanel.SetDock(g, Dock.Right); hp.Children.Add(g); }
+            if (Filter == "" && S.CanWrite) { var g = T("≡", 16, "NavMute"); g.VerticalAlignment = VerticalAlignment.Center; DockPanel.SetDock(g, Dock.Right); hp.Children.Add(g); }
             var n = T($"#{s.SiteNumber}", 14, "NavHi", FontWeights.Bold, true); n.VerticalAlignment = VerticalAlignment.Center; n.Margin = new Thickness(0, 0, 8, 0); hp.Children.Add(n);
             var nm = T(s.Name, 14, "NavInk", FontWeights.Bold); nm.VerticalAlignment = VerticalAlignment.Center; hp.Children.Add(nm);
             hdr.Child = hp;

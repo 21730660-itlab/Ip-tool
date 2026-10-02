@@ -204,7 +204,7 @@ public class Store
         var s = SiteById(id); if (s == null) return;
         var devIds = Db.Devices.Where(d => d.SiteId == id).Select(d => d.Id).ToHashSet();
         foreach (var l in Db.Links.Where(l => devIds.Contains(l.A) || devIds.Contains(l.B)).ToList()) RemoveLink(l);
-        Db.Configs.RemoveAll(c => devIds.Contains(ConfigDevice(c)));
+        Db.Configs.RemoveAll(c => devIds.Contains(c.DeviceId));
         Db.Vlans.RemoveAll(v => v.SiteId == id);
         Db.Devices.RemoveAll(d => devIds.Contains(d.Id));
         var nets = Db.Networks.RemoveAll(n => n.SiteId == id);
@@ -212,8 +212,7 @@ public class Store
         Log("delete", "site", id, $"#{s.SiteNumber} {s.Name}", id, nets > 0 || devIds.Count > 0 ? new List<string> { $"with {nets} networks and {devIds.Count} devices" } : null);
         SyncDeviceHosts(); Persist();
     }
-    static string ConfigDevice(JsonElement c) => c.ValueKind == JsonValueKind.Object && c.TryGetProperty("deviceId", out var d) && d.ValueKind == JsonValueKind.String ? d.GetString() : null;
-    public int ConfigCount(string devId) => Db.Configs.Count(c => ConfigDevice(c) == devId);
+    public int ConfigCount(string devId) => Db.Configs.Count(c => c.DeviceId == devId);
 
     // ------------------------------------------------------------------ networks
     public void SaveNetwork(Network n)
@@ -406,7 +405,7 @@ public class Store
         NeedFull();
         var d = DevById(id); if (d == null) return;
         foreach (var l in Db.Links.Where(l => l.A == id || l.B == id).ToList()) RemoveLink(l);
-        Db.Configs.RemoveAll(c => ConfigDevice(c) == id);
+        Db.Configs.RemoveAll(c => c.DeviceId == id);
         foreach (var v in Db.Vlans.Where(v => v.DeviceId == id)) { v.DeviceId = ""; v.Parent = ""; v.IfName = ""; v.UpdatedAt = Entity.Now(); }
         Db.Devices.Remove(d);
         Log("delete", "device", id, $"{d.Name} · {d.Model}", d.SiteId);
@@ -667,6 +666,62 @@ public class Store
             }
             if (changed) { n.HostList = next.OrderBy(h => h.Num).ToList(); n.Hosts = n.HostList.Count; n.UpdatedAt = Entity.Now(); }
         }
+    }
+
+    // ------------------------------------------------------------------ config backups
+    /// <summary>Saved configs of a device, newest first.</summary>
+    public List<ConfigBackup> ConfigsOf(string devId) => Db.Configs.Where(c => c.DeviceId == devId).OrderByDescending(c => c.At, StringComparer.Ordinal).ToList();
+
+    /// <summary>What a pasted / loaded export would be saved as: the prepared text and a description; throws when it can't be saved.</summary>
+    public (string text, Rsc.Info info, string message, List<string> warnings) CheckConfig(string devId, string raw, bool mask)
+    {
+        var d = DevById(devId) ?? throw new RuleException("Device not found.");
+        if (string.IsNullOrWhiteSpace(raw)) throw new RuleException("Paste the router's /export or load an .rsc file.");
+        var t = raw.Replace("\r\n", "\n"); if (mask) t = Rsc.MaskSecrets(t);
+        var p = Rsc.Parse(t); var size = Rsc.Bytes(t); var last = ConfigsOf(devId).FirstOrDefault();
+        if (size > Rsc.MaxBytes) throw new RuleException($"{Rsc.Size(size)} is too big (max 200 KB). Use /export without “verbose”.");
+        if (!p.Looks) throw new RuleException("This doesn't look like a RouterOS export. It should have lines that start with “/”, like /ip address.");
+        if (last != null && Rsc.Norm(last.Text) == Rsc.Norm(t)) throw new RuleException("Same as the latest saved version. Nothing changed.");
+        var msg = $"RouterOS export · {p.Lines} lines · {Rsc.Size(size)}" + (p.Ros != "" ? " · RouterOS " + p.Ros : "") + (p.Model != "" ? " · " + p.Model : "");
+        var warn = new List<string>();
+        if (p.Identity != "" && !string.Equals(p.Identity, d.Name, StringComparison.OrdinalIgnoreCase)) warn.Add($"identity is “{p.Identity}”, device name is “{d.Name}”. Is this the right router?");
+        var sec = Rsc.CountSecrets(raw);
+        if (sec > 0 && !mask) warn.Add($"it contains {sec} password/key value{(sec == 1 ? "" : "s")} in plain text");
+        else if (sec > 0) msg += $" · {sec} password/key value{(sec == 1 ? "" : "s")} will be hidden";
+        return (t, p, msg, warn);
+    }
+
+    public ConfigBackup SaveConfig(string devId, string raw, string note, bool mask, bool updateRos)
+    {
+        NeedWrite();
+        var (t, p, _, _) = CheckConfig(devId, raw, mask);
+        var d = DevById(devId); var now = Entity.Now();
+        var c = new ConfigBackup
+        {
+            DeviceId = d.Id, SiteId = d.SiteId, At = now, By = Me?.Username ?? "", Note = (note ?? "").Trim() is var n && n.Length > 120 ? n[..120] : (note ?? "").Trim(),
+            Text = t, Size = Rsc.Bytes(t), Lines = p.Lines, Ros = p.Ros, Model = p.Model, Identity = p.Identity, Masked = mask, CreatedAt = now, UpdatedAt = now
+        };
+        Db.Configs.Add(c);
+        var lines = new List<string>();
+        if (updateRos && p.Ros != "" && p.Ros != d.Ros) { lines.Add($"RouterOS: {(string.IsNullOrEmpty(d.Ros) ? "—" : d.Ros)} → {p.Ros}"); d.Ros = p.Ros; d.UpdatedAt = now; }
+        LogConfig("add", c, d, lines);
+        Persist();
+        return c;
+    }
+
+    public void DeleteConfig(string id)
+    {
+        NeedFull();
+        var c = Db.Configs.FirstOrDefault(x => x.Id == id); if (c == null) return;
+        Db.Configs.Remove(c);
+        LogConfig("delete", c, DevById(c.DeviceId), null);
+        Persist();
+    }
+
+    void LogConfig(string act, ConfigBackup c, Device d, List<string> lines)
+    {
+        Log(act, "config", c.Id, $"{d?.Name ?? "device"} · {c.Lines} lines{(string.IsNullOrEmpty(c.Note) ? "" : " · " + c.Note)}", d?.SiteId ?? c.SiteId, lines);
+        var e = Db.Changes[^1]; e.Extra ??= new(); e.Extra["dev"] = JsonSerializer.SerializeToElement(c.DeviceId);   // the web version links the entry to the device this way
     }
 
     // ------------------------------------------------------------------ site map positions
