@@ -86,16 +86,30 @@ public class MapPage : PageBase
         if (W.SiteFilter != "" && S.SiteById(W.SiteFilter) == null) W.SiteFilter = "";
         if (lastFilter != W.SiteFilter) { needFit = true; lastFilter = W.SiteFilter; }
 
-        // site chips
-        var chips = new WrapPanel();
-        void Chip(string id, string text)
+        // which site to show: one drop-down list instead of a button per site (stays tidy with many sites)
+        var chips = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 10) };
+        var ordered = S.Db.Sites.OrderBy(s => s.SiteNumber?.PadLeft(10, '0'), StringComparer.OrdinalIgnoreCase).ToList();
+        void Go(string id) { W.SiteFilter = id; ExitConnect(); W.Navigate(this); }
+        string Count(int n, string one) => $"{n} {one}{(n == 1 ? "" : "s")}";
+        var items = new List<(string, string)> { ("", $"All sites  ({Count(ordered.Count, "site")}, {Count(S.Db.Devices.Count, "device")})") };
+        foreach (var s in ordered)
         {
-            var b = Ui.Btn(text, () => { W.SiteFilter = id; ExitConnect(); W.Navigate(this); }, W.SiteFilter == id ? "Primary" : null);
-            b.Margin = new Thickness(0, 0, 8, 8); b.MinHeight = 32; b.Padding = new Thickness(12, 4, 12, 4);
-            chips.Children.Add(b);
+            var nd = S.Db.Devices.Count(d => d.SiteId == s.Id);
+            var dn = S.Db.Devices.Count(d => d.SiteId == s.Id && W.Monitor.Of(d.Id) == DeviceMonitor.State.Down);
+            items.Add((s.Id, $"#{s.SiteNumber}  ·  {s.Name}   —  {Count(nd, "device")}{(dn > 0 ? $" · {dn} DOWN" : "")}"));
         }
-        Chip("", "All sites");
-        foreach (var s in S.Db.Sites.OrderBy(s => s.SiteNumber?.PadLeft(10, '0'))) Chip(s.Id, $"#{s.SiteNumber}  {s.Name}");
+        var lbl = Ui.Text("Site", 14, FontWeights.SemiBold, "Ink2"); lbl.VerticalAlignment = VerticalAlignment.Center; lbl.Margin = new Thickness(0, 0, 10, 0);
+        var pick = Ui.Choice(items, W.SiteFilter); pick.Width = 420; pick.MaxDropDownHeight = 460; pick.FontSize = 14.5;
+        pick.ToolTip = "Choose a site, or All sites. With the list open, type a site number or name to jump to it.";
+        TextSearch.SetTextPath(pick, "Label");
+        pick.SelectionChanged += (_, _) => { if (pick.Val() != W.SiteFilter) Go(pick.Val()); };
+        // step through the sites one by one
+        int idx = ordered.FindIndex(s => s.Id == W.SiteFilter);
+        var prev = Ui.Btn("‹", () => Go(idx <= 0 ? (idx == 0 ? "" : ordered.LastOrDefault()?.Id ?? "") : ordered[idx - 1].Id), null, "Previous site");
+        var next = Ui.Btn("›", () => Go(idx + 1 < ordered.Count ? ordered[idx + 1].Id : ""), null, "Next site");
+        foreach (var b in new[] { prev, next }) { b.FontSize = 18; b.MinWidth = 40; b.Padding = new Thickness(8, 0, 8, 2); b.Margin = new Thickness(6, 0, 0, 0); b.IsEnabled = ordered.Count > 0; }
+        var all = Ui.Btn("All sites", () => Go(""), W.SiteFilter == "" ? "Primary" : null); all.Margin = new Thickness(12, 0, 0, 0);
+        chips.Children.Add(lbl); chips.Children.Add(pick); chips.Children.Add(prev); chips.Children.Add(next); chips.Children.Add(all);
 
         L = Compute();
 
@@ -302,11 +316,10 @@ public class MapPage : PageBase
     void Draw()
     {
         canvas.Children.Clear();
-        if (L.ShownSites.Count == 0 || (L.ShownDevs.Count == 0 && L.ShownLinks.Count == 0))
+        if (L.ShownSites.Count == 0)
         {
-            var msg = L.ShownSites.Count == 0 ? "No sites yet. Create a site on the Sites page first." : $"No devices {(Filter == "" ? "yet" : "in this site")}. Click “Add device”.";
-            Add(At(T(msg, 16, "Muted", FontWeights.SemiBold), 30, 30));
-            if (L.ShownSites.Count == 0) return;
+            Add(At(T("No sites yet. Create a site on the Sites page first.", 16, "Muted", FontWeights.SemiBold), 30, 30));
+            return;
         }
         // grid
         if (!print) AddGrid();
