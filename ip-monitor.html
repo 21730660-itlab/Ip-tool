@@ -741,6 +741,13 @@ svg .cnhint line{stroke:var(--muted);stroke-width:2.5;stroke-dasharray:7 5;point
 svg .cnhint.hot line{stroke:var(--acc);stroke-width:3}
 svg .cnhint text{fill:var(--acc);font-family:var(--sans);font-weight:700;font-size:13px;paint-order:stroke;stroke:var(--panel);stroke-width:4px;pointer-events:none}
 svg .node.cn-target rect.body{stroke:var(--acc)!important;stroke-width:4.5}
+svg .node.cn-source rect.body{stroke:var(--acc)!important;stroke-width:4.5;stroke-dasharray:none}
+.canvaswrap{position:relative}
+.canvaswrap.connecting .mapstage{cursor:crosshair}
+.cnbar{position:sticky;top:calc(var(--navh) + 78px);z-index:6;margin:0 0 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:8px;
+  background:var(--panel);border:1px solid var(--acc);box-shadow:var(--lift2);font-size:.92rem;color:var(--ink)}
+.cnbar #cnmsg{flex:1;min-width:180px}
+.cnbar .cnico{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--acc);color:var(--acc-ink);font-weight:700;flex:none}
 .hdev{display:inline-block;font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--acc);background:var(--acc-soft);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:2px}
 .nico{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .sfoot{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--nav-mute);white-space:nowrap}
@@ -1132,6 +1139,8 @@ svg .node.nvr rect.body,svg .node.camera rect.body{stroke:var(--c-cam)} svg .nod
       <button class="btn btn-line btn-sm pdfbtn" id="pdfAllBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6M9 15l3 3 3-3"/></svg><span id="pdfAllLbl">PDF · all sites</span></button>
     </div>
     <div class="readouts" id="mapreadouts" style="margin-bottom:12px"></div>
+    <div class="cnbar" id="cnbar" hidden><span class="cnico" aria-hidden="true">⟷</span><span id="cnmsg"></span>
+        <button type="button" class="btn btn-line btn-sm" id="cnForm">Use the form instead</button><button type="button" class="btn btn-primary btn-sm" id="cnCancel">Cancel</button></div>
     <div class="canvaswrap" id="canvaswrap">
       <div class="mapstage" id="mapstage"></div>
       <div class="maptools">
@@ -1142,7 +1151,7 @@ svg .node.nvr rect.body,svg .node.camera rect.body{stroke:var(--c-cam)} svg .nod
       </div>
       <button type="button" class="btn btn-line btn-sm mapreset" id="mapReset">Reset layout</button>
     </div>
-    <p class="hint2" style="margin-top:6px">Drag the background to move around · pinch, scroll or +/− to zoom · drag a site by its title bar or a device to rearrange (saved automatically) · <b>drag a device onto another device to connect them</b>.</p>
+    <p class="hint2" style="margin-top:6px">Drag the background to move around · pinch, scroll or +/− to zoom · drag a site by its title bar or a device to rearrange (saved automatically) · <b>to connect two devices press + Add connection, click the first device, then click or drag to the second</b>.</p>
     <div class="maplegend">
       <span><svg width="34" height="10"><line x1="0" y1="5" x2="34" y2="5" stroke="currentColor" stroke-width="3"/></svg>Wired</span>
       <span><svg width="34" height="10"><line x1="0" y1="5" x2="34" y2="5" stroke="var(--sig)" stroke-width="3" stroke-dasharray="7 5"/></svg>Wireless</span>
@@ -2022,7 +2031,7 @@ function routeNow(){
   const tab = r.page === "site" ? "sites" : r.page === "device" ? "devices" : r.page;
   for (const t of ["dash","sites","devices","ips","map","calc","backup","log","users"]) $("tab-" + t).setAttribute("aria-selected", tab === t);
   const at = $("tab-" + tab); if (at && at.scrollIntoView) at.scrollIntoView({ block: "nearest", inline: "nearest" });
-  if (r.page === "map") renderMap();
+  if (r.page === "map") renderMap(); else if (connectMode) exitConnect();
   if (r.page === "devices") renderDevices();
   if (r.page === "ips") renderIPs();
   if (r.page === "users") renderUsers();
@@ -3803,7 +3812,7 @@ const svgEl = () => $("mapsvg");
 function drawStage(){
   if (!mapShown) return;
   stageEl().innerHTML = drawMap(mapShown.shownSites, mapShown.shownDevs, mapShown.shownLinks);
-  drawConnectHint();
+  if (connectMode){ if (connectMode.a){ const c = devCentre(connectMode.a); if (c){ connectMode.ox = c.x; connectMode.oy = c.y; } else exitConnect(); } paintConnect(); }
 }
 function applyView(){ const s = svgEl(); if (s && mapView) s.setAttribute("viewBox", `${mapView.x} ${mapView.y} ${mapView.w} ${mapView.h}`); updateZoomLabel(); }
 function fitView(){
@@ -3840,21 +3849,29 @@ function onMapDown(e){
     mapDrag = null; return;
   }
   const t = e.target.closest("[data-dev],[data-hdr],[data-site],[data-link]");
+  if (connectMode){
+    const dv = e.target.closest("[data-dev]"), did = dv && !dv.classList.contains("ghost") ? dv.dataset.dev : null;
+    if (did && !connectMode.a){                                  // first device chosen: the line starts here
+      connectMode.a = did; const c = devCentre(did); connectMode.ox = c ? c.x : 0; connectMode.oy = c ? c.y : 0; connectMode.pt = toSvg(e);
+      gest = { type: "connect", sx: e.clientX, sy: e.clientY, moved: false }; connectBar(); paintConnect(); e.preventDefault(); return;
+    }
+    if (did && connectMode.a && did !== connectMode.a){ const a = connectMode.a; exitConnect(); ptrs.delete(e.pointerId); connectDevices(a, did); e.preventDefault(); return; }
+    if (did){ ptrs.delete(e.pointerId); e.preventDefault(); return; }   // the same device again: keep waiting for the second one
+  }
   let type = "pan", id = null;
   if (t && t.dataset.dev){ id = t.dataset.dev; type = !readOnly && !t.classList.contains("ghost") ? "dev" : "tap-dev"; }
   else if (t && t.dataset.hdr){ id = t.dataset.site; type = readOnly ? "tap-site" : "site"; }
   else if (t && t.dataset.site){ id = t.dataset.site; type = "tap-site"; }
   else if (t && t.dataset.link){ id = t.dataset.link; type = "tap-link"; }
   gest = { type, id, sx: e.clientX, sy: e.clientY, v0: { ...mapView }, moved: false, k: toSvg(e).k };
-  if (type === "dev"){
-    const c = devCentre(id); if (c){ gest.ox = c.x; gest.oy = c.y; }
-    // where the other devices are now: dragging can resize site boxes, so targets are found on this snapshot
-    gest.boxes = [...s.querySelectorAll("[data-dev]")].filter(n => n.dataset.dev !== id && !n.classList.contains("ghost"))
-      .map(n => ({ id: n.dataset.dev, r: (n.querySelector("rect.body") || n).getBoundingClientRect() }));
-  }
   e.preventDefault();
 }
 function onMapMove(e){
+  if (connectMode && connectMode.a && (!gest || gest.type === "connect")){   // the dashed line follows the pointer, button held or not
+    connectMode.pt = toSvg(e); connectMode.target = connectTargetAt(e.clientX, e.clientY); paintConnect();
+    if (gest && Math.hypot(e.clientX - gest.sx, e.clientY - gest.sy) > 6) gest.moved = true;
+    return;
+  }
   if (!gest || !ptrs.has(e.pointerId)) return;
   ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (gest.type === "pinch"){
@@ -3866,12 +3883,6 @@ function onMapMove(e){
   if (!gest.moved && Math.hypot(dx, dy) < 6) return;
   gest.moved = true;
   if (gest.type === "dev" || gest.type === "site"){
-    if (gest.type === "dev"){
-      const hit = (gest.boxes || []).find(b => e.clientX >= b.r.left - 6 && e.clientX <= b.r.right + 6 && e.clientY >= b.r.top - 6 && e.clientY <= b.r.bottom + 6);
-      gest.target = hit ? hit.id : null; gest.pt = toSvg(e);
-      // over another device: keep the layout still and show the connection; elsewhere: move the device
-      if (gest.target){ mapDrag = null; scheduleRedraw(); return; }
-    }
     mapDrag = { kind: gest.type, id: gest.id, dx: dx * gest.k, dy: dy * gest.k }; scheduleRedraw();
   } else {
     mapView = { ...gest.v0, x: gest.v0.x - dx * gest.k, y: gest.v0.y - dy * gest.k }; applyView();
@@ -3884,6 +3895,10 @@ function onMapUp(e){
   if (!g) return;
   if (g.type === "pinch"){ if (ptrs.size === 0) gest = null; return; }
   gest = null;
+  if (g.type === "connect"){                                     // dragged from the first device and released on another
+    if (g.moved && connectMode && connectMode.target){ const a = connectMode.a, b = connectMode.target; exitConnect(); connectDevices(a, b); }
+    return;
+  }
   if (!g.moved){
     mapDrag = null;
     if (g.id && (g.type === "dev" || g.type === "tap-dev")) showDevice(g.id);
@@ -3891,7 +3906,6 @@ function onMapUp(e){
     else if (g.id && (g.type === "site" || g.type === "tap-site")){ mapFilter = g.id; renderMap(); }
     return;
   }
-  if (g.type === "dev" && g.target){ if (mapRaf){ cancelAnimationFrame(mapRaf); mapRaf = 0; } mapDrag = null; drawStage(); connectDevices(g.id, g.target); return; }
   if (g.type === "dev" || g.type === "site"){ if (mapRaf){ cancelAnimationFrame(mapRaf); mapRaf = 0; } drawStage(); commitDrag(g.type, g.id); }
 }
 /* centre of a device on the map, in map coordinates */
@@ -3899,18 +3913,50 @@ function devCentre(id){
   const n = svgEl() && svgEl().querySelector(`[data-dev="${CSS.escape(id)}"] rect.body`); if (!n) return null;
   const b = n.getBBox(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
 }
-/* drawn on top while a device is dragged: a line from where it started, and the device it would connect to */
-function drawConnectHint(){
-  const g = gest, s = svgEl();
-  if (!s || !g || g.type !== "dev" || !g.moved || g.ox === undefined || !g.pt) return;
-  const hot = !!g.target, t = hot ? devCentre(g.target) : null, x2 = t ? t.x : g.pt.x, y2 = t ? t.y : g.pt.y;
-  if (hot){ const n = s.querySelector(`[data-dev="${CSS.escape(g.target)}"]`); if (n) n.classList.add("cn-target"); }
-  const ns = "http://www.w3.org/2000/svg", grp = document.createElementNS(ns, "g"); grp.setAttribute("class", "cnhint" + (hot ? " hot" : ""));
-  const ln = document.createElementNS(ns, "line"); Object.entries({ x1: g.ox, y1: g.oy, x2, y2 }).forEach(([k, v]) => ln.setAttribute(k, v)); grp.appendChild(ln);
-  if (hot){ const B = devById(g.target), tx = document.createElementNS(ns, "text"); tx.setAttribute("x", (g.ox + x2) / 2); tx.setAttribute("y", (g.oy + y2) / 2 - 8); tx.setAttribute("text-anchor", "middle");
-    tx.textContent = `Release to connect to ${B ? B.name : "this device"}`; grp.appendChild(tx); }
+/* ---------- connect mode ---------- */
+let connectMode = null;   // { a: first device id, ox, oy: its centre, pt: pointer, target: device under the pointer }
+function startConnect(){
+  if (readOnly) return;
+  if (devices.length < 2) return showAlert("Add devices first", "A connection needs two devices. Add at least two devices, in the same site or in different sites.");
+  connectMode = { a: null }; $("canvaswrap").classList.add("connecting"); connectBar(); paintConnect();
+}
+function exitConnect(){
+  connectMode = null; const w = $("canvaswrap"); if (w) w.classList.remove("connecting");
+  const b = $("cnbar"); if (b) b.hidden = true; paintConnect();
+}
+function connectBar(){
+  const bar = $("cnbar"); if (!bar) return;
+  bar.hidden = !connectMode;
+  if (!connectMode) return;
+  const A = connectMode.a && devById(connectMode.a);
+  $("cnmsg").innerHTML = A ? `<b>${esc(A.name)}</b> selected. Now click the other device, or drag the line to it.` : "Click the device where the connection starts.";
+}
+function connectTargetAt(x, y){
+  const s = svgEl(); if (!s || !connectMode) return null;
+  for (const n of s.querySelectorAll("[data-dev]")){
+    if (n.dataset.dev === connectMode.a || n.classList.contains("ghost")) continue;
+    const r = (n.querySelector("rect.body") || n).getBoundingClientRect();
+    if (x >= r.left - 4 && x <= r.right + 4 && y >= r.top - 4 && y <= r.bottom + 4) return n.dataset.dev;
+  }
+  return null;
+}
+/* the dashed line from the first device to the pointer (or to the device under it) */
+function paintConnect(){
+  const s = svgEl(); if (!s) return;
+  s.querySelectorAll(".cnhint").forEach(n => n.remove());
+  s.querySelectorAll(".cn-target,.cn-source").forEach(n => n.classList.remove("cn-target", "cn-source"));
+  const c = connectMode; if (!c || !c.a) return;
+  const src = s.querySelector(`[data-dev="${CSS.escape(c.a)}"]`); if (src) src.classList.add("cn-source");
+  if (!c.pt) return;
+  const t = c.target ? devCentre(c.target) : null, x2 = t ? t.x : c.pt.x, y2 = t ? t.y : c.pt.y;
+  if (c.target){ const n = s.querySelector(`[data-dev="${CSS.escape(c.target)}"]`); if (n) n.classList.add("cn-target"); }
+  const ns = "http://www.w3.org/2000/svg", grp = document.createElementNS(ns, "g"); grp.setAttribute("class", "cnhint" + (c.target ? " hot" : ""));
+  const ln = document.createElementNS(ns, "line"); Object.entries({ x1: c.ox, y1: c.oy, x2, y2 }).forEach(([k, v]) => ln.setAttribute(k, v)); grp.appendChild(ln);
+  if (c.target){ const B = devById(c.target), tx = document.createElementNS(ns, "text"); tx.setAttribute("x", (c.ox + x2) / 2); tx.setAttribute("y", (c.oy + y2) / 2 - 8); tx.setAttribute("text-anchor", "middle");
+    tx.textContent = `Connect to ${B ? B.name : "this device"}`; grp.appendChild(tx); }
   s.appendChild(grp);
 }
+document.addEventListener("keydown", e => { if (e.key === "Escape" && connectMode) exitConnect(); });
 /* "Add connection" with both ends already chosen; a link between sites is wireless, inside a site wired unless both are radios */
 function connectDevices(a, b){
   if (readOnly) return;
@@ -4659,7 +4705,9 @@ $("kDelete").onclick = () => {
     { label: "Delete", danger: true, run: async () => { try { await dropLinkAddrs(l.id); await delDoc(COL_LINKS, l.id); $("linkSheet").close(); } catch { showAlert("Couldn't delete", "Please try again."); } } },
     { label: "Keep it" }]);
 };
-$("addLinkBtn").onclick = () => openLink(null);
+$("addLinkBtn").onclick = () => { if (connectMode) exitConnect(); else startConnect(); };
+$("cnCancel").onclick = exitConnect;
+$("cnForm").onclick = () => { exitConnect(); openLink(null); };
 
 /* ======================= DEVICES PAGE (inventory by type) ======================= */
 const TYPE_PLURAL = { router: "Routers", wireless: "Wireless", both: "Router + Wi-Fi", pc: "PCs", phone: "IP phones", server: "Servers", dbserver: "Database servers", nvr: "NVRs", camera: "IP cameras" };
