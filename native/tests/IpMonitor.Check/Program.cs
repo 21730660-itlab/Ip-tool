@@ -140,6 +140,7 @@ Ok(h1.Busiest().Count > 0 && h1.AddressSpace().Any(a => a.space.Contains("Privat
 bool ap2Up = true; int calls = 0;
 var mon = new DeviceMonitor(st, ips => { calls++; return Task.FromResult(ips.Select(ip => new Pinger.Result(ip, ip != ap2.Ip || ap2Up, 3, "")).ToList()); });
 var ev = new List<DeviceMonitor.Event>(); mon.Changed += ev.Add;
+var logPath = UptimeLog.For(file); mon.Log = new UptimeLog(logPath, "admin");
 mon.CheckAsync().Wait();
 Ok(ev.Count == 0 && mon.Of(ap2.Id) == DeviceMonitor.State.Up, "first check: everything up, no alert");
 ap2Up = false; calls = 0; mon.CheckAsync().Wait();
@@ -148,7 +149,11 @@ mon.CheckAsync().Wait();
 Ok(ev.Count == 1, "still down: no repeated alert");
 Ok(new Health(st, mon.DownIds).Checks.First(c => c.Title == "Devices not answering ping").Items.Count == 1, "down device listed as a critical health check");
 ap2Up = true; mon.CheckAsync().Wait();
-Ok(ev.Count == 2 && !ev[1].Down && mon.Of(ap2.Id) == DeviceMonitor.State.Up, "device back up: one more message");
+Ok(ev.Count == 2 && !ev[1].Down && mon.Of(ap2.Id) == DeviceMonitor.State.Up && ev[1].DownFor != null, "device back up: one more message, with how long it was down");
+var logLines = File.ReadAllLines(logPath);
+Ok(logPath.EndsWith("ip-monitor-db-uptime-log.csv") && logLines[0].TrimStart('\uFEFF') == UptimeLog.Header && logLines.Length == 3 && logLines[1].Contains(",DOWN,AP2,") && logLines[2].Contains(",UP,AP2,"), "uptime log file written next to the database");
+var recent = new UptimeLog(logPath).Recent();
+Ok(recent.Count == 2 && recent[0].Event == "UP" && recent[1].Event == "DOWN" && recent[0].Site == "#2 Branch", "uptime log read back, newest first");
 
 // --demo <file>: keep a copy of this database to look at in the app (admin / password1)
 if (args.Length > 1 && args[0] == "--demo") File.Copy(file, args[1], true);

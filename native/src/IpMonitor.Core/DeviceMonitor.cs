@@ -15,13 +15,16 @@ public class DeviceMonitor
         public DateTime Since = DateTime.Now, LastCheck;
         public string Note = "";
     }
-    public record Event(DateTime At, Device Device, string Ip, bool Down, string Note);
+    /// <summary>A device went down, or came back (then DownFor says how long it was down).</summary>
+    public record Event(DateTime At, Device Device, string Ip, bool Down, string Note, TimeSpan? DownFor = null);
 
     readonly Store S;
     readonly Func<IEnumerable<string>, Task<List<Pinger.Result>>> ping;
     public readonly Dictionary<string, DevState> States = new();
     public readonly List<Event> Events = new();
     public DateTime LastRun { get; private set; }
+    /// <summary>Where up/down events are written (a CSV file next to the database); null = not written.</summary>
+    public UptimeLog Log { get; set; }
     public bool Running { get; private set; }
     /// <summary>Raised for every change from up to down or down to up (and for devices found down on the first check).</summary>
     public event Action<Event> Changed;
@@ -63,12 +66,18 @@ public class DeviceMonitor
                 st.Ip = ip; st.Ms = r.Ms; st.Note = r.Note; st.LastCheck = DateTime.Now;
                 if (now != was)
                 {
+                    TimeSpan? downFor = was == State.Down ? DateTime.Now - st.Since : null;
                     st.State = now; st.Since = DateTime.Now;
-                    if (now == State.Down || was == State.Down) changes.Add(new Event(DateTime.Now, d, ip, now == State.Down, r.Note));
+                    if (now == State.Down || was == State.Down) changes.Add(new Event(DateTime.Now, d, ip, now == State.Down, r.Note, downFor));
                 }
             }
             LastRun = DateTime.Now;
-            foreach (var c in changes) { Events.Insert(0, c); Changed?.Invoke(c); }
+            foreach (var c in changes)
+            {
+                Events.Insert(0, c);
+                try { Log?.Write(c, S.SiteById(c.Device.SiteId)); } catch { /* a locked log file never stops monitoring */ }
+                Changed?.Invoke(c);
+            }
             if (Events.Count > 200) Events.RemoveRange(200, Events.Count - 200);
             return changes;
         }

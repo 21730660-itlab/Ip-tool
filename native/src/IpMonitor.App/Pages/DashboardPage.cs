@@ -225,13 +225,29 @@ public class DashboardPage : PageBase
             b.Content = row; b.Click += (_, _) => { W.SiteFilter = d.SiteId; W.Navigate<MapPage>(); };
             monList.Children.Add(b);
         }
-        var ev = m.Events.Take(8).ToList();
-        if (ev.Count > 0)
-        {
-            var h = Ui.Text("Recent events", 13, FontWeights.Bold, "Muted"); h.Margin = new Thickness(0, 8, 0, 4); monList.Children.Add(h);
-            foreach (var e in ev)
-                monList.Children.Add(Ui.Text($"{e.At:HH:mm:ss}   {(e.Down ? "▼ down" : "▲ up")}   {e.Device.Name} ({e.Ip})", 13, null, e.Down ? "Sig" : "Ok"));
-        }
+        // up/down log: read back from the file, so it survives closing the app
+        var logPath = m.Log?.Path ?? UptimeLog.For(S.FilePath);
+        List<UptimeLog.Line> lines;
+        try { lines = new UptimeLog(logPath).Recent(10); } catch { lines = new(); }
+        var lh = new DockPanel { Margin = new Thickness(0, 10, 0, 4) };
+        var lb = new StackPanel { Orientation = Orientation.Horizontal };
+        var openLog = Ui.Btn("Open log in Excel", () => OpenFile(logPath), "Link"); openLog.IsEnabled = File.Exists(logPath);
+        var showLog = Ui.Btn("Show in folder", () => System.Diagnostics.Process.Start("explorer.exe", File.Exists(logPath) ? $"/select,\"{logPath}\"" : $"\"{IOPath.GetDirectoryName(logPath)}\""), "Link");
+        lb.Children.Add(openLog); lb.Children.Add(showLog);
+        DockPanel.SetDock(lb, Dock.Right); lh.Children.Add(lb);
+        lh.Children.Add(Ui.Text("Up / down log", 13, FontWeights.Bold, "Muted"));
+        monList.Children.Add(lh);
+        var lp = Ui.Muted(logPath, 12); lp.FontFamily = new FontFamily(Ui.Mono); lp.Margin = new Thickness(0, 0, 0, 6); monList.Children.Add(lp);
+        if (lines.Count == 0) monList.Children.Add(Ui.Muted("No device has gone down yet.", 13));
+        foreach (var e in lines)
+            monList.Children.Add(Ui.Text($"{e.At:yyyy-MM-dd HH:mm:ss}   {(e.Event == "DOWN" ? "▼ DOWN" : "▲ UP  ")}   {e.Device}  ({e.Ip})  {e.Site}" + (e.Event == "UP" && e.DownFor != "" ? $"   · was down {e.DownFor}" : "") + (e.From != Environment.MachineName && e.From != "" ? $"   · seen by {e.From}" : ""),
+                13, null, e.Event == "DOWN" ? "Sig" : "Ok"));
+    }
+
+    static void OpenFile(string path)
+    {
+        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true }); }
+        catch (Exception e) { Ui.Info("Couldn't open the log: " + e.Message); }
     }
 
     // ------------------------------------------------------------------ health checks

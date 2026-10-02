@@ -43,6 +43,7 @@ public class MainWindow : Window
         {
             if (Store.SaveError != null && !Ui.Ask("Your last change is NOT saved in the database file:\n\n" + Store.SaveError + "\n\nClose anyway and lose it?", "Not saved", "Close without saving", true))
                 e.Cancel = true;
+            else if (monTimer.IsEnabled) try { Monitor.Log?.Note("MONITORING OFF (app closed)"); } catch { }
         };
         Loaded += (_, _) => Start();
     }
@@ -202,11 +203,17 @@ public class MainWindow : Window
     {
         monTimer.Stop();
         if (!Settings.MonitorOn || Store.Me == null) { UpdateMonitorStatus(); return; }
+        Monitor.Log = new UptimeLog(UptimeLog.For(Store.FilePath), Store.Me.Username);   // next to the database file
+        try { Monitor.Log.Note($"MONITORING ON (every {Settings.MonitorSeconds} s)"); } catch { }
         monTimer.Interval = TimeSpan.FromSeconds(Math.Max(15, Settings.MonitorSeconds));
         monTimer.Start();
         _ = RunMonitor();
     }
-    public void StopMonitor() { monTimer.Stop(); UpdateMonitorStatus(); }
+    public void StopMonitor()
+    {
+        if (monTimer.IsEnabled) try { Monitor.Log?.Note(Store.Me == null ? "MONITORING OFF (logged out)" : "MONITORING PAUSED"); } catch { }
+        monTimer.Stop(); UpdateMonitorStatus();
+    }
 
     /// <summary>Pings all devices now; refreshes the dashboard, map and devices list when something changed.</summary>
     public async Task RunMonitor()
