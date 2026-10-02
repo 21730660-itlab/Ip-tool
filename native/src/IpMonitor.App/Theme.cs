@@ -14,6 +14,7 @@ public static class Theme
         ["Acc"] = "#0B5CD5", ["AccHover"] = "#0A4FB6", ["AccInk"] = "#FFFFFF", ["AccSoft"] = "#EAF2FE", ["AccLine"] = "#9EC2F5",
         ["Ok"] = "#1E7F45", ["OkSoft"] = "#E5F4EB", ["Warn"] = "#9A5B00", ["WarnSoft"] = "#FDF3E1", ["Sig"] = "#C0262D", ["SigSoft"] = "#FCE9EA",
         ["Nav"] = "#0B2240", ["Nav2"] = "#12305A", ["NavInk"] = "#E8EEF7", ["NavMute"] = "#9DB0C9", ["NavLine"] = "#1C3A63", ["NavHi"] = "#4DA3FF",
+        ["CSrv"] = "#6B47C7", ["CCam"] = "#0B7A70", ["Grid"] = "#E9EDF2",
     };
     static readonly Dictionary<string, string> DarkColors = new()
     {
@@ -22,6 +23,7 @@ public static class Theme
         ["Acc"] = "#5BA3FF", ["AccHover"] = "#7BB5FF", ["AccInk"] = "#061C3A", ["AccSoft"] = "#14294A", ["AccLine"] = "#2F5A93",
         ["Ok"] = "#4CC27E", ["OkSoft"] = "#10291C", ["Warn"] = "#F0B44C", ["WarnSoft"] = "#2A2010", ["Sig"] = "#F07A7F", ["SigSoft"] = "#30171B",
         ["Nav"] = "#081A31", ["Nav2"] = "#0F2747", ["NavInk"] = "#E8EEF7", ["NavMute"] = "#9DB0C9", ["NavLine"] = "#183255", ["NavHi"] = "#4DA3FF",
+        ["CSrv"] = "#A88BF5", ["CCam"] = "#3CC9B8", ["Grid"] = "#172231",
     };
 
     public static void Init(Application app, bool dark)

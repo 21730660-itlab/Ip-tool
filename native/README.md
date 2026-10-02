@@ -7,6 +7,8 @@ A native Windows version of IP Monitor (C#, .NET 8, WPF). It uses the **same dat
 - Sign in / create account (same pre-shared key and passwords as the web version)
 - Open or create the database file; every change is saved to it automatically
 - If another program (or the web version) changes the file, the app warns you instead of overwriting it
+- Site map: every site with its devices, cables and wireless links; drag to arrange (positions shared with the web
+  version), zoom and pan, and “Add connection” → click the first device → click the second
 - Dashboard, Sites, IPs & networks (with hosts, next free IP), Devices (MikroTik ports, bridges, IP addresses,
   wireless; other brands), Connections (wired / wireless with link subnet), VLANs, History, Users and permissions
 - Device IP addresses are listed as hosts of their network automatically; a new prefix creates its network
@@ -14,7 +16,7 @@ A native Windows version of IP Monitor (C#, .NET 8, WPF). It uses the **same dat
 - Backup copy, restore, CSV export for Excel (networks & hosts, devices, connections, devices with passwords)
 - Light and dark mode
 
-Later phases: site map, PDF / Excel reports, configuration backups, subnet calculator.
+Later phases: PDF / Excel reports, configuration backups, subnet calculator.
 
 ## Layout
 - `src/IpMonitor.Core` — data model, IP maths, accounts, all rules (no Windows code, testable anywhere)

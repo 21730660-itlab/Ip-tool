@@ -65,10 +65,11 @@ public class LinksPage : PageBase
         return Layout(Header("Connections", "Cables inside a site and wireless links (also between sites).", AddBtn("Add connection", () => Edit(null))), bar, TableWithEmpty(g, empty));
     }
 
-    void Edit(Link link)
+    /// <summary>Add (link = null, optionally pre-filled by draft) or edit a connection.</summary>
+    public void Edit(Link link, Link draft = null)
     {
         if (S.Db.Devices.Count < 2) { Ui.Info("Add at least two devices first.", "Connections"); return; }
-        var l = link == null ? new Link { Type = "wired" } : DbIo.Clone(link);
+        var l = link == null ? draft ?? new Link { Type = "wired" } : DbIo.Clone(link);
         var ro = !S.CanWrite;
         var d = new Dlg(link == null ? "Add connection" : "Edit connection", 760);
         var devs = S.Db.Devices.OrderBy(x => S.SiteById(x.SiteId)?.SiteNumber?.PadLeft(10, '0')).ThenBy(x => x.Name)

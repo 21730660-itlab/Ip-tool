@@ -669,6 +669,44 @@ public class Store
         }
     }
 
+    // ------------------------------------------------------------------ site map positions
+    // Same fields as the web version: a site's "mx"/"my" is its box position (all-sites view),
+    // a device's "mx"/"my" is its centre inside its site box. Moving things is not written to the history.
+    public static double? MapX(Entity e) => Num(e, "mx");
+    public static double? MapY(Entity e) => Num(e, "my");
+    static double? Num(Entity e, string k) => e.Extra != null && e.Extra.TryGetValue(k, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetDouble() : null;
+    static bool SetPos(Entity e, double? x, double? y)
+    {
+        if (x == null || y == null) return false;
+        int nx = (int)Math.Round(x.Value), ny = (int)Math.Round(y.Value);
+        if (MapX(e) == nx && MapY(e) == ny) return false;
+        e.Extra ??= new();
+        e.Extra["mx"] = JsonSerializer.SerializeToElement(nx);
+        e.Extra["my"] = JsonSerializer.SerializeToElement(ny);
+        return true;
+    }
+
+    /// <summary>Saves new map positions (from a drag on the site map).</summary>
+    public void SaveLayout(IDictionary<string, (double x, double y)> devices, IDictionary<string, (double x, double y)> sites)
+    {
+        NeedWrite();
+        bool changed = false;
+        foreach (var (id, p) in devices ?? new Dictionary<string, (double, double)>()) if (DevById(id) is Device d && SetPos(d, p.x, p.y)) { d.UpdatedAt = Entity.Now(); changed = true; }
+        foreach (var (id, p) in sites ?? new Dictionary<string, (double, double)>()) if (SiteById(id) is Site s && SetPos(s, p.x, p.y)) { s.UpdatedAt = Entity.Now(); changed = true; }
+        if (changed) Persist();
+    }
+
+    /// <summary>Back to the automatic arrangement for these sites and devices.</summary>
+    public void ResetLayout(IEnumerable<string> siteIds, IEnumerable<string> devIds)
+    {
+        NeedWrite();
+        bool changed = false;
+        void Clear(Entity e) { if (e?.Extra != null && (e.Extra.Remove("mx") | e.Extra.Remove("my"))) { e.UpdatedAt = Entity.Now(); changed = true; } }
+        foreach (var id in siteIds ?? Array.Empty<string>()) Clear(SiteById(id));
+        foreach (var id in devIds ?? Array.Empty<string>()) Clear(DevById(id));
+        if (changed) Persist();
+    }
+
     // ------------------------------------------------------------------ backup and export
     /// <summary>Replaces everything with the contents of another database or backup file. Accounts are kept if the file has none.</summary>
     public string RestoreFrom(string path)

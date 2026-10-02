@@ -29,7 +29,7 @@ public class MainWindow : Window
         this.SetResourceReference(ForegroundProperty, "Ink");
         TextOptions.SetTextFormattingMode(this, TextFormattingMode.Display);
         Content = root;
-        pages = new List<PageBase> { new DashboardPage(), new SitesPage(), new NetworksPage(), new DevicesPage(), new LinksPage(), new VlansPage(), new HistoryPage(), new UsersPage(), new BackupPage() };
+        pages = new List<PageBase> { new DashboardPage(), new MapPage(), new SitesPage(), new NetworksPage(), new DevicesPage(), new LinksPage(), new VlansPage(), new HistoryPage(), new UsersPage(), new BackupPage() };
         Store.Changed += OnChanged;
         Activated += (_, _) => CheckOutside();
         Closing += (_, e) =>
