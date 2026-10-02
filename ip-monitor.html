@@ -1106,6 +1106,7 @@ svg .node.nvr rect.body,svg .node.camera rect.body{stroke:var(--c-cam)} svg .nod
   <!-- ============ IPs & NETWORKS ============ -->
   <section class="page" id="page-ips">
     <div class="readouts" id="ipreadouts"></div>
+    <div class="btnrow pagebtns" id="ipActs"><button type="button" class="btn btn-primary btn-sm" id="ipAddNet">+ Add network</button></div>
     <div class="mapfilter" id="ipfilter" style="margin-top:12px"></div>
     <input class="search" id="ipsearch" type="search" placeholder="Search IP, device, host, interface…" autocomplete="off" autocapitalize="off" spellcheck="false">
     <div class="seg" id="ipview" style="margin-top:12px">
@@ -1368,8 +1369,8 @@ svg .node.nvr rect.body,svg .node.camera rect.body{stroke:var(--c-cam)} svg .nod
         <div class="fielderr" id="d-portserr"></div>
       </div>
       <div class="group" id="d-bipgroup" hidden>
-        <h3>IP from a bridge subnet</h3>
-        <label class="field"><span>Bridge</span><select id="d-br"></select></label>
+        <h3>IP address</h3>
+        <label class="field"><span>Takes its IP from (bridge or network)</span><select id="d-br"></select></label>
         <label class="field"><span>IP address</span><input id="d-bip" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. 10.10.10.5"></label>
         <button type="button" class="btn btn-line btn-sm" id="d-bipnext">Use next free IP</button>
         <div id="d-bipstate"></div>
@@ -2134,8 +2135,8 @@ function renderSitePage(){
       <div class="ro"><b>${hosts.toLocaleString()}</b><span>Hosts</span></div>
       <div class="ro ${util >= 90 ? "alert" : ""}"><b>${cap4 > 0n ? util.toFixed(1) + "%" : "—"}</b><span>IPv4 utilization</span></div>
     </div>
-    <div class="secthead"><h3>Networks</h3>${readOnly || orphanView ? "" : `<button class="btn btn-line btn-sm" id="addNetTop">+ Add device</button>`}</div>
-    ${!orphanView && !readOnly ? `<p class="hint2" style="margin:0 0 8px">Networks are created automatically when you give a device an IP with its prefix, e.g. <b>bridge1 · 10.10.10.1/24</b>.</p>` : ""}
+    <div class="secthead"><h3>Networks</h3>${readOnly || orphanView ? "" : `<span class="btnrow" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" id="addNetMan">+ Add network</button><button class="btn btn-line btn-sm" id="addNetTop">+ Add device</button></span>`}</div>
+    ${!orphanView && !readOnly ? `<p class="hint2" style="margin:0 0 8px">Add a network yourself with <b>+ Add network</b>, or give a device an IP with its prefix (e.g. <b>bridge1 · 10.10.10.1/24</b>) and its network is created automatically. Devices in this site can use either kind.</p>` : ""}
     ${nets.length ? `<div class="list">${rows}</div>` : `<div class="empty"><h2>No networks in this site</h2>
       <p>Add a device and give it an IP address with its prefix. Its network appears here automatically.</p>
       ${readOnly ? "" : `<button class="btn btn-primary" id="addNetEmpty">+ Add device</button>`}</div>`}
@@ -2147,6 +2148,7 @@ function renderSitePage(){
   $("backBtn").onclick = () => { location.hash = "#sites"; };
   const es = $("editSite"); if (es) es.onclick = () => openSite(site.id);
   const a1 = $("addNetTop"); if (a1) a1.onclick = () => openDev(null, site.id);
+  const a0 = $("addNetMan"); if (a0) a0.onclick = () => openNet(null, "", site.id);
   const a2 = $("addNetEmpty"); if (a2) a2.onclick = () => openDev(null, site.id);
   document.querySelectorAll("#sitepage .row").forEach(rw => rw.onclick = () => openNet(rw.dataset.id));
   document.querySelectorAll("#sitepage .ptp").forEach(rw => rw.onclick = () => openLink(rw.dataset.l));
@@ -2244,8 +2246,6 @@ function fillSiteSelect(selected){
   $("f-site").innerHTML = (selected && sites.some(s => s.id === selected) ? "" : `<option value="">Choose a site…</option>`) + opts.join("");
 }
 function openNet(id, prefillIP, siteId){
-  if (!id) return showAlert("Networks come from devices", `Give a device an IP address with its prefix${prefillIP ? ` (for example ${prefillIP.includes("/") ? prefillIP.split("/")[0].replace(/\.0$/, ".1") + "/" + prefillIP.split("/")[1] : prefillIP})` : ""} and its network is created automatically in that device's site.`, [
-    { label: "+ Add device", primary: true, run: () => { $("netSheet").close(); location.hash = "#map"; setTimeout(() => openDev(null), 50); } }, { label: "Cancel" }]);
   if (!id && !sites.length){
     return showAlert("Create a site first", "Networks live inside a site. Add a site, then add its networks.", [
       { label: "+ Add site", primary: true, run: () => { location.hash = "#sites"; openSite(null); } }, { label: "Cancel" }]);
@@ -2426,7 +2426,7 @@ async function saveNet(){
     await putDoc(COL_NETS, net);
     $("netSheet").close();
     const r = currentRoute();
-    if (r.page !== "site" || r.id !== siteId) location.hash = "#site/" + encodeURIComponent(siteId);
+    if (r.page !== "ips" && (r.page !== "site" || r.id !== siteId)) location.hash = "#site/" + encodeURIComponent(siteId);   // added from IPs & Networks: stay there
   } catch { showAlert("Couldn't save", "Something went wrong saving this network. Please try again."); }
 }
 $("netForm").addEventListener("submit", ev => { ev.preventDefault(); saveNet(); });
@@ -3901,12 +3901,18 @@ function bridgeSubnets(sid){
       out.push({ key: `${d.id}|${a.iface}`, dev: d, bridge: a.iface, gw: ipOf(a.address), e: analyze(p.v, p.addr, p.prefix) });
     }
   }
+  // networks of the site (added by hand or created from a device) that no bridge already offers
+  for (const n of networks){
+    if (n.siteId !== sid) continue;
+    const e = parseEntry(n.ip); if (!e || e.kind !== "subnet" || out.some(b => b.e.text === e.text)) continue;
+    out.push({ key: `net|${n.id}`, dev: null, net: n, bridge: "", gw: n.gateway || "", e });
+  }
   return out;
 }
 function fillBridgeSelect(selKey){
   const list = bridgeSubnets($("d-site").value);
-  $("d-br").innerHTML = `<option value="">— no bridge —</option>` + list.map(b =>
-    `<option value="${esc(b.key)}" ${b.key === selKey ? "selected" : ""}>${esc(b.dev.name)} · ${esc(b.bridge)} · ${esc(b.e.text)}</option>`).join("");
+  $("d-br").innerHTML = `<option value="">— none —</option>` + list.map(b =>
+    `<option value="${esc(b.key)}" ${b.key === selKey ? "selected" : ""}>${b.dev ? `${esc(b.dev.name)} · ${esc(b.bridge)} · ${esc(b.e.text)}` : `Network · ${esc(b.e.text)}${b.net.name ? " · " + esc(b.net.name) : ""}`}</option>`).join("");
   if (selKey && !list.some(b => b.key === selKey)) $("d-br").value = "";
   if (!selKey && !editingDevId && list.length === 1) $("d-br").value = list[0].key;   // only one bridge in the site: pick it
 }
@@ -3914,7 +3920,7 @@ const chosenBridge = () => bridgeSubnets($("d-site").value).find(b => b.key === 
 function bridgeNextFree(){
   const b = chosenBridge(); if (!b) return "";
   const used = new Set(collectIPs().filter(r => r.devId !== editingDevId).map(r => r.ip));
-  used.add(b.gw);
+  if (b.gw) used.add(b.gw);
   return nextFree(b.e, used);
 }
 $("d-br").addEventListener("change", () => {
@@ -3928,19 +3934,20 @@ function validateBip(sid){
   const st = $("d-bipstate"), raw = $("d-bip").value.trim(), b = chosenBridge();
   const say = (cls, msg) => { st.className = cls; st.textContent = msg; };
   $("d-bipnext").disabled = !b;
-  if (!raw){ say("hint2", b ? "Pick an IP inside the bridge subnet, or use the next free one." : bridgeSubnets(sid).length ? "Choose the bridge this device gets its IP from." : "No MikroTik in this site has a bridge with an IP address yet."); return true; }
+  if (!raw){ say("hint2", b ? "Pick an IP inside it, or use the next free one." : bridgeSubnets(sid).length ? "Choose the bridge or network this device gets its IP from." : "This site has no network yet. Add one on IPs & Networks, or give a MikroTik bridge an IP."); return true; }
   const e = parseEntry(raw);
   if (!e || e.kind !== "ip"){ say("fielderr", "✕ Type a single IP address, without /prefix"); return false; }
   if (b){
-    if (!inCidr(b.e.text, e.v, e.addr)){ say("fielderr", `✕ ${e.text} is outside ${b.e.text} of ${b.bridge}`); return false; }
+    if (!inCidr(b.e.text, e.v, e.addr)){ say("fielderr", `✕ ${e.text} is outside ${b.e.text}${b.dev ? " of " + b.bridge : ""}`); return false; }
     if (e.v === 4 && b.e.prefix < 31 && (e.addr === b.e.start || e.addr === b.e.end)){ say("fielderr", `✕ ${e.text} is the ${e.addr === b.e.start ? "network" : "broadcast"} address of ${b.e.text}`); return false; }
-    if (e.text === b.gw){ say("fielderr", `✕ ${e.text} is the bridge's own address on ${b.dev.name}`); return false; }
+    if (e.text === b.gw){ say("fielderr", b.dev ? `✕ ${e.text} is the bridge's own address on ${b.dev.name}` : `✕ ${e.text} is the gateway of ${b.e.text}`); return false; }
   }
   const taken = collectIPs().find(r => r.ip === e.text && r.devId && r.devId !== editingDevId);
   if (taken){ say("fielderr", `✕ ${e.text} is already used by ${taken.owner} (${taken.sub})`); return false; }
   const foreign = networks.find(n => { const o = parseEntry(n.ip); return o && overlaps(o, e) && n.siteId !== sid; });
   if (foreign){ say("fielderr", `✕ ${e.text} belongs to ${foreign.ip} of ${siteLabel(siteOf(foreign))}`); return false; }
-  say("fieldok", b ? `✓ ${e.text}/${b.e.prefix} from ${b.bridge} on ${b.dev.name} · gateway ${b.gw}` : `✓ ${e.text} (not tied to a bridge)`);
+  say("fieldok", !b ? `✓ ${e.text} (not tied to a bridge or network)` : b.dev ? `✓ ${e.text}/${b.e.prefix} from ${b.bridge} on ${b.dev.name} · gateway ${b.gw}`
+    : `✓ ${e.text}/${b.e.prefix} in network ${b.e.text}${b.net.name ? " (" + b.net.name + ")" : ""}${b.gw ? " · gateway " + b.gw : ""}`);
   return true;
 }
 $("d-type").querySelectorAll("button").forEach(b => b.onclick = () => { if (!readOnly) setDevType(b.dataset.t); });
@@ -3970,7 +3977,9 @@ function openDev(id, siteId){
   renderAddrs();   // re-lock the WLAN rows set by wireless connections
   fillMeta("d", d);
   $("d-bip").value = d && vendorOf(d) === "other" ? d.ip || "" : "";
-  fillBridgeSelect(d && d.uplink ? `${d.uplink.deviceId}|${d.uplink.bridge}` : null);
+  fillBridgeSelect(d && d.uplink ? `${d.uplink.deviceId}|${d.uplink.bridge}` : (() => {      // no bridge: the network that holds its IP
+    const x = d && d.ip && parseEntry(d.ip), n = x && networks.find(nn => nn.siteId === d.siteId && inCidr(nn.ip, x.v, x.addr));
+    return n ? `net|${n.id}` : null; })());
   devType = d?.type || "wireless";
   setDevVendor(vendorOf(d));
   $("devSheet").showModal();
@@ -4201,7 +4210,7 @@ $("devForm").addEventListener("submit", async ev => {
   const ipRaw = other ? $("d-bip").value : $("d-ip").value;
   const ip = ipRaw.trim() ? parseEntry(ipRaw).text : "";
   const dev = { ...(prev || {}), id: editingDevId || newId(), siteId: $("d-site").value, type: devType, vendor: devVendor,
-    uplink: br ? { deviceId: br.dev.id, bridge: br.bridge } : null, func: $("d-func").value, ...readMeta("d"), model: $("d-model").value.trim(), name: $("d-name").value.trim(),
+    uplink: br && br.dev ? { deviceId: br.dev.id, bridge: br.bridge } : null, func: $("d-func").value, ...readMeta("d"), model: $("d-model").value.trim(), name: $("d-name").value.trim(),
     role: hasWifi({ type: devType }) ? $("d-role").value : "", ip, mac: normMac($("d-mac").value) || "", ros: other ? "" : $("d-ros").value.trim(), notes: $("d-notes").value.trim(),
     user: $("d-user").value.trim(), pass: readOnly ? prev?.pass || "" : $("d-pass").value, winbox: $("d-winbox").value.trim(),
     ...(() => { const wl = !other && hasWifi({ type: devType }), sec = wl ? $("d-wsec").value : "";
@@ -4827,6 +4836,9 @@ function nextFree(e, used){
 }
 function renderIPs(){
   if (ipFilter !== "all" && !sites.some(s => s.id === ipFilter)) ipFilter = "all";
+  $("ipActs").hidden = readOnly || !sites.length;
+  $("ipAddNet").textContent = ipFilter !== "all" ? `+ Add network to #${sites.find(s => s.id === ipFilter).siteNumber}` : "+ Add network";
+  $("ipAddNet").onclick = () => openNet(null, "", ipFilter !== "all" ? ipFilter : "");
   const sorted = [...sites].sort(byNum);
   $("ipfilter").innerHTML = `<button type="button" class="mchip" data-f="all" aria-pressed="${ipFilter === "all"}">All sites</button>` +
     sorted.map(s => `<button type="button" class="mchip" data-f="${esc(s.id)}" aria-pressed="${ipFilter === s.id}"><b>#${esc(s.siteNumber)}</b>${esc(s.name)}</button>`).join("");
