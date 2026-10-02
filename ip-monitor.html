@@ -737,6 +737,10 @@ body.locked .shell{display:none!important}
 .side .tab::before,.side .tab::after{content:none}
 .side .tab:hover{color:#fff;background:rgba(255,255,255,.06)}
 .side .tab[hidden]{display:none!important}
+svg .cnhint line{stroke:var(--muted);stroke-width:2.5;stroke-dasharray:7 5;pointer-events:none}
+svg .cnhint.hot line{stroke:var(--acc);stroke-width:3}
+svg .cnhint text{fill:var(--acc);font-family:var(--sans);font-weight:700;font-size:13px;paint-order:stroke;stroke:var(--panel);stroke-width:4px;pointer-events:none}
+svg .node.cn-target rect.body{stroke:var(--acc)!important;stroke-width:4.5}
 .hdev{display:inline-block;font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--acc);background:var(--acc-soft);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:2px}
 .nico{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .sfoot{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--nav-mute);white-space:nowrap}
@@ -1138,7 +1142,7 @@ svg .node.nvr rect.body,svg .node.camera rect.body{stroke:var(--c-cam)} svg .nod
       </div>
       <button type="button" class="btn btn-line btn-sm mapreset" id="mapReset">Reset layout</button>
     </div>
-    <p class="hint2" style="margin-top:6px">Drag the background to move around · pinch, scroll or +/− to zoom · drag a site by its title bar or a device to rearrange (saved automatically).</p>
+    <p class="hint2" style="margin-top:6px">Drag the background to move around · pinch, scroll or +/− to zoom · drag a site by its title bar or a device to rearrange (saved automatically) · <b>drag a device onto another device to connect them</b>.</p>
     <div class="maplegend">
       <span><svg width="34" height="10"><line x1="0" y1="5" x2="34" y2="5" stroke="currentColor" stroke-width="3"/></svg>Wired</span>
       <span><svg width="34" height="10"><line x1="0" y1="5" x2="34" y2="5" stroke="var(--sig)" stroke-width="3" stroke-dasharray="7 5"/></svg>Wireless</span>
@@ -3799,6 +3803,7 @@ const svgEl = () => $("mapsvg");
 function drawStage(){
   if (!mapShown) return;
   stageEl().innerHTML = drawMap(mapShown.shownSites, mapShown.shownDevs, mapShown.shownLinks);
+  drawConnectHint();
 }
 function applyView(){ const s = svgEl(); if (s && mapView) s.setAttribute("viewBox", `${mapView.x} ${mapView.y} ${mapView.w} ${mapView.h}`); updateZoomLabel(); }
 function fitView(){
@@ -3841,6 +3846,12 @@ function onMapDown(e){
   else if (t && t.dataset.site){ id = t.dataset.site; type = "tap-site"; }
   else if (t && t.dataset.link){ id = t.dataset.link; type = "tap-link"; }
   gest = { type, id, sx: e.clientX, sy: e.clientY, v0: { ...mapView }, moved: false, k: toSvg(e).k };
+  if (type === "dev"){
+    const c = devCentre(id); if (c){ gest.ox = c.x; gest.oy = c.y; }
+    // where the other devices are now: dragging can resize site boxes, so targets are found on this snapshot
+    gest.boxes = [...s.querySelectorAll("[data-dev]")].filter(n => n.dataset.dev !== id && !n.classList.contains("ghost"))
+      .map(n => ({ id: n.dataset.dev, r: (n.querySelector("rect.body") || n).getBoundingClientRect() }));
+  }
   e.preventDefault();
 }
 function onMapMove(e){
@@ -3855,6 +3866,12 @@ function onMapMove(e){
   if (!gest.moved && Math.hypot(dx, dy) < 6) return;
   gest.moved = true;
   if (gest.type === "dev" || gest.type === "site"){
+    if (gest.type === "dev"){
+      const hit = (gest.boxes || []).find(b => e.clientX >= b.r.left - 6 && e.clientX <= b.r.right + 6 && e.clientY >= b.r.top - 6 && e.clientY <= b.r.bottom + 6);
+      gest.target = hit ? hit.id : null; gest.pt = toSvg(e);
+      // over another device: keep the layout still and show the connection; elsewhere: move the device
+      if (gest.target){ mapDrag = null; scheduleRedraw(); return; }
+    }
     mapDrag = { kind: gest.type, id: gest.id, dx: dx * gest.k, dy: dy * gest.k }; scheduleRedraw();
   } else {
     mapView = { ...gest.v0, x: gest.v0.x - dx * gest.k, y: gest.v0.y - dy * gest.k }; applyView();
@@ -3874,7 +3891,36 @@ function onMapUp(e){
     else if (g.id && (g.type === "site" || g.type === "tap-site")){ mapFilter = g.id; renderMap(); }
     return;
   }
+  if (g.type === "dev" && g.target){ if (mapRaf){ cancelAnimationFrame(mapRaf); mapRaf = 0; } mapDrag = null; drawStage(); connectDevices(g.id, g.target); return; }
   if (g.type === "dev" || g.type === "site"){ if (mapRaf){ cancelAnimationFrame(mapRaf); mapRaf = 0; } drawStage(); commitDrag(g.type, g.id); }
+}
+/* centre of a device on the map, in map coordinates */
+function devCentre(id){
+  const n = svgEl() && svgEl().querySelector(`[data-dev="${CSS.escape(id)}"] rect.body`); if (!n) return null;
+  const b = n.getBBox(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+}
+/* drawn on top while a device is dragged: a line from where it started, and the device it would connect to */
+function drawConnectHint(){
+  const g = gest, s = svgEl();
+  if (!s || !g || g.type !== "dev" || !g.moved || g.ox === undefined || !g.pt) return;
+  const hot = !!g.target, t = hot ? devCentre(g.target) : null, x2 = t ? t.x : g.pt.x, y2 = t ? t.y : g.pt.y;
+  if (hot){ const n = s.querySelector(`[data-dev="${CSS.escape(g.target)}"]`); if (n) n.classList.add("cn-target"); }
+  const ns = "http://www.w3.org/2000/svg", grp = document.createElementNS(ns, "g"); grp.setAttribute("class", "cnhint" + (hot ? " hot" : ""));
+  const ln = document.createElementNS(ns, "line"); Object.entries({ x1: g.ox, y1: g.oy, x2, y2 }).forEach(([k, v]) => ln.setAttribute(k, v)); grp.appendChild(ln);
+  if (hot){ const B = devById(g.target), tx = document.createElementNS(ns, "text"); tx.setAttribute("x", (g.ox + x2) / 2); tx.setAttribute("y", (g.oy + y2) / 2 - 8); tx.setAttribute("text-anchor", "middle");
+    tx.textContent = `Release to connect to ${B ? B.name : "this device"}`; grp.appendChild(tx); }
+  s.appendChild(grp);
+}
+/* "Add connection" with both ends already chosen; a link between sites is wireless, inside a site wired unless both are radios */
+function connectDevices(a, b){
+  if (readOnly) return;
+  const A = devById(a), B = devById(b); if (!A || !B) return;
+  const type = A.siteId !== B.siteId || (A.type === "wireless" && B.type === "wireless") ? "wireless" : "wired";
+  openLink(null);
+  setLinkType(type);
+  $("k-a").value = a; $("k-a").dispatchEvent(new Event("change"));
+  $("k-b").value = b; $("k-b").dispatchEvent(new Event("change"));
+  validateLink();
 }
 async function commitDrag(kind, id){
   const L = lastLayout; mapDrag = null;
