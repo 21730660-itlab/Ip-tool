@@ -473,6 +473,13 @@ public class Store
                 if (side == "A") l.IpA = x.Text; else l.IpB = x.Text;
             }
             if (!string.IsNullOrEmpty(l.IpA) && l.IpA == l.IpB) throw new RuleException("The two ends need different IP addresses.");
+            // radio values typed on the connection (same limits as the web version)
+            string Xv(string k) => Health.X(l, k);
+            if (Xv("freq") != "" && (!double.TryParse(Xv("freq"), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var fq) || fq < 2000 || fq > 80000))
+                throw new RuleException("Frequency must be a number in MHz, from 2000 to 80000 (e.g. 5180).");
+            if (Xv("dist") != "" && (!double.TryParse(Xv("dist"), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var ds) || ds < 0 || ds > 500))
+                throw new RuleException("Distance must be a number in km, from 0 to 500 (e.g. 3.5).");
+            if (Xv("band") != "" && Xv("band") is not ("2.4" or "5" or "60")) throw new RuleException("Band must be 2.4, 5 or 60 GHz.");
             if ((!string.IsNullOrEmpty(l.IpA) || !string.IsNullOrEmpty(l.IpB)) && sub == null) throw new RuleException("Type the link subnet (e.g. 10.5.5.0/30) so the prefix of the WLAN IPs is known.");
         }
         else
@@ -486,7 +493,8 @@ public class Store
         else
         {
             var lines = Diff(("From", DevById(old.A)?.Name, A.Name), ("To", DevById(old.B)?.Name, B.Name), ("Type", old.Type, l.Type), ("Interface on From", old.PortA, l.PortA), ("Interface on To", old.PortB, l.PortB),
-                ("Link subnet", old.Subnet, l.Subnet), ("IP on From", old.IpA, l.IpA), ("IP on To", old.IpB, l.IpB), ("SSID", old.Ssid, l.Ssid), ("Notes", old.Notes, l.Notes));
+                ("Link subnet", old.Subnet, l.Subnet), ("IP on From", old.IpA, l.IpA), ("IP on To", old.IpB, l.IpB), ("SSID", old.Ssid, l.Ssid),
+                ("Frequency", Health.X(old, "freq"), Health.X(l, "freq")), ("Band", Health.X(old, "band"), Health.X(l, "band")), ("Distance", Health.X(old, "dist"), Health.X(l, "dist")), ("Notes", old.Notes, l.Notes));
             Db.Links[Db.Links.IndexOf(old)] = l;
             if (lines.Count > 0) Log("edit", "connection", l.Id, $"{LinkLabel(l)} · {l.Type}", A.SiteId, lines);
         }
@@ -731,41 +739,6 @@ public class Store
         l.Extra ??= new();
         if (v == null || v is string str && str == "") l.Extra.Remove(k);
         else l.Extra[k] = JsonSerializer.SerializeToElement(v);
-    }
-
-    /// <summary>Saves what was read from the routers onto the connections (and the devices' wireless protocol).
-    /// Frequency, SSID, band, width and protocol changes go to the history; signal and distance (they change all the time) do not.</summary>
-    public int ApplyRadio(IEnumerable<(Link link, Radio.LinkReading r)> readings)
-    {
-        NeedWrite();
-        int n = 0;
-        foreach (var (link, r) in readings)
-        {
-            var l = Db.Links.FirstOrDefault(x => x.Id == link.Id);
-            if (l == null || r == null || !r.Ok) continue;
-            var before = (f: Health.X(l, "freq"), b: Health.X(l, "band"), w: Health.X(l, "width"), p: Health.X(l, "proto"), s: l.Ssid);
-            if (r.Freq is double f) SetX(l, "freq", (int)Math.Round(f));
-            if (r.Band != "") SetX(l, "band", r.Band);
-            if (r.Width != "") SetX(l, "width", r.Width);
-            if (r.Proto != "") SetX(l, "proto", r.Proto);
-            if (r.Signal is double sg) SetX(l, "signal", (int)Math.Round(sg));
-            SetX(l, "signalA", r.SignalA is double sa ? (int)Math.Round(sa) : null);
-            SetX(l, "signalB", r.SignalB is double sb ? (int)Math.Round(sb) : null);
-            if (r.Distance is double d) SetX(l, "dist", Math.Round(d, 2));
-            if (r.Ssid != "") l.Ssid = r.Ssid;
-            SetX(l, "radioAt", Entity.Now());
-            l.UpdatedAt = Entity.Now();
-            foreach (var dev in new[] { DevById(l.A), DevById(l.B) })
-                if (dev != null && dev.IsMikroTik && dev.HasWifi && r.Proto != "" && WProtoLabel.ContainsKey(r.Proto) && dev.WProto != r.Proto) { dev.WProto = r.Proto; dev.UpdatedAt = Entity.Now(); }
-            var lines = new List<string>();
-            void Ch(string label, string a, string b) { if ((a ?? "") != (b ?? "")) lines.Add($"{label}: {(string.IsNullOrEmpty(a) ? "—" : a)} → {b}"); }
-            Ch("Frequency", before.f, Health.X(l, "freq")); Ch("Band", before.b, Health.X(l, "band")); Ch("Width", before.w, Health.X(l, "width"));
-            Ch("Protocol", before.p, Health.X(l, "proto")); Ch("SSID", before.s, l.Ssid);
-            if (lines.Count > 0) Log("edit", "connection", l.Id, $"{LinkLabel(l)} · read from the routers", DevById(l.A)?.SiteId ?? "", lines);
-            n++;
-        }
-        if (n > 0) Persist();
-        return n;
     }
 
     // ------------------------------------------------------------------ site map positions

@@ -47,12 +47,14 @@ public class HistoryPage : PageBase
         g.Columns.Add(Ui.Col("Details", nameof(ChangeRow.Details), -2.4, false, null, true));
         var empty = Ui.Muted("", 15);
         var count = Ui.Muted("", 13);
+        List<Change> shown = new();
         void Refresh()
         {
-            var rows = S.Db.Changes.Where(c => InSite(c.SiteId) || W.SiteFilter == "")
+            shown = S.Db.Changes.Where(c => InSite(c.SiteId) || W.SiteFilter == "")
                 .Where(c => W.SiteFilter == "" || c.SiteId == W.SiteFilter)
                 .Where(c => Match(search, c.By, c.Label, c.Kind, c.Act, string.Join(" ", c.Lines ?? new())))
-                .OrderByDescending(c => c.At, StringComparer.Ordinal).Take(1500).Select(ToRow).ToList();
+                .OrderByDescending(c => c.At, StringComparer.Ordinal).Take(1500).ToList();
+            var rows = shown.Select(ToRow).ToList();
             g.ItemsSource = rows;
             count.Text = $"{rows.Count} of {S.Db.Changes.Count} changes";
             empty.Text = rows.Count > 0 ? "" : "No changes recorded.";
@@ -65,7 +67,22 @@ public class HistoryPage : PageBase
         });
         var clear = Ui.IconBtn("", "Clear history", () => Confirm($"Delete all {S.Db.Changes.Count} history entries? The data itself is not changed.", S.ClearHistory), "Danger");
         clear.IsEnabled = S.FullAccess && S.Db.Changes.Count > 0;
+        var pdf = Ui.IconBtn("\uEA90", "Export PDF…", () =>
+        {
+            if (shown.Count == 0) { Ui.Info("There is nothing to export with this filter.", "History"); return; }
+            var scope = W.SiteFilter == "" ? "All sites" : $"Site {S.SiteById(W.SiteFilter)}";
+            if (!string.IsNullOrWhiteSpace(search)) scope += $" · search “{search.Trim()}”";
+            var f = new Microsoft.Win32.SaveFileDialog { FileName = $"IP-Monitor-history_{DateTime.Now:yyyy-MM-dd}.pdf", Filter = "PDF document (*.pdf)|*.pdf" };
+            if (f.ShowDialog(W) != true) return;
+            try
+            {
+                File.WriteAllBytes(f.FileName, new Report(S, null).HistoryPdf(shown, scope, S.Me?.Username));
+                if (Ui.Ask($"{IOPath.GetFileName(f.FileName)} was saved ({shown.Count} changes).\n\nOpen it now?", "History exported", "Open", false, "Close"))
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(f.FileName) { UseShellExecute = true });
+            }
+            catch (Exception e) { Ui.Info("Couldn't save the PDF: " + e.Message, "History"); }
+        }, "Primary", "Save the history shown here (with the site filter and search) as a PDF");
         var bar = FilterBar(() => search, v => search = v, Refresh, true, count);
-        return Layout(Header("History", "Who changed what, and when. Double-click an entry for its details. Passwords and keys are never written here.", clear), bar, TableWithEmpty(g, empty));
+        return Layout(Header("History", "Who changed what, and when. Double-click an entry for its details. Passwords and keys are never written here.", pdf, clear), bar, TableWithEmpty(g, empty));
     }
 }

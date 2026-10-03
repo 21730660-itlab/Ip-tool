@@ -676,6 +676,8 @@ public class MapPage : PageBase
             ("\uE774", "Web", () => DevicesPage.OpenWeb(d), ip != "", "Open the device's web page (http://" + ip + ")"),
             ("\uE9D9", "Ping", () => _ = PingOne(d), ip != "", "Ping " + ip + " now"),
             ("\uE8A5", "Config backups", () => ConfigDialog.Open(d), d.IsMikroTik, "RouterOS config backups (.rsc)"),
+            ("\uE8C8", "Copy user", () => Ui.Copy(d.User, "username"), !string.IsNullOrEmpty(d.User), "Copy the username"),
+            ("\uE8C8", "Copy password", () => Ui.Copy(d.Pass, "password", true), S.CanWrite && !string.IsNullOrEmpty(d.Pass), "Copy the password (removed from the clipboard after 60 seconds)"),
             ("\uE70F", "Edit", () => DeviceDialog.Edit(d, null), true, "Edit the device"),
         };
     }
@@ -721,7 +723,7 @@ public class MapPage : PageBase
         menu.Items.Add(new Separator());
         foreach (var (_, t, a, en, tip) in Actions(d))
         {
-            var mi = new MenuItem { Header = t == "WinBox" ? "Open in WinBox" : t == "Web" ? "Open web page" : t == "Ping" ? "Ping now" : t == "Edit" ? "Edit device…" : "Config backups…", IsEnabled = en, ToolTip = tip };
+            var mi = new MenuItem { Header = t switch { "WinBox" => "Open in WinBox", "Web" => "Open web page", "Ping" => "Ping now", "Edit" => "Edit device…", "Copy user" => "Copy username", "Copy password" => "Copy password", _ => "Config backups…" }, IsEnabled = en, ToolTip = tip };
             mi.Click += (_, _) => a();
             menu.Items.Add(mi);
         }

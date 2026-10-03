@@ -199,6 +199,34 @@ public static class Ui
         return new Viewbox { Width = size, Height = size, Child = c };
     }
 
+    // ------------------------------------------------------------------ clipboard
+    /// <summary>Copies text; a password is removed from the clipboard again after 60 seconds (if it is still there).</summary>
+    public static void Copy(string text, string what, bool secret = false)
+    {
+        if (string.IsNullOrEmpty(text)) { MainWindow.Instance.Toast($"No {what} saved on this device."); return; }
+        for (int i = 0; ; i++)
+        {
+            try { Clipboard.SetText(text); break; }
+            catch (System.Runtime.InteropServices.COMException) when (i < 4) { Thread.Sleep(60); }   // another program is using the clipboard
+            catch (Exception e) { MainWindow.Instance.Toast("Couldn't copy: " + e.Message); return; }
+        }
+        if (!secret) { MainWindow.Instance.Toast($"{char.ToUpper(what[0])}{what[1..]} copied."); return; }
+        MainWindow.Instance.Toast($"{char.ToUpper(what[0])}{what[1..]} copied. It is removed from the clipboard in 60 seconds.");
+        var t = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(60) };
+        t.Tick += (_, _) => { t.Stop(); try { if (Clipboard.ContainsText() && Clipboard.GetText() == text) Clipboard.Clear(); } catch { } };
+        t.Start();
+    }
+
+    /// <summary>A field with a small copy button on its right.</summary>
+    public static FrameworkElement WithCopy(FrameworkElement field, Func<string> value, string what, bool secret = false)
+    {
+        var d = new DockPanel();
+        var b = IconBtn("\uE8C8", HasIcons ? "" : "Copy", () => Copy(value(), what, secret), null, $"Copy the {what}");
+        b.Margin = new Thickness(6, 0, 0, 0); b.MinWidth = 40; b.Padding = new Thickness(8, 4, 8, 4);
+        DockPanel.SetDock(b, Dock.Right); d.Children.Add(b); d.Children.Add(field);
+        return d;
+    }
+
     // ------------------------------------------------------------------ messages
     public static bool Ask(string message, string title = "IP Monitor", string ok = "OK", bool danger = false, string cancel = "Cancel")
     {

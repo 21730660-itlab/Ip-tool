@@ -161,38 +161,18 @@ Ok(logPath.EndsWith("ip-monitor-db-uptime-log.csv") && logLines[0].TrimStart('\u
 var recent = new UptimeLog(logPath).Recent();
 Ok(recent.Count == 2 && recent[0].Event == "UP" && recent[1].Event == "DOWN" && recent[0].Site == "#2 Branch", "uptime log read back, newest first");
 
-// wireless details read from the routers (RouterOS API) — two pretend MikroTiks
-using (var apR = new FakeRouter { Password = "secret" })
-using (var stR = new FakeRouter { Password = "pw2", OldLogin = true })
+// radio values typed on a wireless connection: checked and written to the history
 {
-    apR.Wireless = new() { ["name"] = "wlan1", ["mode"] = "bridge", ["ssid"] = "LINK-HQ-BR", ["band"] = "5ghz-a/n", ["channel-width"] = "20/40mhz-Ce", ["frequency"] = "auto", ["wireless-protocol"] = "nv2", ["mac-address"] = "aa:aa:aa:00:00:01", ["distance"] = "dynamic" };
-    apR.Monitor = new() { ["status"] = "running-ap", ["frequency"] = "5180", ["wireless-protocol"] = "nv2", ["band"] = "5ghz-a/n" };
-    apR.Registrations = new() { new() { ["mac-address"] = "BB:BB:BB:00:00:02", ["radio-name"] = "AP2", ["signal-strength"] = "-61@HT20-7", ["distance"] = "3" } };
-    stR.Wireless = new() { ["name"] = "wlan1", ["mode"] = "station-bridge", ["ssid"] = "LINK-HQ-BR", ["band"] = "5ghz-a/n", ["channel-width"] = "20/40mhz-Ce", ["frequency"] = "auto", ["wireless-protocol"] = "nv2", ["mac-address"] = "bb:bb:bb:00:00:02" };
-    stR.Monitor = new() { ["status"] = "connected-to-ess", ["frequency"] = "5180", ["wireless-protocol"] = "nv2" };
-    stR.Registrations = new() { new() { ["mac-address"] = "AA:AA:AA:00:00:01", ["radio-name"] = "R1", ["signal-strength"] = "-66dBm@6Mbps", ["distance"] = "3" } };
-    var wlink = st.Db.Links.First(l => l.Type == "wireless");
-    var devA = st.DevById(wlink.A); var devB = st.DevById(wlink.B);
-    devA.User = "admin"; devA.Pass = "secret"; devB.User = "admin"; devB.Pass = "pw2";
-    devA.Extra ??= new(); devB.Extra ??= new();
-    devA.Extra["apiPort"] = JsonSerializer.SerializeToElement(apR.Port); devB.Extra["apiPort"] = JsonSerializer.SerializeToElement(stR.Port);
-    Radio.HostOf = _ => "127.0.0.1";
-    var reading = Radio.ReadLinkAsync(st, wlink).Result;
-    Ok(reading.Freq == 5180 && reading.Band == "5" && reading.Width == "40" && reading.Ssid == "LINK-HQ-BR" && reading.Proto == "nv2", "radio read: frequency, band, width, SSID, NV2 — " + reading.Summary());
-    Ok(reading.SignalA == -61 && reading.SignalB == -66 && reading.Signal == -66 && reading.Distance == 3, $"radio read: signal both ways and distance ({reading.SignalA}/{reading.SignalB} dBm, {reading.Distance} km)");
-    Ok(stR.Commands.Count(c => c == "/login") == 2, "old RouterOS login (MD5 challenge) works");
-    var nlog = st.Db.Changes.Count;
-    st.ApplyRadio(new[] { (wlink, reading) });
-    var saved = DbIo.Load(file).Links.First(l => l.Id == wlink.Id);
-    Ok(Health.X(saved, "freq") == "5180" && Health.X(saved, "signal") == "-66" && Health.X(saved, "dist") == "3" && Health.X(saved, "proto") == "nv2" && saved.Ssid == "LINK-HQ-BR" && devA.WProto == "nv2", "readings saved on the connection (same fields as the web version)");
-    Ok(st.Db.Changes.Count == nlog + 1 && st.Db.Changes[^1].Lines.Any(x => x.StartsWith("Frequency")), "frequency change written to the history");
-    st.ApplyRadio(new[] { (wlink, reading) });
-    Ok(st.Db.Changes.Count == nlog + 1, "same values again: no new history entry");
-    Ok(new Health(st).Weakest().FirstOrDefault()?.Id == wlink.Id, "dashboard sees the signal");
-    devB.Pass = "wrong";
-    var bad = Radio.ReadLinkAsync(st, wlink).Result;
-    Ok(bad.NoteB.Contains("Wrong username or password") && bad.SignalA == -61, "wrong password reported, the other end still read: " + bad.NoteB);
-    Radio.HostOf = DeviceMonitor.IpOf;
+    var wl2 = DbIo.Clone(st.Db.Links.First(l => l.Type == "wireless"));
+    Store.SetX(wl2, "freq", 99); Throws(() => st.SaveLink(wl2), "Frequency", "frequency out of range refused");
+    Store.SetX(wl2, "freq", 5180); Store.SetX(wl2, "band", "5"); Store.SetX(wl2, "dist", 3.5);
+    st.SaveLink(wl2);
+    var back = DbIo.Load(file).Links.First(l => l.Id == wl2.Id);
+    Ok(Health.X(back, "freq") == "5180" && Health.X(back, "band") == "5" && Health.X(back, "dist") == "3.5", "frequency, band and distance saved (web version's fields)");
+    Ok(st.Db.Changes[^1].Lines.Any(x => x.StartsWith("Frequency")) && st.Db.Changes[^1].Lines.Any(x => x.StartsWith("Distance")), "radio changes written to the history");
+    var hp = new Report(st, null).HistoryPdf(st.Db.Changes, "All sites", "admin");
+    Ok(System.Text.Encoding.ASCII.GetString(hp, 0, 8).StartsWith("%PDF") && hp.Length > 1500, $"history PDF created ({hp.Length} bytes)");
+    if (outDir != null) File.WriteAllBytes(Path.Combine(outDir, "history.pdf"), hp);
 }
 
 // --demo <file>: keep a copy of this database to look at in the app (admin / password1)

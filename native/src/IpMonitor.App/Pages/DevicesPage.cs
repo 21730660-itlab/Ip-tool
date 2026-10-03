@@ -82,6 +82,8 @@ public class DevicesPage : PageBase
             var links = S.Db.Links.Count(l => l.A == d.Id || l.B == d.Id); var cfg = S.ConfigCount(d.Id);
             Confirm($"Delete device {d.Name}?" + (links > 0 ? $"\n\nIts {links} connections are deleted too." : "") + (cfg > 0 ? $"\nIts {cfg} saved configurations are deleted too." : ""), () => S.DeleteDevice(d.Id));
         }, "Danger");
+        var cUser = Ui.IconBtn("\uE8C8", "Copy username", () => { if (Sel() is Device d) Ui.Copy(d.User, "username"); }, null, "Copy the device's username");
+        var cPass = Ui.IconBtn("\uE8C8", "Copy password", () => { if (Sel() is Device d) Ui.Copy(d.Pass, "password", true); }, null, "Copy the device's password (removed from the clipboard after 60 seconds)");
         Button pingAll = null;
         pingAll = Ui.IconBtn("", "Ping all", async () =>
         {
@@ -99,11 +101,13 @@ public class DevicesPage : PageBase
             edit.IsEnabled = d != null; del.IsEnabled = d != null && S.FullAccess;
             winbox.IsEnabled = d != null && d.IsMikroTik && MainIp(d) != ""; web.IsEnabled = d != null && MainIp(d) != "";
             cfg.IsEnabled = d != null && d.IsMikroTik;
+            cUser.IsEnabled = d != null && !string.IsNullOrEmpty(d.User);
+            cPass.IsEnabled = d != null && S.CanWrite && !string.IsNullOrEmpty(d.Pass);
         }
         g.SelectionChanged += (_, _) => { if (g.SelectedItem is DevRow r) selId = r.Id; Buttons(); };
         Ui.OnRowDoubleClick(g, r => DeviceDialog.Edit(S.DevById(((DevRow)r).Id), id => selId = id));
         Refresh(); Buttons();
-        var bar = FilterBar(() => search, v => search = v, Refresh, true, Ui.Row(8, edit, cfg, winbox, web, pingAll, del));
+        var bar = FilterBar(() => search, v => search = v, Refresh, true, Ui.Row(8, edit, cfg, winbox, web, cUser, cPass, pingAll, del));
         return Layout(Header("Devices", "MikroTik routers and wireless, and devices of other brands (PCs, servers, cameras…).", AddBtn("Add device", () => DeviceDialog.Edit(null, id => selId = id))), bar, TableWithEmpty(g, empty));
     }
 

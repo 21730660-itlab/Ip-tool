@@ -143,6 +143,29 @@ public class Report
         return pdf.Save();
     }
 
+    /// <summary>The history (who changed what, and when) as a PDF, newest first.</summary>
+    public byte[] HistoryPdf(IEnumerable<Change> changes, string scope, string by)
+    {
+        pdf = new Pdf { Title = "IP Monitor history" };
+        var list = changes.OrderByDescending(c => c.At, StringComparer.Ordinal).ToList();
+        NewPage();
+        pdf.Text(M, y + 22, "History", 26, Core.Pdf.Font.Bold, Navy); y += 34;
+        var span = list.Count == 0 ? "" : $" · from {When(list[^1].At)} to {When(list[0].At)}";
+        pdf.Text(M, y + 14, $"{scope} · {list.Count} change{(list.Count == 1 ? "" : "s")}{span} · created {DateTime.Now:yyyy-MM-dd HH:mm}{(string.IsNullOrEmpty(by) ? "" : " by " + by)}", 10.5, Core.Pdf.Font.Regular, Muted);
+        y += 30;
+        string Act(string a) => a switch { "add" => "Added", "edit" => "Changed", "delete" => "Deleted", "import" => "Imported", "clear" => "Cleared", _ => a };
+        Table(new[] { ("When", 85.0), ("Who", 70), ("Action", 55), ("What", 75), ("Item", 150), ("Site", 95), ("Details", 240) },
+            list.Select(c => new[] { When(c.At), c.By, Act(c.Act), c.Kind, c.Label, S.SiteById(c.SiteId)?.ToString() ?? "", string.Join("\n", c.Lines ?? new()) }), maxLines: 14);
+        for (int i = 0; i < pdf.PageCount; i++)
+        {
+            pdf.OnPage(i);
+            pdf.Line(M, pdf.PageH - 26, pdf.PageW - M, pdf.PageH - 26, Line, 0.6);
+            pdf.Text(M, pdf.PageH - 14, "IP Monitor · history", 8.5, Core.Pdf.Font.Regular, Muted);
+            pdf.TextRight(pdf.PageW - M, pdf.PageH - 14, $"Page {i + 1} of {pdf.PageCount}", 8.5, Core.Pdf.Font.Regular, Muted);
+        }
+        return pdf.Save();
+    }
+
     void NewPage() { pdf.NewPage(); y = M; }
     double Bottom => pdf.PageH - M - 16;
 
@@ -155,7 +178,7 @@ public class Report
     }
 
     /// <summary>A table that continues on the next page (with its header again). Column widths are scaled to the page.</summary>
-    void Table((string head, double w)[] cols, IEnumerable<string[]> rows, int[] monoCols = null)
+    void Table((string head, double w)[] cols, IEnumerable<string[]> rows, int[] monoCols = null, int maxLines = 5)
     {
         double total = cols.Sum(c => c.w), avail = pdf.PageW - 2 * M, k = avail / total;
         var ws = cols.Select(c => c.w * k).ToArray();
@@ -177,7 +200,7 @@ public class Report
             {
                 var f = mono.Contains(i) ? Core.Pdf.Font.Mono : Core.Pdf.Font.Regular;
                 var size = f == Core.Pdf.Font.Mono ? fs - 0.5 : fs;
-                return (lines: Core.Pdf.Wrap(i < r.Length ? r[i] ?? "" : "", ws[i] - 2 * pad, size, f, 5), f, size);
+                return (lines: Core.Pdf.Wrap(i < r.Length ? r[i] ?? "" : "", ws[i] - 2 * pad, size, f, maxLines), f, size);
             }).ToArray();
             double h = Math.Max(1, cells.Max(c => c.lines.Count)) * lh + 6;
             if (y + h > Bottom) { NewPage(); HeaderRow(); }

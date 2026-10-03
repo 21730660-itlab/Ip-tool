@@ -99,8 +99,8 @@ public class DeviceDialog
     void Credentials(bool winbox)
     {
         Add(Ui.Section("Login"));
-        var fields = new List<UIElement> { Ui.Field("Username", T(d.User, v => d.User = v)) };
-        if (!ro) fields.Add(Ui.Field("Password", P(d.Pass, v => d.Pass = v)));
+        var fields = new List<UIElement> { Ui.Field("Username", Ui.WithCopy(T(d.User, v => d.User = v), () => d.User, "username")) };
+        if (!ro) fields.Add(Ui.Field("Password", Ui.WithCopy(P(d.Pass, v => d.Pass = v), () => d.Pass, "password", true)));
         if (winbox) fields.Add(Ui.Field("WinBox port", T(d.Winbox, v => d.Winbox = v), "Empty = 8291"));
         Add(Ui.Cols(fields.ToArray()));
     }

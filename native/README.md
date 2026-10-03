@@ -13,13 +13,13 @@ A native Windows version of IP Monitor (C#, .NET 8, WPF). It uses the **same dat
 - Live monitoring: every device with an IP is pinged (every 30 s to 10 min); a pop-up (with sound) appears in the
   corner of the screen when a device stops answering and when it is back; UP / DOWN badges on the site map;
   every event is written to an up/down log (CSV, opens in Excel) next to the database: <database>-uptime-log.csv
-- Wireless connections read from the MikroTiks (RouterOS API, port 8728/8729, with the username and password saved
-  on each device): frequency, band, channel width, SSID, protocol (NV2 / 802.11 / Nstreme), signal of both ends and
-  distance — on demand ("Read from routers") and automatically every 10 minutes while monitoring is on
+- Wireless connections: frequency (MHz), band (2.4 / 5 / 60 GHz) and distance (km) are typed in on each
+  wireless connection; the station / access point role and IP stay on each device
 - MikroTik model: a searchable list of about 100 MikroTik models (type “sq”, “lhg”, “4011”…); picking one fills in
   the device type and its ports
-- Radio values of wireless connections are not typed in: they are read from the routers (on opening the form, after
-  saving a new connection, and every 10 minutes); when they cannot be read, the reason is shown
+- History can be exported as a PDF file (the current site and search filter are applied)
+- Copy a device's username or password (device form, Devices page, site map); a copied password is removed
+  from the clipboard after 60 seconds, and read-only users cannot copy passwords
 - Passwords can be shown or hidden (eye button)
 - Site map: click a device for WinBox, its web page, ping, config backups or edit (right-click menu, double-click edits)
 - Site map: every site with its devices, cables and wireless links; drag to arrange (positions shared with the web

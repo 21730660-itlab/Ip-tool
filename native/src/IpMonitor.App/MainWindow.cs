@@ -9,10 +9,6 @@ public class MainWindow : Window
     /// <summary>Live monitoring: pings the devices every few seconds and raises alerts.</summary>
     public readonly DeviceMonitor Monitor;
     readonly System.Windows.Threading.DispatcherTimer monTimer = new();
-    readonly System.Windows.Threading.DispatcherTimer radioTimer = new();
-    bool radioBusy;
-    /// <summary>Result of the last automatic reading of the wireless connections (shown on the dashboard).</summary>
-    public string RadioStatus = "";
     TextBlock monStatus; Border monPill;
     public readonly Settings Settings;
     /// <summary>The site chosen in the filter of the pages ("" = all sites).</summary>
@@ -42,7 +38,6 @@ public class MainWindow : Window
         Monitor = new DeviceMonitor(Store);
         Monitor.Changed += OnDeviceChanged;
         monTimer.Tick += async (_, _) => await RunMonitor();
-        radioTimer.Tick += async (_, _) => await RunRadio();
         Activated += (_, _) => CheckOutside();
         Closing += (_, e) =>
         {
@@ -213,39 +208,12 @@ public class MainWindow : Window
         monTimer.Interval = TimeSpan.FromSeconds(Math.Max(15, Settings.MonitorSeconds));
         monTimer.Start();
         _ = RunMonitor();
-        StartRadio();
     }
 
-    /// <summary>Automatic reading of the wireless connections from the routers (while monitoring is on).</summary>
-    public void StartRadio()
-    {
-        radioTimer.Stop();
-        if (!Settings.MonitorOn || !Settings.RadioAuto || Store.Me == null || !Store.CanWrite) return;
-        radioTimer.Interval = TimeSpan.FromMinutes(Math.Max(2, Settings.RadioMinutes));
-        radioTimer.Start();
-        var first = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };   // first reading shortly after sign-in
-        first.Tick += async (_, _) => { first.Stop(); await RunRadio(); };
-        first.Start();
-    }
-
-    public async Task RunRadio()
-    {
-        if (radioBusy || Store.Me == null || !Store.CanWrite) return;
-        var links = Store.Db.Links.Where(l => l.Type == "wireless").ToList();
-        if (links.Count == 0) { RadioStatus = ""; return; }
-        radioBusy = true;
-        try
-        {
-            var (ok, problems) = await LinksPage.ReadFromRouters(links);
-            RadioStatus = $"last read {DateTime.Now:HH:mm} · {ok} of {links.Count} wireless connection{(links.Count == 1 ? "" : "s")} updated" + (problems.Count > 0 ? $" · {problems.Count} problem{(problems.Count == 1 ? "" : "s")}: {problems[0]}" : "");
-        }
-        catch (Exception e) { RadioStatus = "last try failed: " + e.Message; }
-        finally { radioBusy = false; if (inShell && current is DashboardPage dp) dp.RefreshMonitorPanel(); }
-    }
     public void StopMonitor()
     {
         if (monTimer.IsEnabled) try { Monitor.Log?.Note(Store.Me == null ? "MONITORING OFF (logged out)" : "MONITORING PAUSED"); } catch { }
-        monTimer.Stop(); radioTimer.Stop(); UpdateMonitorStatus();
+        monTimer.Stop(); UpdateMonitorStatus();
     }
 
     /// <summary>Pings all devices now; refreshes the dashboard, map and devices list when something changed.</summary>
