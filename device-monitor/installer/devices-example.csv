@@ -1,0 +1,6 @@
+Name,Address,Kind,Group,Interval,Enabled,Notes
+Core router,192.168.88.1,MikroTik,Main office,15,yes,hEX / RB750Gr3
+Office switch,192.168.88.2,Switch,Main office,,yes,
+AP reception,192.168.88.10,AccessPoint,Main office,30,yes,cAP ac
+File server,192.168.88.20,Server,Main office,,yes,
+Google DNS,8.8.8.8,Other,Internet,60,yes,Internet check
