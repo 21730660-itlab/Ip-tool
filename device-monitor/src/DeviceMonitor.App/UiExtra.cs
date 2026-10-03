@@ -26,6 +26,19 @@ public static class UiExtra
         return s.HasValue ? (true, s) : (false, null);
     }
 
+    /// <summary>Choices of a site drop-down: "All sites (n devices)", then "1. Main office (5 devices, 1 OFF)"…</summary>
+    public static List<Opt> SiteOptions()
+    {
+        var items = new List<Opt> { new("", $"All sites ({App.Sites.Count} sites, {App.Devices.Count} devices)") };
+        foreach (var s in App.Sites)
+        {
+            var devs = App.DevicesOf(s.Id).ToList();
+            var off = devs.Count(d => d.Enabled && App.Engine.StateOf(d.Id).Status == DeviceStatus.Down);
+            items.Add(new(s.Id, $"{s.Label}  ({devs.Count} device{(devs.Count == 1 ? "" : "s")}{(off > 0 ? $", {off} OFF" : "")})"));
+        }
+        return items;
+    }
+
     /// <summary>The coloured square with the short name of the kind (MT, SW, AP...).</summary>
     public static Border KindBadge(DeviceKind k, double size = 40)
     {

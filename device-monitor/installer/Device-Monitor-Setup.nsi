@@ -11,7 +11,7 @@ Target amd64-unicode
 
 !define APP      "Device Monitor"
 !define EXE      "Device-Monitor.exe"
-!define VERSION  "1.1.0"
+!define VERSION  "1.2.0"
 !define REGKEY   "Software\Microsoft\Windows\CurrentVersion\Uninstall\DeviceMonitor"
 !define RUNKEY   "Software\Microsoft\Windows\CurrentVersion\Run"
 !define RUNTIME_URL  "https://aka.ms/dotnet/8.0/windowsdesktop-runtime-win-x64.exe"

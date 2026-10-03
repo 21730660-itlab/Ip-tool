@@ -1,4 +1,4 @@
-Device Monitor 1.1
+Device Monitor 1.2
 ==================
 
 Start it from the Start menu or the desktop icon "Device Monitor".
@@ -7,7 +7,8 @@ Start it from the Start menu or the desktop icon "Device Monitor".
 2. Add the IPs of that site: on the site card click "Add IP", enter a name and the IP address
    (for example 192.168.88.1 for a MikroTik) and use "Test ping" to check it answers.
    Or import many at once: Devices > Import (see devices-example.csv; the Site column creates the sites).
-   The "Site" drop-down at the top shows "All sites" or only one site, on every page.
+   On the Dashboard, the "Site" drop-down shows "All sites" (every site) or one site
+   ("1. Main office", "2. Branch"...): then only that site's devices are shown.
 3. Choose how often to ping at the top right ("Ping every"): pick 5 s, 10 s, 15 s, 30 s, 1 min ... from
    the list, or type any value (for example 45 or "2 min"). Each device can also have its own interval.
 4. When a device stops answering, a red pop-up appears in the bottom-right corner of the screen;

@@ -24,7 +24,7 @@ public static class DeviceDialog
         var name = Ui.Box(d.Name, tip: "A name you recognise, for example \"Core router\" or \"AP floor 2\"");
         var addr = Ui.Box(d.Address, mono: true, tip: "IPv4, IPv6 or host name");
         var kind = Ui.Choice(Enum.GetValues<DeviceKind>().Select(k => (k.ToString(), Theme.KindText(k))), d.Kind.ToString());
-        var site = new ComboBox { DisplayMemberPath = "Name", SelectedValuePath = "Id", ItemsSource = App.Sites, SelectedValue = d.SiteId, MaxDropDownHeight = 360 };
+        var site = new ComboBox { DisplayMemberPath = "Label", SelectedValuePath = "Id", ItemsSource = App.Sites, SelectedValue = d.SiteId, MaxDropDownHeight = 360 };
         var newSite = Ui.IconBtn("\uE710", "New site…", () =>
         {
             var s = SiteDialog.Add();

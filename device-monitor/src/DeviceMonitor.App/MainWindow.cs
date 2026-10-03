@@ -16,6 +16,7 @@ public class MainWindow : Window
     readonly ComboBox interval;
     readonly ComboBox siteFilter = new() { Width = 260, MaxDropDownHeight = 420, DisplayMemberPath = "Label", SelectedValuePath = "Value" };
     bool fillingSites;
+    TextBlock siteLbl;
     int lastDown = -1;
     readonly Shapes.Ellipse liveDot = new() { Width = 12, Height = 12, VerticalAlignment = VerticalAlignment.Center };
     readonly TextBlock liveText = Ui.Text("", 14, FontWeights.SemiBold, "Ink", false);
@@ -60,7 +61,7 @@ public class MainWindow : Window
         top.ColumnDefinitions.Add(new ColumnDefinition());
         top.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         // the site drop-down: "All sites" or one site; every page shows only the chosen site's devices
-        var siteLbl = Ui.Text("Site", 14, FontWeights.SemiBold, "Muted", false); siteLbl.VerticalAlignment = VerticalAlignment.Center; siteLbl.Margin = new Thickness(0, 0, 8, 0);
+        siteLbl = Ui.Text("Site", 14, FontWeights.SemiBold, "Muted", false); siteLbl.VerticalAlignment = VerticalAlignment.Center; siteLbl.Margin = new Thickness(0, 0, 8, 0);
         pageSub.VerticalAlignment = VerticalAlignment.Center; pageSub.Margin = new Thickness(16, 0, 0, 0);
         var siteRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 6, 0, 0), Children = { siteLbl, siteFilter, pageSub } };
         siteFilter.ToolTip = "Show all devices, or only the devices of one site";
@@ -127,14 +128,7 @@ public class MainWindow : Window
     void FillSites()
     {
         fillingSites = true;
-        var items = new List<Opt> { new("", $"All sites ({App.Devices.Count} devices)") };
-        foreach (var s in App.Sites)
-        {
-            var devs = App.DevicesOf(s.Id).ToList();
-            var off = devs.Count(d => d.Enabled && App.Engine.StateOf(d.Id).Status == DeviceStatus.Down);
-            items.Add(new(s.Id, $"{s.Name} ({devs.Count}{(off > 0 ? $", {off} OFF" : "")})"));
-        }
-        siteFilter.ItemsSource = items;
+        siteFilter.ItemsSource = UiExtra.SiteOptions();
         siteFilter.SelectedValue = App.CurrentSiteId;
         fillingSites = false;
     }
@@ -157,6 +151,10 @@ public class MainWindow : Window
         current = key;
         foreach (var (k, b) in nav) b.Tag = k == key ? "on" : null;
         pageTitle.Text = p.Title; pageSub.Text = p.Subtitle;
+        // the Dashboard has its own big site drop-down; the top one is for the Devices and Event log pages
+        var topSites = key is "devices" or "events" ? Visibility.Visible : Visibility.Collapsed;
+        siteFilter.Visibility = topSites; siteLbl.Visibility = topSites;
+        pageSub.Margin = new Thickness(topSites == Visibility.Visible ? 16 : 0, 0, 0, 0);
         content.Content = p.View;
         p.Shown();
     }

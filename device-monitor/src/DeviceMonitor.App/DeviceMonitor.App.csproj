@@ -9,7 +9,7 @@
     <AssemblyName>Device-Monitor</AssemblyName>
     <ApplicationIcon>app.ico</ApplicationIcon>
     <Product>Device Monitor</Product>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Company>Device Monitor</Company>
     <Description>Device Monitor - ping monitoring for MikroTik and other network devices</Description>
   </PropertyGroup>

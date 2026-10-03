@@ -35,11 +35,15 @@ public class Device
 public class Site
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    /// <summary>Site number shown with the name ("1. Main office"); given automatically, can be changed.</summary>
+    public int Number { get; set; }
     public string Name { get; set; } = "";
     public string Location { get; set; } = "";
     public string Notes { get; set; } = "";
     public DateTime Added { get; set; } = DateTime.Now;
     public Site Clone() => (Site)MemberwiseClone();
+    /// <summary>"1. Main office".</summary>
+    public string Label => Number > 0 ? $"{Number}. {Name}" : Name;
 }
 
 /// <summary>Helpers that keep devices and sites consistent.</summary>
@@ -64,15 +68,31 @@ public static class Sites
             }
             if (d.Site != s.Name) { d.Site = s.Name; changed = true; }
         }
+        changed |= Renumber(sites);
         return changed;
     }
+
+    /// <summary>Gives a number to every site that has none (or a duplicate): the next free number, in the order the sites were added.</summary>
+    public static bool Renumber(List<Site> sites)
+    {
+        bool changed = false;
+        var used = new HashSet<int>();
+        foreach (var s in sites.OrderBy(x => x.Number <= 0 ? int.MaxValue : x.Number).ThenBy(x => x.Added))
+        {
+            if (s.Number > 0 && used.Add(s.Number)) continue;
+            s.Number = NextNumber(used); used.Add(s.Number); changed = true;
+        }
+        return changed;
+    }
+
+    public static int NextNumber(IEnumerable<int> used) { var u = used.ToHashSet(); int n = 1; while (u.Contains(n)) n++; return n; }
 
     /// <summary>The site with this name, created when missing (CSV import).</summary>
     public static Site GetOrAdd(List<Site> sites, string name)
     {
         name = string.IsNullOrWhiteSpace(name) ? "Unassigned" : name.Trim();
         var s = sites.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-        if (s == null) { s = new Site { Name = name }; sites.Add(s); }
+        if (s == null) { s = new Site { Name = name, Number = NextNumber(sites.Select(x => x.Number)) }; sites.Add(s); }
         return s;
     }
 }

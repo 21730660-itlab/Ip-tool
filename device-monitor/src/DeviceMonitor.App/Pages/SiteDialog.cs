@@ -10,6 +10,8 @@ public static class SiteDialog
     static Site Open(Site s, bool isNew)
     {
         var dlg = new Dlg(isNew ? "Add site" : "Edit site", 560);
+        var number = Ui.Box(s.Number > 0 ? s.Number.ToString() : Core.Sites.NextNumber(App.Sites.Select(x => x.Number)).ToString(), tip: "The site number shown before its name");
+        number.Width = 110;
         var name = Ui.Box(s.Name, tip: "For example \"Main office\", \"Branch Tripoli\", \"Tower 3\"");
         var loc = Ui.Box(s.Location, tip: "Address or description (optional)");
         var notes = Ui.Box(s.Notes, multi: true);
@@ -19,13 +21,21 @@ public static class SiteDialog
             hint.Margin = new Thickness(0, 0, 0, 14);
             dlg.Body.Children.Add(hint);
         }
-        dlg.Body.Children.Add(Ui.Field("Site name", name));
+        var numName = new Grid();
+        numName.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        numName.ColumnDefinitions.Add(new ColumnDefinition());
+        var fNum = Ui.Field("Number", number); var fName = Ui.Field("Site name", name);
+        ((FrameworkElement)fName).Margin = new Thickness(14, 0, 0, 14);
+        Grid.SetColumn(fName, 1); numName.Children.Add(fNum); numName.Children.Add(fName);
+        dlg.Body.Children.Add(numName);
         dlg.Body.Children.Add(Ui.Field("Location", loc));
         dlg.Body.Children.Add(Ui.Field("Notes", notes));
         if (!isNew)
             dlg.Extra("Delete site", () => { if (ConfirmDelete(s)) dlg.DialogResult = false; }, "Danger");
         dlg.Ok(isNew ? "Add site" : "Save", () =>
         {
+            if (!int.TryParse(number.Text.Trim(), out var n) || n < 1 || n > 99999) throw new RuleException("The site number must be a whole number from 1 to 99999.");
+            s.Number = n;
             s.Name = name.Text; s.Location = loc.Text; s.Notes = notes.Text;
             App.SaveSite(s);
             return true;

@@ -110,7 +110,7 @@ public class SiteCard : Border
     public void Update()
     {
         if (App.FindSite(id) is not Site s) return;
-        name.Text = s.Name;
+        name.Text = s.Label;
         loc.Text = s.Location;
         loc.Visibility = s.Location == "" ? Visibility.Collapsed : Visibility.Visible;
         var devs = App.DevicesOf(id).ToList();

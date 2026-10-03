@@ -62,8 +62,8 @@ public static class App
 
     public static IReadOnlyList<Device> Devices => devices;
     public static Device Find(string id) => devices.FirstOrDefault(d => d.Id == id);
-    /// <summary>Sites in name order.</summary>
-    public static IReadOnlyList<Site> Sites => sites.OrderBy(s => s.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+    /// <summary>Sites in number order.</summary>
+    public static IReadOnlyList<Site> Sites => sites.OrderBy(s => s.Number).ThenBy(s => s.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
     public static Site FindSite(string id) => sites.FirstOrDefault(s => s.Id == id);
     public static IEnumerable<Device> DevicesOf(string siteId) => devices.Where(d => d.SiteId == siteId);
 
@@ -73,6 +73,8 @@ public static class App
     {
         s.Name = s.Name?.Trim() ?? ""; s.Location = s.Location?.Trim() ?? ""; s.Notes = s.Notes?.Trim() ?? "";
         if (s.Name == "") throw new RuleException("Enter a name for the site.");
+        if (s.Number <= 0) s.Number = Core.Sites.NextNumber(sites.Where(x => x.Id != s.Id).Select(x => x.Number));
+        if (sites.Any(x => x.Id != s.Id && x.Number == s.Number)) throw new RuleException($"Site number {s.Number} is already used by \"{sites.First(x => x.Id != s.Id && x.Number == s.Number).Name}\".");
         if (sites.Any(x => x.Id != s.Id && x.Name.Equals(s.Name, StringComparison.OrdinalIgnoreCase)))
             throw new RuleException($"There is already a site called \"{s.Name}\".");
         var i = sites.FindIndex(x => x.Id == s.Id);

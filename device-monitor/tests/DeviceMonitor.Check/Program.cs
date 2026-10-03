@@ -73,6 +73,11 @@ Directory.Delete(tmpOld, true);
 var siteList = new List<Site>();
 var s1 = Sites.GetOrAdd(siteList, "Branch"); var s2 = Sites.GetOrAdd(siteList, "branch ");
 Check(s1 == s2 && siteList.Count == 1, "GetOrAdd re-uses a site");
+Check(oSites.Select(x => x.Number).OrderBy(n => n).SequenceEqual(new[] { 1, 2 }), "old sites get numbers 1, 2");
+var numbered = new List<Site> { new() { Name = "A", Number = 3 }, new() { Name = "B" }, new() { Name = "C", Number = 3 } };
+Sites.Renumber(numbered);
+Check(numbered.Select(x => x.Number).Distinct().Count() == 3 && numbered[0].Number == 3 && numbered.All(x => x.Number > 0), "numbers are unique and kept");
+Check(new Site { Name = "Main office", Number = 1 }.Label == "1. Main office", "site label");
 
 // --- storage + logs in a temp folder
 var tmp = Path.Combine(Path.GetTempPath(), "dm-check-" + Guid.NewGuid().ToString("N"));

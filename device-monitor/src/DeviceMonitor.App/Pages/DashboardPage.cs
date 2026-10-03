@@ -6,7 +6,7 @@ namespace DeviceMonitor.App.Pages;
 public class DashboardPage : IPage
 {
     public string Title => "Dashboard";
-    public string Subtitle => "Live status of every device";
+    public string Subtitle => "Live status of your sites and devices";
     public FrameworkElement View { get; }
 
     readonly TextBlock kTotal, kTotalNote, kUp, kUpNote, kDown, kDownNote, kAvg, kAvgNote, kAvail, kAvailNote;
@@ -19,6 +19,11 @@ public class DashboardPage : IPage
     readonly TextBox search = Ui.Box(tip: "Search by name or IP address");
     readonly ComboBox filter = Ui.Choice(new[] { ("all", "All devices"), ("down", "OFF only"), ("up", "ON only"), ("paused", "Paused") }, "all");
     readonly Border empty;
+    readonly ComboBox siteBox = new() { Width = 420, MinHeight = 42, FontSize = 16, MaxDropDownHeight = 460, DisplayMemberPath = "Label", SelectedValuePath = "Value" };
+    readonly TextBlock siteInfo = Ui.Muted("", 14);
+    readonly Button allBtn;
+    readonly WrapPanel overview = new() { Margin = new Thickness(0, 0, 0, 6) };
+    bool fillingSites;
     int tick;
     string lastSig = "";
     bool dirty = true;
@@ -26,6 +31,22 @@ public class DashboardPage : IPage
     public DashboardPage()
     {
         var root = new StackPanel();
+
+        // site drop-down: "All sites" or one site ("1. Main office"); the whole dashboard follows it
+        var pickLbl = Ui.Text("Site", 17, FontWeights.Bold); pickLbl.VerticalAlignment = VerticalAlignment.Center; pickLbl.Margin = new Thickness(0, 0, 12, 0);
+        siteBox.ToolTip = "Choose \"All sites\" to see every site, or one site to see only its devices";
+        siteBox.SelectionChanged += (_, _) => { if (!fillingSites && siteBox.SelectedValue is string v) App.CurrentSiteId = v; };
+        allBtn = Ui.Btn("Show all sites", () => App.CurrentSiteId = "");
+        allBtn.Margin = new Thickness(10, 0, 0, 0);
+        var addSite = Ui.IconBtn("\uE710", "Add site", () => { var ns = SiteDialog.Add(); if (ns != null) App.CurrentSiteId = ns.Id; });
+        addSite.Margin = new Thickness(10, 0, 0, 0);
+        siteInfo.VerticalAlignment = VerticalAlignment.Center; siteInfo.Margin = new Thickness(16, 0, 0, 0);
+        var pick = new DockPanel();
+        DockPanel.SetDock(addSite, Dock.Right); pick.Children.Add(addSite);
+        pick.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Children = { pickLbl, siteBox, allBtn, siteInfo } });
+        var pickCard = Ui.Card(pick, 14); pickCard.Margin = new Thickness(0, 0, 0, 12);
+        root.Children.Add(pickCard);
+        root.Children.Add(overview);
 
         // key figures
         var kpis = new Grid { Margin = new Thickness(0, 0, 0, 16) };
@@ -91,9 +112,55 @@ public class DashboardPage : IPage
         root.Children.Add(cards);
 
         View = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Padding = new Thickness(0, 0, 4, 0) };
-        App.DevicesChanged += () => dirty = true;
+        App.DevicesChanged += () => { dirty = true; FillSiteBox(); };
+        App.SiteFilterChanged += FillSiteBox;
+        FillSiteBox();
         App.EventAdded += _ => FillRecent();
         FillRecent();
+    }
+
+    /// <summary>Fills the site drop-down and the line next to it.</summary>
+    void FillSiteBox()
+    {
+        if (siteBox.IsDropDownOpen) return;
+        fillingSites = true;
+        siteBox.ItemsSource = UiExtra.SiteOptions();
+        siteBox.SelectedValue = App.CurrentSiteId;
+        fillingSites = false;
+        var site = App.FindSite(App.CurrentSiteId);
+        allBtn.Visibility = site == null ? Visibility.Collapsed : Visibility.Visible;
+        siteInfo.Text = site == null ? (App.Sites.Count == 0 ? "No sites yet: click \"Add site\"" : "Showing every site. Pick one to see only its devices.")
+                                     : string.Join("   ·   ", new[] { site.Location, site.Notes }.Where(x => !string.IsNullOrWhiteSpace(x)));
+        dirty = true;
+    }
+
+    /// <summary>With "All sites": one small tile per site (number, name, ON / OFF); click = show that site.</summary>
+    void FillOverview(IReadOnlyList<Device> all)
+    {
+        overview.Children.Clear();
+        overview.Visibility = App.CurrentSiteId == "" && App.Sites.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        if (overview.Visibility != Visibility.Visible) return;
+        foreach (var site in App.Sites)
+        {
+            var devs = all.Where(d => d.SiteId == site.Id).ToList();
+            var on = devs.Count(d => d.Enabled && App.Engine.StateOf(d.Id).Status == DeviceStatus.Up);
+            var off = devs.Count(d => d.Enabled && App.Engine.StateOf(d.Id).Status == DeviceStatus.Down);
+            var key = off > 0 ? "Sig" : devs.Count > 0 && on == devs.Count ? "Ok" : "Idle";
+            var num = new Border { Width = 34, Height = 34, CornerRadius = new CornerRadius(17), Margin = new Thickness(0, 0, 12, 0), VerticalAlignment = VerticalAlignment.Center,
+                Child = new TextBlock { Text = site.Number.ToString(), Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = 14, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center } }
+                .Res(Border.BackgroundProperty, key);
+            var txt = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+            txt.Children.Add(Ui.Text(site.Name, 15, FontWeights.SemiBold, "Ink", false));
+            txt.Children.Add(Ui.Text($"{devs.Count} device{(devs.Count == 1 ? "" : "s")} · {on} ON" + (off > 0 ? $" · {off} OFF" : ""), 13, off > 0 ? FontWeights.SemiBold : FontWeights.Normal, off > 0 ? "Sig" : "Muted", false));
+            var tile = new Border
+            {
+                Width = 250, Padding = new Thickness(12, 10, 12, 10), Margin = new Thickness(0, 0, 10, 10), CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1), Cursor = Cursors.Hand,
+                Child = new StackPanel { Orientation = Orientation.Horizontal, Children = { num, txt } }, ToolTip = $"Show only {site.Label}"
+            }.Res(Border.BackgroundProperty, "Panel").Res(Border.BorderBrushProperty, off > 0 ? "Sig" : "Line");
+            var id = site.Id;
+            tile.MouseLeftButtonUp += (_, _) => App.CurrentSiteId = id;
+            overview.Children.Add(tile);
+        }
     }
 
     static Border CardWithTitle(string title, UIElement body) => Ui.Card(new StackPanel { Children = { Ui.Section(title), body } });
@@ -168,8 +235,8 @@ public class DashboardPage : IPage
         empty.Visibility = all.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         // a device changed state: re-sort (OFF first) and re-filter
         var sig = App.CurrentSiteId + ":" + string.Join(",", devices.Select(d => d.Enabled ? (int)App.Engine.StateOf(d.Id).Status : 9));
-        if (sig != lastSig) { lastSig = sig; dirty = true; }
-        if (dirty) RebuildCards(devices, all);
+        if (sig != lastSig) { lastSig = sig; dirty = true; FillSiteBox(); }
+        if (dirty) { FillOverview(all); RebuildCards(devices, all); }
         foreach (var d in devices) if (cardById.TryGetValue(d.Id, out var c) && c.Visibility == Visibility.Visible) c.Update(d);
     }
 
@@ -219,7 +286,7 @@ public class DashboardPage : IPage
             var pin = new Border { Width = 6, Height = 26, CornerRadius = new CornerRadius(3), Margin = new Thickness(0, 0, 12, 0), VerticalAlignment = VerticalAlignment.Center }
                 .Res(Border.BackgroundProperty, off > 0 ? "Sig" : siteAll.Count > 0 && on == siteAll.Count ? "Ok" : "Idle");
             DockPanel.SetDock(pin, Dock.Left); head.Children.Add(pin);
-            var title = Ui.Text(site.Name, 18, FontWeights.Bold, "Ink", false); title.VerticalAlignment = VerticalAlignment.Center;
+            var title = Ui.Text(site.Label, 18, FontWeights.Bold, "Ink", false); title.VerticalAlignment = VerticalAlignment.Center;
             var info = Ui.Text($"   {siteAll.Count} device(s) · {on} ON" + (off > 0 ? $" · {off} OFF" : ""), 14, FontWeights.SemiBold, off > 0 ? "Sig" : "Muted", false);
             info.VerticalAlignment = VerticalAlignment.Center;
             head.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Children = { title, info } });
