@@ -46,15 +46,33 @@ Check(one.Record(t0, null, "x", 1) == DeviceStatus.Down, "threshold 1 = OFF at f
 // --- CSV import / export round trip
 var devs = new List<Device>
 {
-    new() { Name = "Core router, \"main\"", Address = "10.0.0.1", Kind = DeviceKind.MikroTik, Group = "HQ", IntervalSeconds = 30 },
+    new() { Name = "Core router, \"main\"", Address = "10.0.0.1", Kind = DeviceKind.MikroTik, Site = "HQ", IntervalSeconds = 30 },
     new() { Name = "Printer", Address = "printer.local", Kind = DeviceKind.Printer, Enabled = false, Notes = "2nd floor" },
 };
 var back = Storage.FromCsv(Storage.ToCsv(devs), out var probs);
 Check(probs.Count == 0, "csv no problems");
-Check(back.Count == 2 && back[0].Name == devs[0].Name && back[0].IntervalSeconds == 30 && back[0].Kind == DeviceKind.MikroTik, "csv row 1");
+Check(back.Count == 2 && back[0].Site == "HQ" && back[0].Name == devs[0].Name && back[0].IntervalSeconds == 30 && back[0].Kind == DeviceKind.MikroTik, "csv row 1");
 Check(!back[1].Enabled && back[1].Notes == "2nd floor" && back[1].Kind == DeviceKind.Printer, "csv row 2");
 var semi = Storage.FromCsv("Name;Address\nAP;10.0.0.5\nbad;10.0\n", out probs);
 Check(semi.Count == 1 && semi[0].Address == "10.0.0.5" && probs.Count == 1, "semicolon csv + bad line reported");
+
+// --- sites: old 1.0 files (site written as "Group") get real sites; devices without one go to "Unassigned"
+var oldJson = "{\"Version\":1,\"Devices\":[{\"Name\":\"R1\",\"Address\":\"10.0.0.1\",\"Group\":\"HQ\"},{\"Name\":\"R2\",\"Address\":\"10.0.0.2\",\"Group\":\"hq\"},{\"Name\":\"R3\",\"Address\":\"10.0.0.3\"}]}";
+var tmpOld = Path.Combine(Path.GetTempPath(), "dm-old-" + Guid.NewGuid().ToString("N"));
+var oldStore = new Storage(tmpOld);
+File.WriteAllText(oldStore.DevicesFile, oldJson);
+var (oSites, oDevs) = oldStore.LoadAll();
+Check(oSites.Count == 2 && oSites.Any(x => x.Name == "HQ") && oSites.Any(x => x.Name == "Unassigned"), "old groups become sites");
+Check(oDevs[0].SiteId == oDevs[1].SiteId && oDevs[0].Site == "HQ" && oDevs[1].Site == "HQ", "same site, case-insensitive");
+oldStore.SaveAll(oSites, oDevs);
+var saved = File.ReadAllText(oldStore.DevicesFile);
+Check(!saved.Contains("\"Group\"") && saved.Contains("\"Sites\""), "saved in the new format");
+var (rSites, rDevs) = oldStore.LoadAll();
+Check(rSites.Count == 2 && rDevs.All(d => rSites.Any(x => x.Id == d.SiteId)), "reloads with the same sites");
+Directory.Delete(tmpOld, true);
+var siteList = new List<Site>();
+var s1 = Sites.GetOrAdd(siteList, "Branch"); var s2 = Sites.GetOrAdd(siteList, "branch ");
+Check(s1 == s2 && siteList.Count == 1, "GetOrAdd re-uses a site");
 
 // --- storage + logs in a temp folder
 var tmp = Path.Combine(Path.GetTempPath(), "dm-check-" + Guid.NewGuid().ToString("N"));
@@ -70,7 +88,7 @@ var log = new EventLog(Path.Combine(tmp, "logs"));
 log.Write(new MonitorEvent(DateTime.Now, EventKind.Down, "a", "Router, 1", "10.0.0.1", "HQ", "No reply"));
 log.Write(new MonitorEvent(DateTime.Now, EventKind.Up, "a", "Router, 1", "10.0.0.1", "HQ", "Reply in 3 ms", TimeSpan.FromSeconds(95)));
 Check(File.ReadAllLines(log.CsvPath).Length == 3, "csv log lines");
-Check(File.ReadAllText(log.DayPath(DateTime.Now)).Contains("back ON after 1 min 35 s"), "text log");
+Check(File.ReadAllText(log.DayPath(DateTime.Now)).Contains("back ON after 1 min 35 s") && File.ReadAllText(log.DayPath(DateTime.Now)).Contains("[site: HQ]"), "text log");
 var log2 = new EventLog(Path.Combine(tmp, "logs")); log2.LoadFromFile();
 Check(log2.Recent.Count == 2 && log2.Recent[0].Kind == EventKind.Up && log2.Recent[0].DeviceName == "Router, 1" && log2.Recent[0].Duration == TimeSpan.FromSeconds(95), "log read back");
 

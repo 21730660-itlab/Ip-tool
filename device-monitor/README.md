@@ -7,7 +7,10 @@ shows a pop-up when a device turns OFF and another one when it comes back ON, an
 `release/Device-Monitor-Setup.exe` is the small installer. It downloads the .NET 8 Desktop Runtime if it is missing.
 Build `Device-Monitor-Setup-Full.exe` (.NET built in) with the steps below.
 
-## Features (version 1.0)
+## Features (version 1.1)
+- Sites: create a site first, then add the IPs of its devices. The **Site** drop-down at the top
+  ("All sites" or one site) filters the Dashboard, Devices and Event log pages. The Sites page shows one card for each site
+  with its devices ON/OFF, and the dashboard groups the device cards by site.
 - Ping interval drop-down (5 s, 10 s, 15 s, 30 s, 1, 2, 5, 10 min), or type any value ("45", "90 s", "2 min").
   Each device can also have its own interval.
 - A device counts as OFF after N missed pings in a row (default 2). A missed ping is checked again after 2 s.

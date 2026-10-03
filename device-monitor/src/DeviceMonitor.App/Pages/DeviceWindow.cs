@@ -124,7 +124,7 @@ public class DeviceWindow : Window
         if (shownStatus != status) { shownStatus = status; pill.Content = UiExtra.StatusPill(status, 14); }
         name.Text = d.Name;
         var interval = MonitorSettings.IntervalText(App.Engine.IntervalOf(d));
-        sub.Text = $"{d.Address}   ·   {Theme.KindText(d.Kind)}{(d.Group == "" ? "" : "   ·   " + d.Group)}   ·   pinged every {interval}"
+        sub.Text = $"{d.Address}   ·   {Theme.KindText(d.Kind)}{(d.Site == "" ? "" : "   ·   Site: " + d.Site)}   ·   pinged every {interval}"
                    + (st.LastCheck.HasValue ? $"   ·   last check {UiExtra.Ago(st.LastCheck)}" : "")
                    + (status == DeviceStatus.Down && st.LastError != "" ? $"\n{st.LastError}" : "")
                    + (d.Notes != "" ? $"\n{d.Notes}" : "");

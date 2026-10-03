@@ -10,7 +10,7 @@ public class EventsPage : IPage
     public FrameworkElement View { get; }
 
     readonly DataGrid grid = Ui.Table();
-    readonly TextBox search = Ui.Box(tip: "Search by device, address or text");
+    readonly TextBox search = Ui.Box(tip: "Search by device, address, site or text");
     readonly ComboBox kind = Ui.Choice(new[] { ("all", "All events"), ("down", "OFF only"), ("up", "ON only"), ("info", "Notes only") }, "all");
     readonly ComboBox period = Ui.Choice(new[] { ("1", "Last 24 hours"), ("7", "Last 7 days"), ("30", "Last 30 days"), ("0", "Everything") }, "7");
     readonly ColumnChart perHour = new() { Height = 150 };
@@ -61,7 +61,7 @@ public class EventsPage : IPage
         grid.Columns.Add(Ui.BadgeCol("Event", nameof(EventRow.Kind), nameof(EventRow.Fg), nameof(EventRow.Bg)));
         grid.Columns.Add(Ui.Col("Device", nameof(EventRow.Device), -1.4));
         grid.Columns.Add(Ui.Col("IP address", nameof(EventRow.Address), -1, true));
-        grid.Columns.Add(Ui.Col("Group", nameof(EventRow.Group), -0.9));
+        grid.Columns.Add(Ui.Col("Site", nameof(EventRow.Site), -0.9));
         grid.Columns.Add(Ui.Col("Detail", nameof(EventRow.Detail), -2.2));
         grid.Columns.Add(Ui.Col("Was OFF for", nameof(EventRow.Duration), 120, sortPath: nameof(EventRow.DurationKey)));
         Ui.OnRowDoubleClick(grid, o =>
@@ -76,6 +76,7 @@ public class EventsPage : IPage
         kind.SelectionChanged += (_, _) => Fill();
         period.SelectionChanged += (_, _) => Fill();
         App.EventAdded += _ => dirty = true;
+        App.SiteFilterChanged += () => dirty = true;
         View = root;
     }
 
@@ -90,11 +91,13 @@ public class EventsPage : IPage
         var since = days == 0 ? DateTime.MinValue : DateTime.Now.AddDays(-days);
         var q = search.Text.Trim();
         var k = kind.Val();
-        var inPeriod = App.Log.Recent.Where(e => e.At >= since).ToList();
+        var siteName = App.FindSite(App.CurrentSiteId)?.Name;
+        // a site chosen at the top: only its devices' events (notes about the program stay visible)
+        var inPeriod = App.Log.Recent.Where(e => e.At >= since && (siteName == null || e.Kind == EventKind.Info || e.Site == siteName)).ToList();
         var list = inPeriod
             .Where(e => k switch { "down" => e.Kind == EventKind.Down, "up" => e.Kind == EventKind.Up, "info" => e.Kind == EventKind.Info, _ => true })
             .Where(e => q == "" || e.DeviceName.Contains(q, StringComparison.OrdinalIgnoreCase) || e.Address.Contains(q, StringComparison.OrdinalIgnoreCase)
-                        || e.Detail.Contains(q, StringComparison.OrdinalIgnoreCase) || e.Group.Contains(q, StringComparison.OrdinalIgnoreCase))
+                        || e.Detail.Contains(q, StringComparison.OrdinalIgnoreCase) || e.Site.Contains(q, StringComparison.OrdinalIgnoreCase))
             .Select(e => new EventRow(e)).ToList();
         grid.ItemsSource = list;
         count.Text = $"{list.Count} events shown" + (App.Log.Recent.Count >= EventLog.Keep ? $" (the newest {EventLog.Keep}; everything is in events.csv)" : "");
@@ -134,12 +137,12 @@ public class EventRow
         Kind = EventLog.KindText(e.Kind);
         var key = e.Kind switch { EventKind.Down => "Sig", EventKind.Up => "Ok", _ => "Acc" };
         Fg = Theme.B(key); Bg = Theme.B(key + "Soft");
-        Device = e.DeviceName; Address = e.Address; Group = e.Group; Detail = e.Detail; DeviceId = e.DeviceId;
+        Device = e.DeviceName; Address = e.Address; Site = e.Site; Detail = e.Detail; DeviceId = e.DeviceId;
         Duration = e.Duration is TimeSpan t ? EventLog.Duration(t) : "";
         DurationKey = e.Duration?.TotalSeconds ?? -1;
     }
     public string Date { get; } public string Time { get; } public DateTime Sort { get; }
     public string Kind { get; } public Brush Fg { get; } public Brush Bg { get; }
-    public string Device { get; } public string Address { get; } public string Group { get; } public string Detail { get; }
+    public string Device { get; } public string Address { get; } public string Site { get; } public string Detail { get; }
     public string Duration { get; } public double DurationKey { get; } public string DeviceId { get; }
 }

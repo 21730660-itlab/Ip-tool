@@ -15,7 +15,7 @@ public class DevicesPage : IPage
     readonly ObservableCollection<DeviceRow> rows = new();
     readonly ICollectionView view;
     readonly DataGrid grid = Ui.Table();
-    readonly TextBox search = Ui.Box(tip: "Search by name, address, group or kind");
+    readonly TextBox search = Ui.Box(tip: "Search by name, address, site or kind");
     readonly TextBlock count = Ui.Muted("", 13.5);
 
     public DevicesPage()
@@ -25,7 +25,7 @@ public class DevicesPage : IPage
         var bar = new DockPanel { Margin = new Thickness(0, 0, 0, 14) };
         var left = new StackPanel { Orientation = Orientation.Horizontal };
         void Add(Button b) { if (left.Children.Count > 0) b.Margin = new Thickness(8, 0, 0, 0); left.Children.Add(b); }
-        Add(Ui.IconBtn("\uE710", "Add device", () => DeviceDialog.Add(), "Primary"));
+        Add(Ui.IconBtn("\uE710", "Add IP", () => DeviceDialog.Add(), "Primary"));
         Add(Ui.IconBtn("\uE70F", "Edit", EditSelected));
         Add(Ui.IconBtn("\uE72C", "Check now", () => _ = App.Engine.CheckNowAsync(Selected().Select(d => d.Id).ToList()), null, "Ping the selected devices right away"));
         Add(Ui.IconBtn("\uE769", "Pause", () => App.SetEnabled(Selected().Select(d => d.Id), false), null, "Stop pinging the selected devices (they stay in the list)"));
@@ -48,7 +48,7 @@ public class DevicesPage : IPage
         grid.Columns.Add(Ui.BadgeCol("Kind", nameof(DeviceRow.KindText), nameof(DeviceRow.KindFg), nameof(DeviceRow.KindBg)));
         grid.Columns.Add(Ui.Col("Name", nameof(DeviceRow.Name), -2));
         grid.Columns.Add(Ui.Col("IP address", nameof(DeviceRow.Address), -1.4, true, nameof(DeviceRow.AddressKey)));
-        grid.Columns.Add(Ui.Col("Group", nameof(DeviceRow.Group), -1.2));
+        grid.Columns.Add(Ui.Col("Site", nameof(DeviceRow.Site), -1.2));
         grid.Columns.Add(Ui.Col("Reply", nameof(DeviceRow.Reply), 90, sortPath: nameof(DeviceRow.ReplyKey)));
         grid.Columns.Add(Ui.Col("Average", nameof(DeviceRow.Avg), 90, sortPath: nameof(DeviceRow.AvgKey)));
         grid.Columns.Add(Ui.Col("Uptime", nameof(DeviceRow.Uptime), 90, sortPath: nameof(DeviceRow.UptimeKey)));
@@ -79,15 +79,17 @@ public class DevicesPage : IPage
 
         search.TextChanged += (_, _) => { view.Refresh(); UpdateCount(); };
         App.DevicesChanged += Sync;
+        App.SiteFilterChanged += () => { view.Refresh(); UpdateCount(); };
         Sync();
         View = root;
     }
 
     bool Match(DeviceRow r)
     {
+        if (App.Find(r.Id) is not Device d || !App.InCurrentSite(d)) return false;
         var q = search.Text.Trim();
         return q == "" || r.Name.Contains(q, StringComparison.OrdinalIgnoreCase) || r.Address.Contains(q, StringComparison.OrdinalIgnoreCase)
-            || r.Group.Contains(q, StringComparison.OrdinalIgnoreCase) || r.KindText.Contains(q, StringComparison.OrdinalIgnoreCase);
+            || r.Site.Contains(q, StringComparison.OrdinalIgnoreCase) || r.KindText.Contains(q, StringComparison.OrdinalIgnoreCase);
     }
 
     List<Device> Selected() => grid.SelectedItems.Cast<DeviceRow>().Select(r => App.Find(r.Id)).Where(d => d != null).ToList();
@@ -126,7 +128,8 @@ public class DevicesPage : IPage
     void UpdateCount()
     {
         var shown = rows.Count(Match);
-        count.Text = shown == rows.Count ? $"{rows.Count} devices" : $"{shown} of {rows.Count} devices";
+        var site = App.FindSite(App.CurrentSiteId);
+        count.Text = (shown == rows.Count ? $"{rows.Count} devices" : $"{shown} of {rows.Count} devices") + (site != null ? $" · site: {site.Name} (choose \"All sites\" at the top to see every device)" : "");
     }
 
     public void Shown() => Sync();
@@ -146,11 +149,11 @@ public class DevicesPage : IPage
         try { text = File.ReadAllText(dlg.FileName); }
         catch (Exception e) { Ui.Info("Could not read the file:\n" + e.Message); return; }
         var list = Storage.FromCsv(text, out var problems);
-        int added = App.AddMany(list);
+        int added = App.AddMany(list, App.CurrentSiteId);
         var msg = $"{added} device(s) added.";
         if (list.Count - added > 0) msg += $"\n{list.Count - added} skipped (address already in the list).";
         if (problems.Count > 0) msg += "\n\nNot imported:\n" + string.Join("\n", problems.Take(12)) + (problems.Count > 12 ? $"\n… and {problems.Count - 12} more" : "");
-        msg += "\n\nColumns: " + Storage.CsvHeader + " (only the address is required).";
+        msg += "\n\nColumns: " + Storage.CsvHeader + " (only the address is required). Sites named in the Site column are created when missing; rows without a site go to the site chosen at the top.";
         Ui.Info(msg, "Import devices");
     }
 
@@ -158,7 +161,7 @@ public class DevicesPage : IPage
     {
         var dlg = new SaveFileDialog { Title = "Export devices", Filter = "CSV file (*.csv)|*.csv", FileName = $"devices-{DateTime.Now:yyyy-MM-dd}.csv" };
         if (dlg.ShowDialog() != true) return;
-        try { File.WriteAllText(dlg.FileName, Storage.ToCsv(App.Devices), new System.Text.UTF8Encoding(true)); }
+        try { File.WriteAllText(dlg.FileName, Storage.ToCsv(App.Devices.Where(App.InCurrentSite)), new System.Text.UTF8Encoding(true)); }
         catch (Exception e) { Ui.Info("Could not save the file:\n" + e.Message); }
     }
 }
@@ -173,7 +176,7 @@ public class DeviceRow : INotifyPropertyChanged
     public string Name { get; private set; } = "";
     public string Address { get; private set; } = "";
     public string AddressKey { get; private set; } = "";
-    public string Group { get; private set; } = "";
+    public string Site { get; private set; } = "";
     public string KindText { get; private set; } = "";
     public Brush KindFg { get; private set; }
     public Brush KindBg { get; private set; }
@@ -199,7 +202,7 @@ public class DeviceRow : INotifyPropertyChanged
         Set(nameof(Name), Name, d.Name, v => Name = v);
         Set(nameof(Address), Address, d.Address, v => Address = v);
         Set(nameof(AddressKey), AddressKey, SortKey(d.Address), v => AddressKey = v);
-        Set(nameof(Group), Group, d.Group, v => Group = v);
+        Set(nameof(Site), Site, d.Site, v => Site = v);
         if (Set(nameof(KindText), KindText, Theme.KindText(d.Kind), v => KindText = v) || KindFg == null)
         {
             var c = Theme.KindColor(d.Kind);

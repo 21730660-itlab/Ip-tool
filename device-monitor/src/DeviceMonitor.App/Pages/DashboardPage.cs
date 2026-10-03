@@ -14,11 +14,10 @@ public class DashboardPage : IPage
     readonly StackPanel legend = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(18, 0, 0, 0) };
     readonly BarChart slowest = new() { Height = 200, Empty = "No replies yet" };
     readonly StackPanel recent = new();
-    readonly WrapPanel cards = new();
+    readonly StackPanel cards = new();
     readonly Dictionary<string, DeviceCard> cardById = new();
-    readonly TextBox search = Ui.Box(tip: "Search by name, address or group");
+    readonly TextBox search = Ui.Box(tip: "Search by name or IP address");
     readonly ComboBox filter = Ui.Choice(new[] { ("all", "All devices"), ("down", "OFF only"), ("up", "ON only"), ("paused", "Paused") }, "all");
-    readonly ComboBox group = new() { Width = 180 };
     readonly Border empty;
     int tick;
     string lastSig = "";
@@ -68,54 +67,42 @@ public class DashboardPage : IPage
 
         // device cards with search / filter
         var bar = new DockPanel { Margin = new Thickness(0, 0, 0, 14) };
-        var add = Ui.IconBtn("\uE710", "Add device", () => DeviceDialog.Add(), "Primary");
+        var add = Ui.IconBtn("\uE710", "Add IP", () => DeviceDialog.Add(), "Primary");
         DockPanel.SetDock(add, Dock.Right); bar.Children.Add(add);
         var t = Ui.Text("Devices", 18, FontWeights.Bold); t.VerticalAlignment = VerticalAlignment.Center; t.Margin = new Thickness(0, 0, 20, 0);
         DockPanel.SetDock(t, Dock.Left); bar.Children.Add(t);
         search.Width = 260; filter.Width = 160;
-        filter.Margin = new Thickness(10, 0, 0, 0); group.Margin = new Thickness(10, 0, 0, 0);
-        var filters = new StackPanel { Orientation = Orientation.Horizontal, Children = { search, filter, group } };
+        filter.Margin = new Thickness(10, 0, 0, 0);
+        var filters = new StackPanel { Orientation = Orientation.Horizontal, Children = { search, filter } };
         bar.Children.Add(filters);
         root.Children.Add(bar);
         search.TextChanged += (_, _) => { dirty = true; Refresh(); };
         filter.SelectionChanged += (_, _) => { dirty = true; Refresh(); };
-        group.SelectionChanged += (_, _) => { dirty = true; Refresh(); };
 
         var emptyBox = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 30, 0, 30) };
         var logo = MainWindow.Logo(64); logo.Margin = new Thickness(0, 0, 0, 14); emptyBox.Children.Add(logo);
         var et = Ui.Text("No devices yet", 20, FontWeights.Bold); et.HorizontalAlignment = HorizontalAlignment.Center; emptyBox.Children.Add(et);
-        var es = Ui.Muted("Add your MikroTik routers, switches, access points, servers or any device with an IP address.\nEach one is pinged on the interval you choose, and you get a pop-up when it turns OFF or comes back ON.", 14);
+        var es = Ui.Muted("Step 1: add a site (office, branch, customer…).  Step 2: add the IP addresses of its MikroTik routers and other devices.\nEach one is pinged on the interval you choose, and you get a pop-up when it turns OFF or comes back ON.", 14);
         es.TextAlignment = TextAlignment.Center; es.Margin = new Thickness(0, 6, 0, 16); emptyBox.Children.Add(es);
-        var eb = Ui.IconBtn("\uE710", "Add your first device", () => DeviceDialog.Add(), "Primary"); eb.HorizontalAlignment = HorizontalAlignment.Center; emptyBox.Children.Add(eb);
+        var eb = Ui.IconBtn("\uE710", "Add a site and its first IP", () => DeviceDialog.Add(), "Primary"); eb.HorizontalAlignment = HorizontalAlignment.Center; emptyBox.Children.Add(eb);
         var imp = Ui.Btn("or import a list (CSV)…", () => DevicesPage.ImportCsv(), "Link"); imp.HorizontalAlignment = HorizontalAlignment.Center; imp.Margin = new Thickness(0, 8, 0, 0); emptyBox.Children.Add(imp);
         empty = Ui.Card(emptyBox, 24);
         root.Children.Add(empty);
         root.Children.Add(cards);
 
         View = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Padding = new Thickness(0, 0, 4, 0) };
-        App.DevicesChanged += () => { dirty = true; FillGroups(); };
+        App.DevicesChanged += () => dirty = true;
         App.EventAdded += _ => FillRecent();
-        FillGroups();
         FillRecent();
     }
 
     static Border CardWithTitle(string title, UIElement body) => Ui.Card(new StackPanel { Children = { Ui.Section(title), body } });
 
-    void FillGroups()
-    {
-        var sel = group.SelectedValue as string ?? "";
-        var items = new List<Opt> { new("", "All groups") };
-        items.AddRange(App.Groups.Select(g => new Opt(g, g)));
-        group.DisplayMemberPath = "Label"; group.SelectedValuePath = "Value";
-        group.ItemsSource = items;
-        group.SelectedValue = items.Any(i => i.Value == sel) ? sel : "";
-        group.Visibility = items.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
-    }
-
     void FillRecent()
     {
         recent.Children.Clear();
-        var list = App.Log.Recent.Where(e => e.Kind != EventKind.Info).Take(7).ToList();
+        var siteName = App.FindSite(App.CurrentSiteId)?.Name;
+        var list = App.Log.Recent.Where(e => e.Kind != EventKind.Info && (siteName == null || e.Site == siteName)).Take(7).ToList();
         if (list.Count == 0) { recent.Children.Add(Ui.Muted("No device has turned OFF or ON yet.", 13.5)); return; }
         foreach (var e in list)
         {
@@ -141,8 +128,17 @@ public class DashboardPage : IPage
 
     public void Refresh()
     {
-        var devices = App.Devices;
-        var (total, up, down, paused, unknown) = App.Engine.Counts();
+        var all = App.Devices;
+        var devices = all.Where(App.InCurrentSite).ToList();
+        int total = devices.Count, up = 0, down = 0, paused = 0, unknown = 0;
+        foreach (var d in devices)
+            switch (d.Enabled ? App.Engine.StateOf(d.Id).Status : DeviceStatus.Paused)
+            {
+                case DeviceStatus.Up: up++; break;
+                case DeviceStatus.Down: down++; break;
+                case DeviceStatus.Paused: paused++; break;
+                default: unknown++; break;
+            }
         kTotal.Text = total.ToString();
         kTotalNote.Text = paused > 0 ? $"{paused} paused" : unknown > 0 ? $"{unknown} waiting for first reply" : "all watched";
         kUp.Text = up.ToString(); kUpNote.Text = total == 0 ? "" : $"{100.0 * up / Math.Max(1, total - paused):0}% of watched devices";
@@ -169,11 +165,11 @@ public class DashboardPage : IPage
             slowest.SetData(slow);
         }
 
-        empty.Visibility = devices.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        empty.Visibility = all.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         // a device changed state: re-sort (OFF first) and re-filter
-        var sig = string.Join(",", devices.Select(d => d.Enabled ? (int)App.Engine.StateOf(d.Id).Status : 9));
+        var sig = App.CurrentSiteId + ":" + string.Join(",", devices.Select(d => d.Enabled ? (int)App.Engine.StateOf(d.Id).Status : 9));
         if (sig != lastSig) { lastSig = sig; dirty = true; }
-        if (dirty) RebuildCards(devices);
+        if (dirty) RebuildCards(devices, all);
         foreach (var d in devices) if (cardById.TryGetValue(d.Id, out var c) && c.Visibility == Visibility.Visible) c.Update(d);
     }
 
@@ -187,31 +183,63 @@ public class DashboardPage : IPage
         legend.Children.Add(sp);
     }
 
-    void RebuildCards(IReadOnlyList<Device> devices)
+    /// <summary>One section per site (name, counts, "Add IP"), each with the cards of its devices; OFF devices first.</summary>
+    void RebuildCards(List<Device> devices, IReadOnlyList<Device> all)
     {
         dirty = false;
         var q = search.Text.Trim();
         var f = filter.Val();
-        var g = group.SelectedValue as string ?? "";
-        // OFF devices first, then by group and name
         var shown = devices
-            .Where(d => q == "" || d.Name.Contains(q, StringComparison.OrdinalIgnoreCase) || d.Address.Contains(q, StringComparison.OrdinalIgnoreCase) || d.Group.Contains(q, StringComparison.OrdinalIgnoreCase))
-            .Where(d => g == "" || d.Group.Equals(g, StringComparison.OrdinalIgnoreCase))
+            .Where(d => q == "" || d.Name.Contains(q, StringComparison.OrdinalIgnoreCase) || d.Address.Contains(q, StringComparison.OrdinalIgnoreCase))
             .Where(d =>
             {
                 var s = d.Enabled ? App.Engine.StateOf(d.Id).Status : DeviceStatus.Paused;
                 return f switch { "down" => s == DeviceStatus.Down, "up" => s == DeviceStatus.Up, "paused" => s == DeviceStatus.Paused, _ => true };
             })
-            .OrderBy(d => d.Enabled && App.Engine.StateOf(d.Id).Status == DeviceStatus.Down ? 0 : 1).ThenBy(d => d.Group).ThenBy(d => d.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
+        foreach (var w in cards.Children.OfType<WrapPanel>()) w.Children.Clear();   // free the cards before re-using them
         cards.Children.Clear();
-        foreach (var id in cardById.Keys.Where(id => devices.All(d => d.Id != id)).ToList()) cardById.Remove(id);
-        foreach (var d in shown)
+        foreach (var id in cardById.Keys.Where(id => all.All(d => d.Id != id)).ToList()) cardById.Remove(id);
+
+        var sites = App.CurrentSiteId == "" ? App.Sites : App.Sites.Where(s => s.Id == App.CurrentSiteId).ToList();
+        foreach (var site in sites)
         {
-            if (!cardById.TryGetValue(d.Id, out var c) || c.Tag as string != d.Kind.ToString()) { c = new DeviceCard(d) { Tag = d.Kind.ToString() }; cardById[d.Id] = c; }
-            cards.Children.Add(c);
+            var mine = shown.Where(d => d.SiteId == site.Id)
+                .OrderBy(d => d.Enabled && App.Engine.StateOf(d.Id).Status == DeviceStatus.Down ? 0 : 1).ThenBy(d => d.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+            if (mine.Count == 0 && (q != "" || f != "all")) continue;   // while searching / filtering, hide sites without a match
+            var siteAll = devices.Where(d => d.SiteId == site.Id).ToList();
+            var off = siteAll.Count(d => d.Enabled && App.Engine.StateOf(d.Id).Status == DeviceStatus.Down);
+            var on = siteAll.Count(d => d.Enabled && App.Engine.StateOf(d.Id).Status == DeviceStatus.Up);
+
+            var head = new DockPanel { Margin = new Thickness(0, cards.Children.Count == 0 ? 0 : 8, 0, 10) };
+            var siteId = site.Id;
+            var addIp = Ui.IconBtn("", "Add IP to this site", () => DeviceDialog.Add(siteId));
+            addIp.MinHeight = 32; addIp.Padding = new Thickness(12, 4, 12, 4);
+            DockPanel.SetDock(addIp, Dock.Right); head.Children.Add(addIp);
+            var pin = new Border { Width = 6, Height = 26, CornerRadius = new CornerRadius(3), Margin = new Thickness(0, 0, 12, 0), VerticalAlignment = VerticalAlignment.Center }
+                .Res(Border.BackgroundProperty, off > 0 ? "Sig" : siteAll.Count > 0 && on == siteAll.Count ? "Ok" : "Idle");
+            DockPanel.SetDock(pin, Dock.Left); head.Children.Add(pin);
+            var title = Ui.Text(site.Name, 18, FontWeights.Bold, "Ink", false); title.VerticalAlignment = VerticalAlignment.Center;
+            var info = Ui.Text($"   {siteAll.Count} device(s) · {on} ON" + (off > 0 ? $" · {off} OFF" : ""), 14, FontWeights.SemiBold, off > 0 ? "Sig" : "Muted", false);
+            info.VerticalAlignment = VerticalAlignment.Center;
+            head.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Children = { title, info } });
+            cards.Children.Add(head);
+
+            var wrap = new WrapPanel();
+            foreach (var d in mine)
+            {
+                if (!cardById.TryGetValue(d.Id, out var c) || c.Tag as string != d.Kind.ToString()) { c = new DeviceCard(d) { Tag = d.Kind.ToString() }; cardById[d.Id] = c; }
+                wrap.Children.Add(c);
+            }
+            if (mine.Count == 0)
+            {
+                var none = Ui.Muted("No IP addresses in this site yet. Click \"Add IP to this site\".", 14);
+                none.Margin = new Thickness(18, 0, 0, 14);
+                wrap.Children.Add(none);
+            }
+            cards.Children.Add(wrap);
         }
-        if (shown.Count == 0 && devices.Count > 0)
+        if (cards.Children.Count == 0 && all.Count > 0)
             cards.Children.Add(Ui.Muted("No device matches the search / filter.", 14));
     }
 }

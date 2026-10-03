@@ -14,6 +14,9 @@ public class MainWindow : Window
     readonly TextBlock pageSub = Ui.Muted("", 13.5);
     readonly Button startStop;
     readonly ComboBox interval;
+    readonly ComboBox siteFilter = new() { Width = 260, MaxDropDownHeight = 420, DisplayMemberPath = "Label", SelectedValuePath = "Value" };
+    bool fillingSites;
+    int lastDown = -1;
     readonly Shapes.Ellipse liveDot = new() { Width = 12, Height = 12, VerticalAlignment = VerticalAlignment.Center };
     readonly TextBlock liveText = Ui.Text("", 14, FontWeights.SemiBold, "Ink", false);
     readonly TextBlock footer = Ui.Text("", 12.5, null, "NavMute");
@@ -45,6 +48,7 @@ public class MainWindow : Window
         DockPanel.SetDock(foot, Dock.Bottom); side.Children.Add(foot);
         var navList = new StackPanel();
         AddNav(navList, "dash", "\uE80F", "Dashboard");
+        AddNav(navList, "sites", "\uE707", "Sites");
         AddNav(navList, "devices", "\uE839", "Devices");
         AddNav(navList, "events", "\uE81C", "Event log");
         AddNav(navList, "settings", "\uE713", "Settings");
@@ -55,7 +59,13 @@ public class MainWindow : Window
         var top = new Grid { Margin = new Thickness(28, 18, 28, 14) };
         top.ColumnDefinitions.Add(new ColumnDefinition());
         top.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var titles = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { pageTitle, pageSub } };
+        // the site drop-down: "All sites" or one site; every page shows only the chosen site's devices
+        var siteLbl = Ui.Text("Site", 14, FontWeights.SemiBold, "Muted", false); siteLbl.VerticalAlignment = VerticalAlignment.Center; siteLbl.Margin = new Thickness(0, 0, 8, 0);
+        pageSub.VerticalAlignment = VerticalAlignment.Center; pageSub.Margin = new Thickness(16, 0, 0, 0);
+        var siteRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 6, 0, 0), Children = { siteLbl, siteFilter, pageSub } };
+        siteFilter.ToolTip = "Show all devices, or only the devices of one site";
+        siteFilter.SelectionChanged += (_, _) => { if (!fillingSites && siteFilter.SelectedValue is string v) App.CurrentSiteId = v; };
+        var titles = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { pageTitle, siteRow } };
         top.Children.Add(titles);
 
         var controls = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
@@ -90,6 +100,9 @@ public class MainWindow : Window
         tray.ToggleRequested += ToggleMonitoring;
         tray.ExitRequested += () => _ = ExitAsync();
         App.MonitorChanged += UpdateMonitorUi;
+        App.DevicesChanged += FillSites;
+        App.SiteFilterChanged += () => { FillSites(); if (current != null && pages.TryGetValue(current, out var pg)) pg.Shown(); };
+        FillSites();
         App.ShowDeviceRequested += id => { ShowFromTray(); if (App.Find(id) != null) DeviceWindow.Open(id); };
         clock.Tick += (_, _) => Tick();
         clock.Start();
@@ -110,6 +123,22 @@ public class MainWindow : Window
         Application.Current.MainWindow = this;
     }
 
+    /// <summary>Fills the site drop-down: "All sites", then each site with its device count and how many are OFF.</summary>
+    void FillSites()
+    {
+        fillingSites = true;
+        var items = new List<Opt> { new("", $"All sites ({App.Devices.Count} devices)") };
+        foreach (var s in App.Sites)
+        {
+            var devs = App.DevicesOf(s.Id).ToList();
+            var off = devs.Count(d => d.Enabled && App.Engine.StateOf(d.Id).Status == DeviceStatus.Down);
+            items.Add(new(s.Id, $"{s.Name} ({devs.Count}{(off > 0 ? $", {off} OFF" : "")})"));
+        }
+        siteFilter.ItemsSource = items;
+        siteFilter.SelectedValue = App.CurrentSiteId;
+        fillingSites = false;
+    }
+
     void AddNav(Panel list, string key, string glyph, string text)
     {
         var b = Ui.IconBtn(glyph, text, () => Go(key), "NavItem");
@@ -121,7 +150,7 @@ public class MainWindow : Window
     {
         if (!pages.TryGetValue(key, out var p))
         {
-            p = key switch { "devices" => new DevicesPage(), "events" => new EventsPage(), "settings" => new SettingsPage(), _ => new DashboardPage() };
+            p = key switch { "sites" => new SitesPage(), "devices" => new DevicesPage(), "events" => new EventsPage(), "settings" => new SettingsPage(), _ => new DashboardPage() };
             pages[key] = p;
         }
         if (current != null && pages.TryGetValue(current, out var old)) old.Hidden();
@@ -170,6 +199,7 @@ public class MainWindow : Window
         tray.Update(up, down, App.Engine.IsRunning);
         footer.Text = $"{total} devices · {up} ON · {down} OFF\nVersion {App.Version}";
         Title = down > 0 ? $"({down} OFF) {App.Name}" : App.Name;
+        if (down != lastDown && !siteFilter.IsDropDownOpen) { lastDown = down; FillSites(); }   // keep the "n OFF" in the site list current
         if (current != null && IsVisible && pages.TryGetValue(current, out var p)) p.Refresh();
     }
 

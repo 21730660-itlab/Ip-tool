@@ -30,8 +30,20 @@ public class Storage
     public static string DefaultLogFolder =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) is { Length: > 0 } docs ? docs : AppContext.BaseDirectory, "Device Monitor", "Logs");
 
-    public List<Device> LoadDevices() => Load<DeviceFile>(DevicesFile)?.Devices ?? new List<Device>();
-    public void SaveDevices(IEnumerable<Device> devices) => Save(DevicesFile, new DeviceFile { Devices = devices.ToList() });
+    public List<Device> LoadDevices() => LoadAll().devices;
+    public void SaveDevices(IEnumerable<Device> devices) => SaveAll(new List<Site>(), devices);
+
+    /// <summary>Sites and devices (sites are repaired / created for old files).</summary>
+    public (List<Site> sites, List<Device> devices) LoadAll()
+    {
+        var f = Load<DeviceFile>(DevicesFile) ?? new DeviceFile();
+        var sites = f.Sites ?? new List<Site>();
+        var devices = f.Devices ?? new List<Device>();
+        Sites.Repair(sites, devices);
+        return (sites, devices);
+    }
+    public void SaveAll(IEnumerable<Site> sites, IEnumerable<Device> devices) =>
+        Save(DevicesFile, new DeviceFile { Version = 2, Sites = sites.ToList(), Devices = devices.ToList() });
 
     public MonitorSettings LoadSettings()
     {
@@ -43,7 +55,8 @@ public class Storage
 
     public class DeviceFile
     {
-        public int Version { get; set; } = 1;
+        public int Version { get; set; } = 2;
+        public List<Site> Sites { get; set; } = new();
         public List<Device> Devices { get; set; } = new();
     }
 
@@ -69,17 +82,17 @@ public class Storage
 
     // ------------------------------------------------------------------ CSV import / export of the device list
 
-    public const string CsvHeader = "Name,Address,Kind,Group,Interval,Enabled,Notes";
+    public const string CsvHeader = "Name,Address,Kind,Site,Interval,Enabled,Notes";
 
     public static string ToCsv(IEnumerable<Device> devices)
     {
         var sb = new StringBuilder().AppendLine(CsvHeader);
         foreach (var d in devices)
-            sb.AppendLine(string.Join(",", Csv.Quote(d.Name), Csv.Quote(d.Address), d.Kind, Csv.Quote(d.Group), d.IntervalSeconds?.ToString() ?? "", d.Enabled ? "yes" : "no", Csv.Quote(d.Notes)));
+            sb.AppendLine(string.Join(",", Csv.Quote(d.Name), Csv.Quote(d.Address), d.Kind, Csv.Quote(d.Site), d.IntervalSeconds?.ToString() ?? "", d.Enabled ? "yes" : "no", Csv.Quote(d.Notes)));
         return sb.ToString();
     }
 
-    /// <summary>Reads devices from CSV (header row optional; columns as <see cref="CsvHeader"/>; only Address is required).</summary>
+    /// <summary>Reads devices from CSV (header row optional; columns as <see cref="CsvHeader"/>; only Address is required). Device.Site holds the site name; SiteId is set by the caller.</summary>
     public static List<Device> FromCsv(string text, out List<string> problems)
     {
         problems = new List<string>();
@@ -100,7 +113,7 @@ public class Storage
                 Name = F(0) == "" || F(0) == addr ? addr : F(0),
                 Address = addr,
                 Kind = Enum.TryParse<DeviceKind>(F(2).Replace(" ", ""), true, out var k) ? k : DeviceKind.Other,
-                Group = F(3),
+                Site = F(3),
                 IntervalSeconds = MonitorSettings.ParseInterval(F(4)),
                 Enabled = !(F(5).Equals("no", StringComparison.OrdinalIgnoreCase) || F(5).Equals("false", StringComparison.OrdinalIgnoreCase) || F(5) == "0"),
                 Notes = F(6),

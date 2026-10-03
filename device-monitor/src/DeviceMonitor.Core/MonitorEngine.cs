@@ -159,8 +159,8 @@ public sealed class MonitorEngine : IDisposable
             {
                 var initial = before is DeviceStatus.Unknown or DeviceStatus.Paused;
                 var ev = s == DeviceStatus.Down
-                    ? new MonitorEvent(now, EventKind.Down, d.Id, d.Name, d.Address, d.Group, string.IsNullOrEmpty(r.Error) ? "No reply" : r.Error, null, initial)
-                    : new MonitorEvent(now, EventKind.Up, d.Id, d.Name, d.Address, d.Group, $"Reply in {r.Ms} ms", initial ? null : now - beforeSince, initial);
+                    ? new MonitorEvent(now, EventKind.Down, d.Id, d.Name, d.Address, d.Site, string.IsNullOrEmpty(r.Error) ? "No reply" : r.Error, null, initial)
+                    : new MonitorEvent(now, EventKind.Up, d.Id, d.Name, d.Address, d.Site, $"Reply in {r.Ms} ms", initial ? null : now - beforeSince, initial);
                 StatusChanged?.Invoke(ev);
             }
         }

@@ -21,14 +21,27 @@ public static class App
     public static MonitorEngine Engine { get; private set; }
     public static EventLog Log { get; private set; }
     static List<Device> devices = new();
+    static List<Site> sites = new();
     static Dispatcher ui;
 
-    /// <summary>The device list changed (added, edited, removed, paused). Raised on the window thread.</summary>
+    /// <summary>The device or site list changed (added, edited, removed, paused). Raised on the window thread.</summary>
     public static event Action DevicesChanged;
     /// <summary>Monitoring was started or stopped, or the interval changed. Raised on the window thread.</summary>
     public static event Action MonitorChanged;
     /// <summary>A new event was logged. Raised on the window thread.</summary>
     public static event Action<MonitorEvent> EventAdded;
+    /// <summary>The site chosen in the top bar ("" = all sites). Raised on the window thread.</summary>
+    public static event Action SiteFilterChanged;
+    static string currentSite = "";
+    /// <summary>The site chosen in the top bar; "" = all sites. Every page shows only this site's devices.</summary>
+    public static string CurrentSiteId
+    {
+        get => FindSite(currentSite) != null ? currentSite : "";
+        set { value ??= ""; if (value == currentSite) return; currentSite = value; SiteFilterChanged?.Invoke(); }
+    }
+    /// <summary>Does the device belong to the site chosen in the top bar?</summary>
+    public static bool InCurrentSite(Device d) => CurrentSiteId == "" || d.SiteId == CurrentSiteId;
+
     /// <summary>Asks the main window to show a device (from a pop-up or the tray).</summary>
     public static event Action<string> ShowDeviceRequested;
 
@@ -37,7 +50,7 @@ public static class App
         ui = Dispatcher.CurrentDispatcher;
         Storage = new Storage();
         Settings = Storage.LoadSettings();
-        devices = Storage.LoadDevices();
+        (sites, devices) = Storage.LoadAll();
         Log = new EventLog(Settings.LogFolder);
         Log.LoadFromFile();
         Log.CleanUp(Settings.KeepLogDays);
@@ -49,13 +62,48 @@ public static class App
 
     public static IReadOnlyList<Device> Devices => devices;
     public static Device Find(string id) => devices.FirstOrDefault(d => d.Id == id);
-    public static IEnumerable<string> Groups => devices.Select(d => d.Group).Where(g => !string.IsNullOrWhiteSpace(g)).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(g => g);
+    /// <summary>Sites in name order.</summary>
+    public static IReadOnlyList<Site> Sites => sites.OrderBy(s => s.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+    public static Site FindSite(string id) => sites.FirstOrDefault(s => s.Id == id);
+    public static IEnumerable<Device> DevicesOf(string siteId) => devices.Where(d => d.SiteId == siteId);
+
+    // ------------------------------------------------------------------ sites
+
+    public static void SaveSite(Site s)
+    {
+        s.Name = s.Name?.Trim() ?? ""; s.Location = s.Location?.Trim() ?? ""; s.Notes = s.Notes?.Trim() ?? "";
+        if (s.Name == "") throw new RuleException("Enter a name for the site.");
+        if (sites.Any(x => x.Id != s.Id && x.Name.Equals(s.Name, StringComparison.OrdinalIgnoreCase)))
+            throw new RuleException($"There is already a site called \"{s.Name}\".");
+        var i = sites.FindIndex(x => x.Id == s.Id);
+        var old = i >= 0 ? sites[i].Name : null;
+        if (i >= 0) sites[i] = s; else sites.Add(s);
+        // the devices carry the site name (logs and pop-ups)
+        foreach (var d in devices.Where(d => d.SiteId == s.Id)) d.Site = s.Name;
+        Persist();
+        if (old == null) Log.Info($"Site added: {s.Name}");
+        else if (old != s.Name) Log.Info($"Site renamed: {old} → {s.Name}");
+        DevicesChanged?.Invoke();
+    }
+
+    /// <summary>Deletes a site together with its devices.</summary>
+    public static void DeleteSite(string id)
+    {
+        var s = FindSite(id); if (s == null) return;
+        foreach (var d in devices.Where(d => d.SiteId == id).ToList()) { devices.Remove(d); Engine.Remove(d.Id); }
+        sites.Remove(s);
+        Persist();
+        Log.Info($"Site removed: {s.Name}");
+        DevicesChanged?.Invoke();
+    }
 
     // ------------------------------------------------------------------ devices
 
     public static void Save(Device d)
     {
-        d.Name = d.Name?.Trim() ?? ""; d.Address = d.Address?.Trim() ?? ""; d.Group = d.Group?.Trim() ?? "";
+        d.Name = d.Name?.Trim() ?? ""; d.Address = d.Address?.Trim() ?? "";
+        var site = FindSite(d.SiteId) ?? throw new RuleException("Choose the site of this device (add a site first if the list is empty).");
+        d.Site = site.Name;
         if (!Validation.IsAddress(d.Address)) throw new RuleException("Enter a valid IP address (for example 192.168.88.1) or host name.");
         if (d.Name == "") d.Name = d.Address;
         if (devices.Any(x => x.Id != d.Id && x.Address.Equals(d.Address, StringComparison.OrdinalIgnoreCase)))
@@ -65,17 +113,22 @@ public static class App
         if (isNew) devices.Add(d); else devices[i] = d;
         Persist();
         Engine.Upsert(d);
-        if (isNew) Log.Info($"Device added: {d.Name} ({d.Address})");
+        if (isNew) Log.Info($"Device added: {d.Name} ({d.Address}) to site {d.Site}");
         DevicesChanged?.Invoke();
     }
 
-    /// <summary>Adds many devices at once (CSV import); addresses already in the list are skipped. Returns how many were added.</summary>
-    public static int AddMany(IEnumerable<Device> list)
+    /// <summary>
+    /// Adds many devices at once (CSV import); addresses already in the list are skipped. Returns how many were added.
+    /// Each device goes to the site named in its Site column (created when missing), or to <paramref name="defaultSiteId"/>.
+    /// </summary>
+    public static int AddMany(IEnumerable<Device> list, string defaultSiteId = null)
     {
         int n = 0;
         foreach (var d in list)
         {
             if (devices.Any(x => x.Address.Equals(d.Address, StringComparison.OrdinalIgnoreCase))) continue;
+            var site = string.IsNullOrWhiteSpace(d.Site) && FindSite(defaultSiteId) is Site def ? def : Core.Sites.GetOrAdd(sites, d.Site);
+            d.SiteId = site.Id; d.Site = site.Name;
             devices.Add(d); Engine.Upsert(d); n++;
         }
         if (n > 0) { Persist(); Log.Info($"{n} device(s) imported"); DevicesChanged?.Invoke(); }
@@ -108,7 +161,7 @@ public static class App
 
     static void Persist()
     {
-        try { Storage.SaveDevices(devices); }
+        try { Storage.SaveAll(sites, devices); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { throw new RuleException("Could not save the device list: " + e.Message); }
     }
 

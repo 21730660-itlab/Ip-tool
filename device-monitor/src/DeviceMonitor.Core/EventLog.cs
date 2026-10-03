@@ -12,7 +12,7 @@ namespace DeviceMonitor.Core;
 public class EventLog
 {
     public const string CsvName = "events.csv";
-    const string CsvHeader = "Date,Time,Event,Device,Address,Group,Detail,Down for,Down for (seconds)";
+    const string CsvHeader = "Date,Time,Event,Device,Address,Site,Detail,Down for,Down for (seconds)";
     public const int Keep = 5000;
 
     readonly object gate = new();
@@ -44,7 +44,7 @@ public class EventLog
             {
                 var newCsv = !File.Exists(CsvPath);
                 var line = string.Join(",", e.At.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), e.At.ToString("HH:mm:ss", CultureInfo.InvariantCulture),
-                    KindText(e.Kind), Csv.Quote(e.DeviceName), Csv.Quote(e.Address), Csv.Quote(e.Group), Csv.Quote(e.Detail),
+                    KindText(e.Kind), Csv.Quote(e.DeviceName), Csv.Quote(e.Address), Csv.Quote(e.Site), Csv.Quote(e.Detail),
                     e.Duration is TimeSpan t ? Duration(t) : "", e.Duration is TimeSpan t2 ? ((long)t2.TotalSeconds).ToString(CultureInfo.InvariantCulture) : "");
                 File.AppendAllText(CsvPath, (newCsv ? CsvHeader + "\r\n" : "") + line + "\r\n", new UTF8Encoding(newCsv));
                 File.AppendAllText(DayPath(e.At), TextLine(e) + "\r\n", Encoding.UTF8);
@@ -61,7 +61,7 @@ public class EventLog
 
     public static string TextLine(MonitorEvent e)
     {
-        var who = e.Kind == EventKind.Info ? "" : $"{e.DeviceName} ({e.Address}){(string.IsNullOrEmpty(e.Group) ? "" : " [" + e.Group + "]")} ";
+        var who = e.Kind == EventKind.Info ? "" : $"{e.DeviceName} ({e.Address}){(string.IsNullOrEmpty(e.Site) ? "" : " [site: " + e.Site + "]")} ";
         var what = e.Kind switch
         {
             EventKind.Down => $"is OFF - {e.Detail}",

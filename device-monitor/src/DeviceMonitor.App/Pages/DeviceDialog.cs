@@ -1,18 +1,39 @@
 namespace DeviceMonitor.App.Pages;
 
-/// <summary>Add / edit a device: name, IP, kind, group, own interval, notes, with a "Test ping" button.</summary>
+/// <summary>Add / edit a device: name, IP, site, kind, own interval, notes, with a "Test ping" button.</summary>
 public static class DeviceDialog
 {
-    public static void Add() => Open(new Device(), true);
+    /// <summary>Adds a device to a site (default: the site chosen in the top bar). With no site yet, a site is created first.</summary>
+    public static void Add(string siteId = null)
+    {
+        if (App.Sites.Count == 0)
+        {
+            if (!Ui.Ask("Devices belong to a site, and there is no site yet.\n\nAdd a site first (for example \"Main office\"), then add its IP addresses.", "Add a site first", "Add site")) return;
+            var s = SiteDialog.Add();
+            if (s == null) return;
+            siteId = s.Id;
+        }
+        siteId ??= App.CurrentSiteId;
+        Open(new Device { SiteId = App.FindSite(siteId) != null ? siteId : App.Sites[0].Id }, true);
+    }
     public static void Edit(Device d) => Open(d.Clone(), false);
 
     static void Open(Device d, bool isNew)
     {
-        var dlg = new Dlg(isNew ? "Add device" : "Edit device", 640);
+        var dlg = new Dlg(isNew ? "Add device (IP) to a site" : "Edit device", 660);
         var name = Ui.Box(d.Name, tip: "A name you recognise, for example \"Core router\" or \"AP floor 2\"");
         var addr = Ui.Box(d.Address, mono: true, tip: "IPv4, IPv6 or host name");
         var kind = Ui.Choice(Enum.GetValues<DeviceKind>().Select(k => (k.ToString(), Theme.KindText(k))), d.Kind.ToString());
-        var group = Ui.Editable(App.Groups, d.Group);
+        var site = new ComboBox { DisplayMemberPath = "Name", SelectedValuePath = "Id", ItemsSource = App.Sites, SelectedValue = d.SiteId, MaxDropDownHeight = 360 };
+        var newSite = Ui.IconBtn("\uE710", "New site…", () =>
+        {
+            var s = SiteDialog.Add();
+            if (s == null) return;
+            site.ItemsSource = App.Sites; site.SelectedValue = s.Id;
+        });
+        newSite.Margin = new Thickness(8, 0, 0, 0);
+        var siteRow = new DockPanel();
+        DockPanel.SetDock(newSite, Dock.Right); siteRow.Children.Add(newSite); siteRow.Children.Add(site);
         var defText = $"Default ({MonitorSettings.IntervalText(App.Settings.IntervalSeconds)})";
         var interval = UiExtra.IntervalBox(d.IntervalSeconds, defText, 260);
         var notes = Ui.Box(d.Notes, multi: true);
@@ -32,10 +53,10 @@ public static class DeviceDialog
             test.Res(TextBlock.ForegroundProperty, r.Ok ? "Ok" : "Sig");
         };
 
+        dlg.Body.Children.Add(Ui.Field("Site", siteRow, "The site this device belongs to"));
         dlg.Body.Children.Add(Ui.Cols(Ui.Field("Name", name), Ui.Field("IP address", addr, "For example 192.168.88.1 (MikroTik default)")));
         dlg.Body.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, -4, 0, 16), Children = { testBtn, test } });
-        dlg.Body.Children.Add(Ui.Cols(Ui.Field("Kind", kind), Ui.Field("Group", group, "Site, building or customer (optional)")));
-        dlg.Body.Children.Add(Ui.Field("Ping interval", interval, "Leave on Default to follow the global setting, pick a value, or type seconds (e.g. 45)"));
+        dlg.Body.Children.Add(Ui.Cols(Ui.Field("Kind", kind), Ui.Field("Ping interval", interval, "Default, a value from the list, or seconds (e.g. 45)")));
         dlg.Body.Children.Add(Ui.Field("Notes", notes));
         dlg.Body.Children.Add(enabled);
 
@@ -53,7 +74,7 @@ public static class DeviceDialog
             if (!ok) throw new RuleException($"The interval must be a number of seconds between {MonitorSettings.MinInterval} and {MonitorSettings.MaxInterval} (or for example \"2 min\").");
             d.Name = name.Text; d.Address = addr.Text;
             d.Kind = Enum.Parse<DeviceKind>(kind.Val());
-            d.Group = group.Text; d.Notes = notes.Text;
+            d.SiteId = site.SelectedValue as string ?? ""; d.Notes = notes.Text;
             d.IntervalSeconds = secs; d.Enabled = enabled.IsChecked == true;
             App.Save(d);
             return true;

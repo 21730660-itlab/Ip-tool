@@ -44,7 +44,7 @@ public static class Toast
         sp.Children.Add(title);
         var name = Ui.Text(e.DeviceName, 18, FontWeights.SemiBold, "Ink"); name.Margin = new Thickness(0, 2, 0, 0);
         sp.Children.Add(name);
-        sp.Children.Add(Ui.Text($"{e.Address}{(string.IsNullOrEmpty(e.Group) ? "" : "   ·   " + e.Group)}", 14, null, "Ink2"));
+        sp.Children.Add(Ui.Text($"{e.Address}{(string.IsNullOrEmpty(e.Site) ? "" : "   ·   Site: " + e.Site)}", 14, null, "Ink2"));
         var detail = down
             ? $"{e.Detail}  ·  {e.At:HH:mm:ss}"
             : (e.Duration is TimeSpan t ? $"Was OFF for {EventLog.Duration(t)}  ·  " : "") + $"{e.Detail}  ·  {e.At:HH:mm:ss}";

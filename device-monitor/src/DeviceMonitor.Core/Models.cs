@@ -14,8 +14,13 @@ public class Device
     /// <summary>IPv4 / IPv6 address or a host name.</summary>
     public string Address { get; set; } = "";
     public DeviceKind Kind { get; set; } = DeviceKind.MikroTik;
-    /// <summary>Free grouping (site, building, customer...). Empty = "No group".</summary>
-    public string Group { get; set; } = "";
+    /// <summary>The site the device belongs to (see <see cref="Site"/> class / <see cref="Sites"/>).</summary>
+    public string SiteId { get; set; } = "";
+    /// <summary>Name of that site, kept in step by the program (used in the logs and pop-ups).</summary>
+    public string Site { get; set; } = "";
+    /// <summary>Version 1.0 files called the site "Group": read it once, never written again.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string Group { get => null; set { if (!string.IsNullOrWhiteSpace(value) && string.IsNullOrWhiteSpace(Site)) Site = value; } }
     public string Notes { get; set; } = "";
     /// <summary>false = paused: kept in the list but not pinged.</summary>
     public bool Enabled { get; set; } = true;
@@ -24,6 +29,52 @@ public class Device
     public DateTime Added { get; set; } = DateTime.Now;
 
     public Device Clone() => (Device)MemberwiseClone();
+}
+
+/// <summary>A place (office, branch, customer, tower...) that holds devices. Create the site first, then add its IPs.</summary>
+public class Site
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Name { get; set; } = "";
+    public string Location { get; set; } = "";
+    public string Notes { get; set; } = "";
+    public DateTime Added { get; set; } = DateTime.Now;
+    public Site Clone() => (Site)MemberwiseClone();
+}
+
+/// <summary>Helpers that keep devices and sites consistent.</summary>
+public static class Sites
+{
+    /// <summary>
+    /// Every device gets a valid site: old files (site written only as a name) get their sites created,
+    /// devices without a site go to "Unassigned". Device.Site is refreshed from the site name. Returns true when something changed.
+    /// </summary>
+    public static bool Repair(List<Site> sites, List<Device> devices)
+    {
+        bool changed = false;
+        foreach (var d in devices)
+        {
+            var s = sites.FirstOrDefault(x => x.Id == d.SiteId);
+            if (s == null)
+            {
+                var name = string.IsNullOrWhiteSpace(d.Site) ? "Unassigned" : d.Site.Trim();
+                s = sites.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                if (s == null) { s = new Site { Name = name }; sites.Add(s); }
+                d.SiteId = s.Id; changed = true;
+            }
+            if (d.Site != s.Name) { d.Site = s.Name; changed = true; }
+        }
+        return changed;
+    }
+
+    /// <summary>The site with this name, created when missing (CSV import).</summary>
+    public static Site GetOrAdd(List<Site> sites, string name)
+    {
+        name = string.IsNullOrWhiteSpace(name) ? "Unassigned" : name.Trim();
+        var s = sites.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        if (s == null) { s = new Site { Name = name }; sites.Add(s); }
+        return s;
+    }
 }
 
 /// <summary>Everything the user can change on the Settings page.</summary>
@@ -100,7 +151,7 @@ public enum DeviceStatus { Unknown, Up, Down, Paused }
 /// <summary>A device went OFF or came back ON (or a note about the monitor itself).</summary>
 /// <param name="Duration">For "back ON": how long the device was OFF.</param>
 /// <param name="Initial">The first result after the monitor started (a device found ON is no news: no pop-up).</param>
-public record MonitorEvent(DateTime At, EventKind Kind, string DeviceId, string DeviceName, string Address, string Group, string Detail, TimeSpan? Duration = null, bool Initial = false);
+public record MonitorEvent(DateTime At, EventKind Kind, string DeviceId, string DeviceName, string Address, string Site, string Detail, TimeSpan? Duration = null, bool Initial = false);
 
 public enum EventKind { Down, Up, Info }
 
