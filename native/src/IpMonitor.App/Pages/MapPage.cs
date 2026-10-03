@@ -33,6 +33,9 @@ public class MapPage : PageBase
     double panTx, panTy;
     (string kind, string id, double dx, double dy)? drag;
 
+    // the device clicked on the map, and its action bar (WinBox, web page, ping…)
+    string selDev; Border actBar;
+
     // connect mode
     bool connecting; string connectA; Point mouseWorld;
     Shapes.Line rubber;
@@ -163,7 +166,13 @@ public class MapPage : PageBase
             var b = Ui.Btn(t, a, null, tip); b.MinWidth = 40; b.Margin = new Thickness(6, 0, 0, 0); b.Padding = new Thickness(10, 4, 10, 4); tools.Children.Add(b);
         }
         var mapArea = new Grid();
-        mapArea.Children.Add(host); mapArea.Children.Add(tools); mapArea.Children.Add(cnBar);
+        actBar = new Border { Padding = new Thickness(14, 8, 8, 8), CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1), Margin = new Thickness(10, 0, 10, 10),
+            VerticalAlignment = VerticalAlignment.Bottom, HorizontalAlignment = HorizontalAlignment.Left, Visibility = Visibility.Collapsed,
+            Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 12, ShadowDepth = 1, Opacity = 0.25 } }
+            .Res(Border.BackgroundProperty, "Panel").Res(Border.BorderBrushProperty, "Frame");
+        mapArea.Children.Add(host); mapArea.Children.Add(tools); mapArea.Children.Add(cnBar); mapArea.Children.Add(actBar);
+        host.MouseRightButtonUp += OnRightClick;
+        if (selDev != null && S.DevById(selDev) != null) ShowActions(); else selDev = null;
 
         var legend = new WrapPanel { Margin = new Thickness(0, 10, 0, 0) };
         void Leg(UIElement sample, string text)
@@ -180,7 +189,7 @@ public class MapPage : PageBase
         Leg(Ui.Badge("DOWN", Theme.B("AccInk"), Theme.B("Sig")), "no ping reply");
         foreach (var (t, k) in new[] { ("Router", "router"), ("Wireless", "wireless"), ("Router + Wi-Fi", "both"), ("PC / IP phone", "pc"), ("Servers", "server"), ("Cameras / NVR", "camera") })
             Leg(new Border { Width = 12, Height = 12, CornerRadius = new CornerRadius(2), Background = TypeBrush(k) }, t);
-        var hint = Ui.Muted("Drag the background to move around · mouse wheel or +/− to zoom · drag a device, or a site by its title bar, to arrange it (saved automatically) · click a device or a line to open it · to connect two devices click “Add connection”, then the first device, then the second.", 12.5);
+        var hint = Ui.Muted("Drag the background to move around · mouse wheel or +/− to zoom · drag a device, or a site by its title bar, to arrange it (saved automatically) · click a device for WinBox, web page, ping and more (right-click for a menu, double-click to edit) · click a line to open the connection · to connect two devices click “Add connection”, then the first device, then the second.", 12.5);
         hint.Margin = new Thickness(0, 6, 0, 0);
         var bottom = new StackPanel(); bottom.Children.Add(legend); bottom.Children.Add(hint);
 
@@ -492,8 +501,9 @@ public class MapPage : PageBase
         bool isDown = live?.State == DeviceMonitor.State.Down, isUp = live?.State == DeviceMonitor.State.Up;
         var color = p.Ghost ? Theme.B("Muted") : TypeBrush(d.Type);
         var g = new Grid { Width = NW, Height = NH };
-        var body = new Border { CornerRadius = new CornerRadius(7), BorderThickness = new Thickness(connectA == id || isDown ? 3 : 2),
-            BorderBrush = connectA == id ? Theme.B("Acc") : isDown ? Theme.B("Sig") : color, Background = Theme.B(isDown ? "SigSoft" : "Panel") };
+        bool sel = id == selDev && !print;
+        var body = new Border { CornerRadius = new CornerRadius(7), BorderThickness = new Thickness(connectA == id || isDown || sel ? 3 : 2),
+            BorderBrush = connectA == id || sel ? Theme.B("Acc") : isDown ? Theme.B("Sig") : color, Background = Theme.B(isDown ? "SigSoft" : "Panel") };
         if (p.Ghost) body.Opacity = 0.75;
         g.Children.Add(body);
         g.Children.Add(new Border { Height = 4, CornerRadius = new CornerRadius(2), Background = isDown ? Theme.B("Sig") : color, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(2, 2, 2, 0) });
@@ -576,7 +586,13 @@ public class MapPage : PageBase
     void OnDown(object sender, MouseButtonEventArgs e)
     {
         host.Focus();
-        downTag = TagAt(e.OriginalSource); downScreen = e.GetPosition(host); downWorld = ToWorld(downScreen); moved = false;
+        downTag = TagAt(e.OriginalSource);
+        if (e.ClickCount == 2 && !connecting && downTag != null && downTag.StartsWith("dev:"))
+        {
+            var id2 = downTag[4..]; downTag = null; e.Handled = true;
+            if (S.DevById(id2) is Device dd) DeviceDialog.Edit(dd, null);
+            return;
+        } downScreen = e.GetPosition(host); downWorld = ToWorld(downScreen); moved = false;
         panning = downTag == null || downTag.StartsWith("link:") || downTag.StartsWith("goto:");
         panTx = tx; panTy = ty;
         host.CaptureMouse();
@@ -627,7 +643,7 @@ public class MapPage : PageBase
 
     void Click(string tag)
     {
-        if (tag == null) return;
+        if (tag == null) { if (selDev != null && !connecting) { selDev = null; actBar.Visibility = Visibility.Collapsed; Draw(); } return; }
         var (kind, id) = (tag[..tag.IndexOf(':')], tag[(tag.IndexOf(':') + 1)..]);
         if (connecting)
         {
@@ -643,11 +659,74 @@ public class MapPage : PageBase
         }
         switch (kind)
         {
-            case "dev": if (S.DevById(id) is Device d) DeviceDialog.Edit(d, null); break;
+            case "dev": selDev = id; ShowActions(); Draw(); break;
             case "link": if (S.Db.Links.FirstOrDefault(l => l.Id == id) is Link l) W.Page<LinksPage>().Edit(l); break;
             case "goto": case "site" when W.SiteFilter == "" && !S.CanWrite: W.SiteFilter = id; W.Navigate(this); break;
             case "site": if (W.SiteFilter == "") { W.SiteFilter = id; W.Navigate(this); } break;
         }
+    }
+
+    // ------------------------------------------------------------------ device actions (click / right-click a device)
+    List<(string glyph, string text, Action act, bool enabled, string tip)> Actions(Device d)
+    {
+        var ip = DevicesPage.MainIp(d);
+        return new()
+        {
+            ("\uE7F8", "WinBox", () => DevicesPage.Winbox(d), d.IsMikroTik && ip != "", d.IsMikroTik ? "Open this MikroTik in WinBox (logs in with the saved username and password)" : "WinBox is for MikroTik devices"),
+            ("\uE774", "Web", () => DevicesPage.OpenWeb(d), ip != "", "Open the device's web page (http://" + ip + ")"),
+            ("\uE9D9", "Ping", () => _ = PingOne(d), ip != "", "Ping " + ip + " now"),
+            ("\uE8A5", "Config backups", () => ConfigDialog.Open(d), d.IsMikroTik, "RouterOS config backups (.rsc)"),
+            ("\uE70F", "Edit", () => DeviceDialog.Edit(d, null), true, "Edit the device"),
+        };
+    }
+
+    async Task PingOne(Device d)
+    {
+        var ip = DevicesPage.MainIp(d);
+        var r = await Pinger.PingAsync(ip);
+        NetworksPage.Pings[ip] = r;
+        W.Toast(r.Up ? $"{d.Name} ({ip}) answers ping · {r.Ms} ms" : $"{d.Name} ({ip}) does not answer ping");
+    }
+
+    void ShowActions()
+    {
+        if (actBar == null || selDev == null || S.DevById(selDev) is not Device d) return;
+        var row = new StackPanel { Orientation = Orientation.Horizontal };
+        var info = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 14, 0) };
+        info.Children.Add(Ui.Text(d.Name, 15, FontWeights.Bold, "Ink", false));
+        var live = W.Monitor.Of(d.Id);
+        var ip = DevicesPage.MainIp(d);
+        info.Children.Add(Ui.Muted($"{(ip == "" ? "no IP" : ip)} · {Store.TypeLabel.GetValueOrDefault(d.Type, d.Type)}" + (live == DeviceMonitor.State.Down ? " · DOWN" : live == DeviceMonitor.State.Up ? " · UP" : ""), 12.5));
+        row.Children.Add(info);
+        foreach (var (g, t, a, en, tip) in Actions(d))
+        {
+            var b = Ui.IconBtn(g, t, a, t == "WinBox" ? "Primary" : null, tip);
+            b.IsEnabled = en; b.Margin = new Thickness(0, 0, 6, 0); b.MinHeight = 34; b.Padding = new Thickness(10, 5, 10, 5);
+            row.Children.Add(b);
+        }
+        var close = Ui.Btn("✕", () => { selDev = null; actBar.Visibility = Visibility.Collapsed; Draw(); }, "Link", "Close");
+        close.Margin = new Thickness(4, 0, 0, 0);
+        row.Children.Add(close);
+        actBar.Child = row; actBar.Visibility = Visibility.Visible;
+    }
+
+    void OnRightClick(object sender, MouseButtonEventArgs e)
+    {
+        if (connecting) return;
+        var tag = TagAt(e.OriginalSource);
+        if (tag == null || !tag.StartsWith("dev:") || S.DevById(tag[4..]) is not Device d) return;
+        selDev = d.Id; ShowActions(); Draw();
+        var menu = new ContextMenu();
+        menu.Items.Add(new MenuItem { Header = $"{d.Name}  ({(DevicesPage.MainIp(d) == "" ? "no IP" : DevicesPage.MainIp(d))})", IsEnabled = false, FontWeight = FontWeights.Bold });
+        menu.Items.Add(new Separator());
+        foreach (var (_, t, a, en, tip) in Actions(d))
+        {
+            var mi = new MenuItem { Header = t == "WinBox" ? "Open in WinBox" : t == "Web" ? "Open web page" : t == "Ping" ? "Ping now" : t == "Edit" ? "Edit device…" : "Config backups…", IsEnabled = en, ToolTip = tip };
+            mi.Click += (_, _) => a();
+            menu.Items.Add(mi);
+        }
+        menu.PlacementTarget = host; menu.IsOpen = true;
+        e.Handled = true;
     }
 
     // ------------------------------------------------------------------ connect mode

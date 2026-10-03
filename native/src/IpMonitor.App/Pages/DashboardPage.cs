@@ -214,6 +214,19 @@ public class DashboardPage : PageBase
             $"Every {(st.MonitorSeconds >= 60 ? st.MonitorSeconds / 60 + " min" : st.MonitorSeconds + " s")} · last check {m.LastRun:HH:mm:ss} · {up} up · {dn} down · {watched.Count} watched" + (noIp > 0 ? $" · {noIp} without IP" : "") +
             "\nA pop-up appears when a device stops answering, and again when it is back. Planned and Retired devices are not pinged.";
         monList.Children.Clear();
+        // wireless details read from the routers
+        if (S.Db.Links.Any(l => l.Type == "wireless"))
+        {
+            var rr = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
+            var auto = new CheckBox { Content = $"Read wireless details from the routers every {st.RadioMinutes} min", IsChecked = st.RadioAuto, IsEnabled = S.CanWrite, VerticalAlignment = VerticalAlignment.Center };
+            auto.Checked += (_, _) => { st.RadioAuto = true; st.Save(); W.StartRadio(); }; auto.Unchecked += (_, _) => { st.RadioAuto = false; st.Save(); W.StartRadio(); };
+            var now = Ui.Btn("Read now", async () => { await W.RunRadio(); }, "Link"); now.IsEnabled = S.CanWrite;
+            DockPanel.SetDock(now, Dock.Right); rr.Children.Add(now);
+            var inner = new StackPanel(); inner.Children.Add(auto);
+            inner.Children.Add(Ui.Muted(W.RadioStatus == "" ? "Frequency, SSID, protocol (NV2…), signal and distance — using the username and password saved on each MikroTik." : W.RadioStatus, 12.5));
+            rr.Children.Add(inner);
+            monList.Children.Add(rr);
+        }
         foreach (var s in m.States.Values.Where(s => s.State == DeviceMonitor.State.Down).OrderBy(s => s.Since))
         {
             if (S.DevById(s.DeviceId) is not Device d) continue;

@@ -9,13 +9,17 @@ public static class Pinger
 
     public static async Task<Result> PingAsync(string ip, int timeoutMs = 1500)
     {
-        try
+        // the plain (synchronous) ping on a background thread: the most compatible way on every Windows version
+        return await Task.Run(() =>
         {
-            using var p = new Ping();
-            var r = await p.SendPingAsync(ip, timeoutMs);
-            return r.Status == IPStatus.Success ? new Result(ip, true, r.RoundtripTime, "") : new Result(ip, false, 0, r.Status.ToString());
-        }
-        catch (Exception ex) { return new Result(ip, false, 0, ex.InnerException?.Message ?? ex.Message); }
+            try
+            {
+                using var p = new Ping();
+                var r = p.Send(ip, timeoutMs);
+                return r.Status == IPStatus.Success ? new Result(ip, true, r.RoundtripTime, "") : new Result(ip, false, 0, r.Status.ToString());
+            }
+            catch (Exception ex) { return new Result(ip, false, 0, ex.InnerException?.Message ?? ex.Message); }
+        });
     }
 
     public static async Task<List<Result>> PingManyAsync(IEnumerable<string> ips, int parallel = 32, int timeoutMs = 1500, IProgress<Result> progress = null)

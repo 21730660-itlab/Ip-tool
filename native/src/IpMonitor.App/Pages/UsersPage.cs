@@ -68,7 +68,7 @@ public class UsersPage : PageBase
     static void AddAccount()
     {
         var d = new Dlg("Add account", 520);
-        var user = Ui.Box(); var p1 = new PasswordBox(); var p2 = new PasswordBox();
+        var user = Ui.Box(); var p1 = new SecretBox(); var p2 = new SecretBox();
         var perm = Ui.Choice(new[] { ("read", "View only"), ("write", "Can edit"), ("full", "Full access") }, "read");
         d.Body.Children.Add(Ui.Field("Username", user, "3–32 characters: letters, numbers, dot, dash or underscore."));
         d.Body.Children.Add(Ui.Cols(Ui.Field("Password", p1, "At least 8 characters."), Ui.Field("Confirm", p2)));

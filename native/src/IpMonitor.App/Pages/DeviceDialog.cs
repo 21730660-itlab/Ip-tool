@@ -63,10 +63,10 @@ public class DeviceDialog
         c.SelectionChanged += (_, _) => { if (c.SelectedItem is string s) set(s); };
         return c;
     }
-    static PasswordBox P(string v, Action<string> set)
+    static SecretBox P(string v, Action<string> set)
     {
-        var p = new PasswordBox { Password = v ?? "" };
-        p.PasswordChanged += (_, _) => set(p.Password);
+        var p = new SecretBox(v);
+        p.PasswordChanged += () => set(p.Password);
         return p;
     }
     void Add(UIElement e) => body.Children.Add(e);

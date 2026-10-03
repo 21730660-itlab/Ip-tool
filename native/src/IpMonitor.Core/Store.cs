@@ -724,6 +724,49 @@ public class Store
         var e = Db.Changes[^1]; e.Extra ??= new(); e.Extra["dev"] = JsonSerializer.SerializeToElement(c.DeviceId);   // the web version links the entry to the device this way
     }
 
+    // ------------------------------------------------------------------ radio readings (from the routers)
+    public static void SetX(Link l, string k, object v)
+    {
+        l.Extra ??= new();
+        if (v == null || v is string str && str == "") l.Extra.Remove(k);
+        else l.Extra[k] = JsonSerializer.SerializeToElement(v);
+    }
+
+    /// <summary>Saves what was read from the routers onto the connections (and the devices' wireless protocol).
+    /// Frequency, SSID, band, width and protocol changes go to the history; signal and distance (they change all the time) do not.</summary>
+    public int ApplyRadio(IEnumerable<(Link link, Radio.LinkReading r)> readings)
+    {
+        NeedWrite();
+        int n = 0;
+        foreach (var (link, r) in readings)
+        {
+            var l = Db.Links.FirstOrDefault(x => x.Id == link.Id);
+            if (l == null || r == null || !r.Ok) continue;
+            var before = (f: Health.X(l, "freq"), b: Health.X(l, "band"), w: Health.X(l, "width"), p: Health.X(l, "proto"), s: l.Ssid);
+            if (r.Freq is double f) SetX(l, "freq", (int)Math.Round(f));
+            if (r.Band != "") SetX(l, "band", r.Band);
+            if (r.Width != "") SetX(l, "width", r.Width);
+            if (r.Proto != "") SetX(l, "proto", r.Proto);
+            if (r.Signal is double sg) SetX(l, "signal", (int)Math.Round(sg));
+            SetX(l, "signalA", r.SignalA is double sa ? (int)Math.Round(sa) : null);
+            SetX(l, "signalB", r.SignalB is double sb ? (int)Math.Round(sb) : null);
+            if (r.Distance is double d) SetX(l, "dist", Math.Round(d, 2));
+            if (r.Ssid != "") l.Ssid = r.Ssid;
+            SetX(l, "radioAt", Entity.Now());
+            l.UpdatedAt = Entity.Now();
+            foreach (var dev in new[] { DevById(l.A), DevById(l.B) })
+                if (dev != null && dev.IsMikroTik && dev.HasWifi && r.Proto != "" && WProtoLabel.ContainsKey(r.Proto) && dev.WProto != r.Proto) { dev.WProto = r.Proto; dev.UpdatedAt = Entity.Now(); }
+            var lines = new List<string>();
+            void Ch(string label, string a, string b) { if ((a ?? "") != (b ?? "")) lines.Add($"{label}: {(string.IsNullOrEmpty(a) ? "—" : a)} → {b}"); }
+            Ch("Frequency", before.f, Health.X(l, "freq")); Ch("Band", before.b, Health.X(l, "band")); Ch("Width", before.w, Health.X(l, "width"));
+            Ch("Protocol", before.p, Health.X(l, "proto")); Ch("SSID", before.s, l.Ssid);
+            if (lines.Count > 0) Log("edit", "connection", l.Id, $"{LinkLabel(l)} · read from the routers", DevById(l.A)?.SiteId ?? "", lines);
+            n++;
+        }
+        if (n > 0) Persist();
+        return n;
+    }
+
     // ------------------------------------------------------------------ site map positions
     // Same fields as the web version: a site's "mx"/"my" is its box position (all-sites view),
     // a device's "mx"/"my" is its centre inside its site box. Moving things is not written to the history.

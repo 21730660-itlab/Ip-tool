@@ -42,7 +42,7 @@ public static class Theme
         }
     }
 
-    public static Brush B(string key) => (Brush)Application.Current.Resources[key];
+    public static Brush B(string key) => Application.Current.Resources[key] as Brush ?? Brushes.Transparent;
 
     /// <summary>Colour pair (text, background) of a status.</summary>
     public static (Brush fg, Brush bg) Status(string status) => Store.StatusOf(status) switch

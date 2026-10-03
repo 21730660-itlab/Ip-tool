@@ -13,6 +13,9 @@ public class Settings
     public bool MonitorOn { get; set; } = true;
     public int MonitorSeconds { get; set; } = 60;
     public bool MonitorSound { get; set; } = true;
+    /// <summary>Read the wireless connections' radio details from the routers automatically, and how often (minutes).</summary>
+    public bool RadioAuto { get; set; } = true;
+    public int RadioMinutes { get; set; } = 10;
 
     static string Dir => IOPath.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "IPMonitor");
     static string FilePath => IOPath.Combine(Dir, "settings.json");
