@@ -113,6 +113,12 @@ Ok(diff.Count(d => d.op == '-') == 1 && diff.Count(d => d.op == '+') == 1 && dif
 Ok(Rsc.DiffContext(diff).Any(d => d.line == "/ip address"), "diff keeps the section header");
 var guestUser = st.Me; st.Me = guest; Throws(() => st.DeleteConfig(c1.Id), "Full access", "only full access deletes configs"); st.Me = guestUser;
 
+// MikroTik model list: typing part of a name finds the models
+var sq = MikroTikModels.Search("sq");
+Ok(sq.Count >= 4 && sq.All(m => m.Name.Contains("SXTsq")) && sq.All(m => m.Type == "wireless"), "model search “sq”: " + string.Join(", ", sq.Select(m => m.Name)));
+Ok(MikroTikModels.Search("4011").Count == 2 && MikroTikModels.Search("hap ac").Any(m => m.Name == "hAP ac²") && MikroTikModels.Find("RB750Gr3")?.Name == "hEX", "model search by code and with spaces");
+Ok(Store.DefaultPorts("SXTsq 5 ac", "wireless").SequenceEqual(new[] { "ether1", "wlan1" }) && Store.DefaultPorts("RB4011iGS+RM", "router").Contains("sfp-sfpplus1"), "a known model brings its ports");
+
 // subnet calculator
 var ce = IpMath.Parse("192.168.1.10/26");
 Ok(IpMath.Wildcard(ce) == "0.0.0.63" && ce.Mask == "255.255.255.192" && IpMath.V4Class(ce.Addr) == "C" && IpMath.Scope(ce).StartsWith("Private"), "calculator basics");

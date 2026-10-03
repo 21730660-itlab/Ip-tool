@@ -85,7 +85,8 @@ public class DeviceDialog
             Ui.Field("Brand", C(new[] { ("mikrotik", "MikroTik"), ("other", "Other brand") }, d.IsMikroTik ? "mikrotik" : "other", v => d.Vendor = v, true))));
         Add(Ui.Cols(
             Ui.Field("Type", C(types.Select(t => (t, Store.TypeLabel[t])), d.Type, v => d.Type = v, true)),
-            Ui.Field(d.IsMikroTik ? "Model" : "Brand and model", T(d.Model, v => d.Model = v), d.IsMikroTik ? "e.g. hEX, RB4011, SXT, LHG" : "e.g. Dell OptiPlex, Hikvision DS-2CD")));
+            d.IsMikroTik ? Ui.Field("Model", ModelBox(), "Type part of the name (e.g. sq, lhg, 4011) and pick it from the list — the type and ports are filled in.")
+                         : Ui.Field("Brand and model", OtherModelBox(), "e.g. Dell OptiPlex, Hikvision DS-2CD")));
         Add(Ui.Cols(
             Ui.Field("Device name", T(d.Name, v => d.Name = v)),
             Ui.Field("Status", C(Store.StatusLabel.Select(kv => (kv.Key, kv.Value)), Store.StatusOf(d.Status), v => d.Status = v))));
@@ -102,6 +103,51 @@ public class DeviceDialog
         if (!ro) fields.Add(Ui.Field("Password", P(d.Pass, v => d.Pass = v)));
         if (winbox) fields.Add(Ui.Field("WinBox port", T(d.Winbox, v => d.Winbox = v), "Empty = 8291"));
         Add(Ui.Cols(fields.ToArray()));
+    }
+
+    /// <summary>MikroTik model: a searchable list of MikroTik devices (and models already used in this database).</summary>
+    FrameworkElement ModelBox()
+    {
+        IEnumerable<SuggestBox.Item> Source(string typed)
+        {
+            var known = MikroTikModels.Search(typed).Select(m => new SuggestBox.Item(m.Name, m.Name, $"{m.Code} · {string.Join(", ", m.Ports.Count > 6 ? m.Ports.Take(6).Append("…") : m.Ports)}", m.Family, m));
+            var key = new string((typed ?? "").Where(char.IsLetterOrDigit).ToArray());
+            var used = S.Db.Devices.Where(x => x.IsMikroTik && !string.IsNullOrWhiteSpace(x.Model) && MikroTikModels.Find(x.Model) == null)
+                .Select(x => x.Model.Trim()).Distinct(StringComparer.OrdinalIgnoreCase)
+                .Where(m => key == "" || new string(m.Where(char.IsLetterOrDigit).ToArray()).Contains(key, StringComparison.OrdinalIgnoreCase))
+                .Select(m => new SuggestBox.Item(m, m, "used before in this database", "", null));
+            return known.Concat(used);
+        }
+        var box = new SuggestBox(d.Model, Source, "MikroTik model");
+        box.Box.IsReadOnly = ro;
+        box.Typed += v => d.Model = v;
+        box.Picked += it =>
+        {
+            var oldDefaults = Store.DefaultPorts(d.Model, d.Type);
+            d.Model = it.Value;
+            if (it.Data is MikroTikModels.Model m)
+            {
+                if (Store.NetTypes.Contains(m.Type)) d.Type = m.Type;
+                // the model's ports, unless the ports were already changed by hand
+                if (d.Ports.Count == 0 || d.Ports.SequenceEqual(oldDefaults) || isNew) d.Ports = m.Ports.ToList();
+            }
+            dlg.Dispatcher.BeginInvoke(Render);
+        };
+        return box;
+    }
+
+    /// <summary>Other brands: a box that suggests the models already used in this database.</summary>
+    FrameworkElement OtherModelBox()
+    {
+        IEnumerable<SuggestBox.Item> Source(string typed) => S.Db.Devices.Where(x => !x.IsMikroTik && !string.IsNullOrWhiteSpace(x.Model))
+            .GroupBy(x => x.Model.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Where(g => string.IsNullOrWhiteSpace(typed) || g.Key.Contains(typed.Trim(), StringComparison.OrdinalIgnoreCase))
+            .Select(g => new SuggestBox.Item(g.Key, g.Key, $"{Store.TypeLabel.GetValueOrDefault(g.First().Type, g.First().Type)} · used on {g.Count()} device{(g.Count() == 1 ? "" : "s")}", "", g.First().Type));
+        var box = new SuggestBox(d.Model, Source, "Brand and model");
+        box.Box.IsReadOnly = ro;
+        box.Typed += v => d.Model = v;
+        box.Picked += it => { d.Model = it.Value; if (it.Data is string t && Store.EndTypes.Contains(t)) { d.Type = t; dlg.Dispatcher.BeginInvoke(Render); } };
+        return box;
     }
 
     void RenderMikroTik()

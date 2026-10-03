@@ -100,6 +100,7 @@ public class Store
 
     public static List<string> DefaultPorts(string model, string type)
     {
+        if (MikroTikModels.Find(model) is MikroTikModels.Model known) return known.Ports.ToList();
         var m = (model ?? "").ToLowerInvariant();
         var ports = new List<string>();
         int eth = m.Contains("rb4011") || m.Contains("rb5009") ? 10 : m.Contains("crs3") ? 24 : m.Contains("hex") || m.Contains("rb750") || m.Contains("rb760") ? 5 : m.Contains("sxt") || m.Contains("lhg") || m.Contains("ldf") || m.Contains("disc") ? 1 : type == "wireless" ? 1 : 5;

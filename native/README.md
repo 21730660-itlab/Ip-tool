@@ -16,6 +16,10 @@ A native Windows version of IP Monitor (C#, .NET 8, WPF). It uses the **same dat
 - Wireless connections read from the MikroTiks (RouterOS API, port 8728/8729, with the username and password saved
   on each device): frequency, band, channel width, SSID, protocol (NV2 / 802.11 / Nstreme), signal of both ends and
   distance — on demand ("Read from routers") and automatically every 10 minutes while monitoring is on
+- MikroTik model: a searchable list of about 100 MikroTik models (type “sq”, “lhg”, “4011”…); picking one fills in
+  the device type and its ports
+- Radio values of wireless connections are not typed in: they are read from the routers (on opening the form, after
+  saving a new connection, and every 10 minutes); when they cannot be read, the reason is shown
 - Passwords can be shown or hidden (eye button)
 - Site map: click a device for WinBox, its web page, ping, config backups or edit (right-click menu, double-click edits)
 - Site map: every site with its devices, cables and wireless links; drag to arrange (positions shared with the web

@@ -121,56 +121,98 @@ public class LinksPage : PageBase
         return Layout(Header("Connections", "Cables inside a site and wireless links (also between sites)." + auto, AddBtn("Add connection", () => Edit(null))), bar, TableWithEmpty(g, empty));
     }
 
-    /// <summary>Frequency, band, width, protocol, signal and distance of a wireless connection, with "Read from routers".</summary>
-    UIElement RadioSection(Link l, Dlg d, Action redraw)
+    /// <summary>A new wireless connection: read its radio values right away.</summary>
+    static async Task ReadAfterSave(string linkId)
+    {
+        if (S.Db.Links.FirstOrDefault(x => x.Id == linkId) is not Link l) return;
+        var (ok, problems) = await ReadFromRouters(new[] { l });
+        W.Toast(ok > 0 ? $"Radio values of {S.LinkLabel(l)} read from the routers." : $"Radio values of {S.LinkLabel(l)} could not be read: {problems.FirstOrDefault()}");
+    }
+
+    static readonly string[] RadioKeys = { "freq", "band", "width", "proto", "signal", "signalA", "signalB", "dist", "radioAt" };
+
+    /// <summary>
+    /// Frequency, band, width, protocol, signal and distance of a wireless connection. These are not typed in:
+    /// they are read from the two MikroTiks (automatically), and shown only when they could be read.
+    /// </summary>
+    UIElement RadioSection(Link l, Dlg d)
     {
         string X(string k) => Health.X(l, k);
-        void Set(string k, string v, bool number)
+        var sp = new StackPanel { Margin = new Thickness(0, 6, 0, 4) };
+        var head = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
+        var status = Ui.Muted("", 12.5);
+        var values = new StackPanel();
+        var again = Ui.Btn("Read now", () => { }, "Link", "Read the values from the routers now");
+        again.IsEnabled = S.CanWrite;
+        DockPanel.SetDock(again, Dock.Right); head.Children.Add(again);
+        var ht = new StackPanel(); ht.Children.Add(Ui.Text("Radio · read from the routers", 15, FontWeights.Bold)); ht.Children.Add(status); head.Children.Add(ht);
+        sp.Children.Add(head); sp.Children.Add(values);
+
+        void Show(string problem = null)
         {
-            v = (v ?? "").Trim();
-            if (v == "") Store.SetX(l, k, null);
-            else if (number && double.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var n)) Store.SetX(l, k, n == Math.Floor(n) ? (object)(int)n : n);
-            else if (!number) Store.SetX(l, k, v);
-        }
-        var sp = new StackPanel { Margin = new Thickness(0, 4, 0, 0) };
-        var head = new DockPanel { Margin = new Thickness(0, 6, 0, 8) };
-        var status = Ui.Muted(X("radioAt") == "" ? "Not read from the routers yet." : $"Last read from the routers: {Health.When(X("radioAt"))}", 12.5);
-        var read = Ui.IconBtn("\uE895", "Read from routers", async () =>
-        {
-            if (string.IsNullOrEmpty(l.A) || string.IsNullOrEmpty(l.B)) { d.ErrorText = "Choose both devices first."; return; }
-            status.Text = "Connecting to the routers…"; d.ErrorText = "";
-            var r = await Radio.ReadLinkAsync(S, l);
-            if (r.Freq is double f) Store.SetX(l, "freq", (int)Math.Round(f));
-            if (r.Band != "") Store.SetX(l, "band", r.Band);
-            if (r.Width != "") Store.SetX(l, "width", r.Width);
-            if (r.Proto != "") Store.SetX(l, "proto", r.Proto);
-            if (r.Signal is double s) Store.SetX(l, "signal", (int)Math.Round(s));
-            Store.SetX(l, "signalA", r.SignalA is double sa ? (int)Math.Round(sa) : null); Store.SetX(l, "signalB", r.SignalB is double sb ? (int)Math.Round(sb) : null);
-            if (r.Distance is double dd) Store.SetX(l, "dist", Math.Round(dd, 2));
-            if (r.Ssid != "") l.Ssid = r.Ssid;
-            if (r.Ok) Store.SetX(l, "radioAt", Entity.Now());
-            var notes = string.Join("  ·  ", new[] { r.NoteA, r.NoteB }.Where(n => n != ""));
-            redraw();
-            if (!r.Ok) d.ErrorText = "Nothing could be read. " + notes;
-            else
+            values.Children.Clear();
+            if (X("radioAt") == "")
             {
-                MainWindow.Instance.Toast("Read from the routers: " + r.Summary() + " — click Save to keep it.");
-                if (!(r.NoteA.EndsWith(": read") && r.NoteB.EndsWith(": read"))) d.ErrorText = "Only one end could be read: " + notes;
+                status.Text = problem == null ? "Not read yet." : "";
+                var msg = problem ?? "Frequency, band, width, protocol (NV2…), signal and distance are read automatically from the two MikroTiks, with the username and password saved on each device.";
+                var t = Ui.Text(msg, 13.5, null, problem == null ? "Ink2" : "Sig"); t.Margin = new Thickness(0, 0, 0, 4);
+                values.Children.Add(t);
+                if (problem != null) values.Children.Add(Ui.Muted("Check on each device: IP address, username and password; and on the router: IP → Services → api (port 8728) enabled.", 12.5));
+                return;
             }
-        }, "Primary", "Log in to both MikroTiks with their saved username and password and read the values");
-        read.IsEnabled = S.CanWrite;
-        DockPanel.SetDock(read, Dock.Right); head.Children.Add(read);
-        var ht = new StackPanel(); ht.Children.Add(Ui.Text("Radio", 15, FontWeights.Bold)); ht.Children.Add(status); head.Children.Add(ht);
-        sp.Children.Add(head);
-        var band = Ui.Choice(new[] { ("", "—"), ("2.4", "2.4 GHz"), ("5", "5 GHz"), ("60", "60 GHz") }, X("band")); band.SelectionChanged += (_, _) => Set("band", band.Val(), false);
-        var width = Ui.Choice(new[] { ("", "—"), ("20", "20 MHz"), ("40", "40 MHz"), ("80", "80 MHz"), ("160", "160 MHz"), ("2160", "2160 MHz") }, X("width")); width.SelectionChanged += (_, _) => Set("width", width.Val(), false);
-        var freq = Ui.Box(X("freq")); freq.TextChanged += (_, _) => Set("freq", freq.Text, true);
-        var proto = Ui.Choice(new[] { ("", "—"), ("nv2", "NV2 (MikroTik TDMA)"), ("802.11", "802.11"), ("nstreme", "Nstreme") }, X("proto")); proto.SelectionChanged += (_, _) => Set("proto", proto.Val(), false);
-        var sig = Ui.Box(X("signal")); sig.TextChanged += (_, _) => Set("signal", sig.Text, true);
-        var dist = Ui.Box(X("dist")); dist.TextChanged += (_, _) => Set("dist", dist.Text, true);
-        sp.Children.Add(Ui.Cols(Ui.Field("Frequency (MHz)", freq), Ui.Field("Band", band), Ui.Field("Channel width", width)));
-        var both = X("signalA") != "" || X("signalB") != "" ? $"{S.DevById(l.A)?.Name}: {(X("signalA") == "" ? "—" : X("signalA") + " dBm")} · {S.DevById(l.B)?.Name}: {(X("signalB") == "" ? "—" : X("signalB") + " dBm")}" : "e.g. -62. The weaker side is kept.";
-        sp.Children.Add(Ui.Cols(Ui.Field("Protocol", proto), Ui.Field("Signal (dBm)", sig, both), Ui.Field("Distance (km)", dist)));
+            status.Text = $"Read {Health.When(X("radioAt"))}" + (W.Settings.RadioAuto && W.Settings.MonitorOn ? $" · updated automatically every {W.Settings.RadioMinutes} min" : "");
+            var g = new System.Windows.Controls.Primitives.UniformGrid { Columns = 3 };
+            void V(string label, string value, string brush = "Ink")
+            {
+                var c = new StackPanel { Margin = new Thickness(0, 0, 12, 10) };
+                c.Children.Add(Ui.Text(label, 12.5, FontWeights.SemiBold, "Muted"));
+                c.Children.Add(Ui.Text(value == "" ? "—" : value, 15.5, FontWeights.Bold, brush));
+                g.Children.Add(c);
+            }
+            var sg = Health.Signal(l); var cls = Health.SigClass(sg);
+            V("Frequency", X("freq") == "" ? "" : X("freq") + " MHz");
+            V("Band · width", string.Join(" · ", new[] { X("band") == "" ? "" : X("band") + " GHz", X("width") == "" ? "" : X("width") + " MHz" }.Where(x => x != "")));
+            V("Protocol", ProtoText(X("proto")));
+            V("Signal", sg is double v ? $"{v:0} dBm" : "", cls == "good" ? "Ok" : cls == "fair" ? "Warn" : cls == "poor" ? "Sig" : "Ink");
+            V("Each end", X("signalA") == "" && X("signalB") == "" ? "" : $"{S.DevById(l.A)?.Name}: {(X("signalA") == "" ? "—" : X("signalA"))} · {S.DevById(l.B)?.Name}: {(X("signalB") == "" ? "—" : X("signalB"))}");
+            V("Distance", X("dist") == "" ? "" : X("dist") + " km");
+            values.Children.Add(g);
+            if (problem != null) { var t = Ui.Text("Last try: " + problem, 12.5, null, "Warn"); values.Children.Add(t); }
+        }
+
+        async Task Read()
+        {
+            if (string.IsNullOrEmpty(l.A) || string.IsNullOrEmpty(l.B) || !S.CanWrite) return;
+            again.IsEnabled = false; status.Text = "Reading from the routers…";
+            try
+            {
+                var r = await Radio.ReadLinkAsync(S, l);
+                var notes = string.Join("  ·  ", new[] { r.NoteA, r.NoteB }.Where(n => n != "" && !n.EndsWith(": read")));
+                if (!r.Ok) { Show("Could not be read. " + notes); return; }
+                // saved at once on the connection (when it exists already), and copied into this form
+                var saved = S.Db.Links.FirstOrDefault(x => x.Id == l.Id && x.A == l.A && x.B == l.B && x.PortA == l.PortA && x.PortB == l.PortB);   // same devices as saved
+                if (saved != null) S.ApplyRadio(new[] { (saved, r) });
+                var src = saved ?? l;
+                if (saved == null)
+                {
+                    if (r.Freq is double f) Store.SetX(l, "freq", (int)Math.Round(f));
+                    if (r.Band != "") Store.SetX(l, "band", r.Band); if (r.Width != "") Store.SetX(l, "width", r.Width); if (r.Proto != "") Store.SetX(l, "proto", r.Proto);
+                    if (r.Signal is double sg2) Store.SetX(l, "signal", (int)Math.Round(sg2));
+                    Store.SetX(l, "signalA", r.SignalA is double a1 ? (int)Math.Round(a1) : null); Store.SetX(l, "signalB", r.SignalB is double b1 ? (int)Math.Round(b1) : null);
+                    if (r.Distance is double dd) Store.SetX(l, "dist", Math.Round(dd, 2));
+                    Store.SetX(l, "radioAt", Entity.Now());
+                }
+                else foreach (var k in RadioKeys) Store.SetX(l, k, Health.X(saved, k) == "" ? null : saved.Extra[k]);
+                if (r.Ssid != "") l.Ssid = r.Ssid;
+                Show(notes == "" ? null : "only one end could be read — " + notes);
+            }
+            finally { again.IsEnabled = S.CanWrite; }
+        }
+        again.Click += async (_, _) => await Read();
+        Show();
+        // never read: read now, without waiting for the automatic round
+        if (X("radioAt") == "" && S.CanWrite && !string.IsNullOrEmpty(l.A) && !string.IsNullOrEmpty(l.B) && S.Db.Links.Any(x => x.Id == l.Id))
+            d.Dispatcher.BeginInvoke(async () => await Read());
         return sp;
     }
 
@@ -184,6 +226,8 @@ public class LinksPage : PageBase
         var devs = S.Db.Devices.OrderBy(x => S.SiteById(x.SiteId)?.SiteNumber?.PadLeft(10, '0')).ThenBy(x => x.Name)
             .Select(x => (x.Id, $"{x.Name} · {Store.TypeLabel.GetValueOrDefault(x.Type, x.Type)} · #{S.SiteById(x.SiteId)?.SiteNumber}")).ToList();
         var body = new StackPanel(); d.Body.Children.Add(body);
+        UIElement radio = null;   // kept when the form is redrawn, so a reading in progress is not lost
+        string radioPair = "";
 
         void Render()
         {
@@ -226,7 +270,14 @@ public class LinksPage : PageBase
                 var row = new DockPanel(); DockPanel.SetDock(fill, Dock.Right); fill.Margin = new Thickness(8, 0, 0, 0); row.Children.Add(fill); row.Children.Add(sub);
                 var ssid = Ui.Box(l.Ssid); ssid.TextChanged += (_, _) => l.Ssid = ssid.Text.Trim();
                 body.Children.Add(Ui.Cols(Ui.Field("Link subnet", row, "e.g. 10.5.5.0/30 — the WLAN IPs are added to both devices."), Ui.Field("SSID", ssid)));
-                body.Children.Add(RadioSection(l, d, Render));
+                if (radioPair != $"{l.A}|{l.B}|{l.PortA}|{l.PortB}")
+                {
+                    if (radioPair != "") foreach (var k in RadioKeys) Store.SetX(l, k, null);   // other devices: the old readings no longer apply
+                    radio = null; radioPair = $"{l.A}|{l.B}|{l.PortA}|{l.PortB}";
+                }
+                if (radio == null) radio = RadioSection(l, d);
+                else if (radio is FrameworkElement fe && fe.Parent is Panel pp) pp.Children.Remove(radio);
+                body.Children.Add(radio);
             }
             var notes = Ui.Box(l.Notes, true); notes.TextChanged += (_, _) => l.Notes = notes.Text.Trim();
             body.Children.Add(Ui.Field("Notes", notes));
@@ -236,7 +287,13 @@ public class LinksPage : PageBase
         if (ro) d.Cancel("Close");
         else
         {
-            d.Ok(link == null ? "Add connection" : "Save", () => { S.SaveLink(l); selId = l.Id; return true; });
+            d.Ok(link == null ? "Add connection" : "Save", () =>
+            {
+                S.SaveLink(l); selId = l.Id;
+                if (l.Type == "wireless" && Health.X(l, "radioAt") == "" && S.CanWrite)
+                    _ = ReadAfterSave(l.Id);
+                return true;
+            });
             d.Cancel();
         }
         d.Open();

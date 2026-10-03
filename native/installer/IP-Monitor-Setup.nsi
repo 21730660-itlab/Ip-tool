@@ -11,7 +11,7 @@ Target amd64-unicode
 
 !define APP      "IP Monitor"
 !define EXE      "IP-Monitor.exe"
-!define VERSION  "1.4.0"
+!define VERSION  "1.4.1"
 !define REGKEY   "Software\Microsoft\Windows\CurrentVersion\Uninstall\IPMonitor"
 !define RUNTIME_URL  "https://aka.ms/dotnet/8.0/windowsdesktop-runtime-win-x64.exe"
 !define RUNTIME_PAGE "https://dotnet.microsoft.com/download/dotnet/8.0"
